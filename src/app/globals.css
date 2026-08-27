@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* IBM Plex Sans Arabic is loaded via next/font — no @import needed */
+
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
