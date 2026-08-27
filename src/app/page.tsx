@@ -1,69 +1,126 @@
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { BarChart3, Bell, CalendarCheck, GraduationCap, MessageCircle, Trophy, Users } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+
+const features = [
+  {
+    icon: Users,
+    title: "مجموعات منظّمة",
+    body: "أنشئ مجموعة لكل صف، أضف الطلاب والمدرسين، وتابع كل شيء من لوحة واحدة.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "حضور في ثوانٍ",
+    body: "سجّل الحضور بضغطة واحدة لكل طالب، مع سجل كامل وإحصائيات دقيقة.",
+  },
+  {
+    icon: MessageCircle,
+    title: "تفاعل داخل المجموعة",
+    body: "منشورات وإعلانات وتعليقات وردود بين المدرس وطلابه في مكان آمن.",
+  },
+  {
+    icon: Trophy,
+    title: "ترتيب ونقاط",
+    body: "نقاط تلقائية على الحضور والمشاركة مع لوحة ترتيب تحفّز الطلاب.",
+  },
+  {
+    icon: Bell,
+    title: "إشعارات فورية",
+    body: "تنبيه الطلاب بكل منشور جديد أو رد أو تسجيل حضور.",
+  },
+  {
+    icon: BarChart3,
+    title: "تقارير واضحة",
+    body: "نِسَب الحضور والنمو الشهري في رسوم بيانية سهلة القراءة.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <span className="flex items-center gap-2.5">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
+              <GraduationCap className="size-5" />
+            </span>
+            <span className="font-display text-base font-bold">مجموعتي</span>
+          </span>
+          <nav className="flex items-center gap-2">
+            <Button variant="ghost" size="sm">
+              <Link href="/login">تسجيل الدخول</Link>
+            </Button>
+            <Button size="sm">
+              <Link href="/register">إنشاء حساب</Link>
+            </Button>
+          </nav>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main>
+        <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <Badge variant="secondary" className="mb-4">
+              نسخة تجريبية ببيانات واقعية
+            </Badge>
+            <h1 className="font-display text-3xl font-extrabold leading-tight sm:text-5xl">
+              إدارة مجموعاتك وحضور طلابك
+              <span className="text-primary"> بلا تعقيد</span>
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-muted-foreground sm:text-base">
+              منصة عربية واحدة للمدرس والطالب: مجموعات، تسجيل حضور سريع، منشورات وتعليقات،
+              ولوحة ترتيب تحفّز الطلاب على الاستمرار.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-2.5">
+              <Button size="lg">
+                <Link href="/teacher">تجربة لوحة المدرس</Link>
+              </Button>
+              <Button size="lg" variant="outline">
+                <Link href="/student">تجربة حساب الطالب</Link>
+              </Button>
+              <Button size="lg" variant="ghost">
+                <Link href="/admin">لوحة الإدارة</Link>
+              </Button>
+            </div>
+          </div>
+
+          <dl className="mt-14 grid gap-3 sm:grid-cols-3">
+            {[
+              { k: "112", v: "طالب نشط" },
+              { k: "%86", v: "متوسط نسبة الحضور" },
+              { k: "63", v: "منشورًا هذا الشهر" },
+            ].map((s) => (
+              <div key={s.v} className="card-soft p-5 text-center">
+                <dt className="font-display text-3xl font-bold text-primary">{s.k}</dt>
+                <dd className="mt-1 text-xs text-muted-foreground">{s.v}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+          <h2 className="mb-6 text-center font-display text-2xl font-bold">
+            كل ما تحتاجه لإدارة مجموعاتك
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f) => (
+              <article key={f.title} className="card-soft p-5">
+                <span className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary">
+                  <f.icon className="size-5" />
+                </span>
+                <h3 className="mt-3 text-base font-bold">{f.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{f.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
+
+      <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
+        منصة مجموعتي — جميع الحقوق محفوظة © 2026
+      </footer>
     </div>
   );
 }
