@@ -1,0 +1,29 @@
+import { z } from "zod";
+
+export const createTeacherSchema = z.object({
+  name: z.string().min(2).max(100).trim(),
+  email: z.string().email().toLowerCase(),
+  password: z.string().min(8, "كلمة المرور 8 أحرف على الأقل"),
+});
+
+export const updateTeacherSchema = z.object({
+  name: z.string().min(2).max(100).trim().optional(),
+  email: z.string().email().toLowerCase().optional(),
+  password: z.string().min(8).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const updateGroupSchema = z.object({
+  name: z.string().min(2).max(150).trim().optional(),
+  description: z.string().max(1000).trim().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const addTeacherToGroupSchema = z.object({
+  teacherId: z.string().min(1, "معرّف المدرس مطلوب"),
+});
+
+export type CreateTeacherDto = z.infer<typeof createTeacherSchema>;
+export type UpdateTeacherDto = z.infer<typeof updateTeacherSchema>;
+export type UpdateGroupDto = z.infer<typeof updateGroupSchema>;
+export type AddTeacherToGroupDto = z.infer<typeof addTeacherToGroupSchema>;
