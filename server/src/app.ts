@@ -20,18 +20,10 @@ import { notificationRouter } from "./modules/notifications/notification.routes"
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
 
-// ─────────────────────────────────────────
-// App
-// ─────────────────────────────────────────
-
 const app = express();
 
 // ── Security ──────────────────────────────
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
-);
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 app.use(
   cors({
@@ -41,8 +33,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// Handle preflight OPTIONS globally
 app.options("*", cors());
 
 // ── Body parsers ──────────────────────────
@@ -56,36 +46,62 @@ app.use(requestLogger);
 // ── Rate limiting ─────────────────────────
 app.use(generalLimiter);
 
-// ── DB middleware: ensures connection is alive on every request ──
-// This is a no-op on local dev (connection is already open via server.ts).
-// On Vercel serverless it re-uses the cached connection or reconnects.
-app.use((_req, _res, next) => {
-  connectDB().then(() => next()).catch(next);
+// ─────────────────────────────────────────
+// Routes that do NOT need a DB connection
+// (must be registered BEFORE the DB middleware)
+// ─────────────────────────────────────────
+
+// Basic health — no DB needed
+app.get("/api/health", (_req, res) => {
+  res.json({
+    success: true,
+    data: { status: "healthy", env: env.NODE_ENV, timestamp: new Date().toISOString() },
+  });
 });
 
-// ── Static files (uploaded images) ────────
-// On Vercel, file uploads land in /tmp which is ephemeral.
-// For production use a cloud bucket (S3, Cloudinary, etc.)
-app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
+// Diagnostic — shows env var presence + DB connectivity
+// ONLY available in non-production. Remove or protect before going live.
+if (env.NODE_ENV !== "production") {
+  app.get("/api/debug", async (_req, res) => {
+    const checks: Record<string, string> = {
+      NODE_ENV: env.NODE_ENV,
+      MONGODB_URI: env.MONGODB_URI
+        ? `set (${env.MONGODB_URI.substring(0, 20)}...)`
+        : "❌ NOT SET",
+      JWT_SECRET: env.JWT_SECRET ? "set" : "❌ NOT SET",
+      CORS_ORIGIN: env.CORS_ORIGIN,
+      UPLOAD_DIR: env.UPLOAD_DIR,
+    };
 
-// ── API docs (dev only) ───────────────────
+    let dbStatus = "not tested";
+    try {
+      await connectDB();
+      dbStatus = "✅ connected";
+    } catch (e: unknown) {
+      dbStatus = `❌ ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    res.json({ success: true, data: { checks, db: dbStatus } });
+  });
+}
+
+// API docs — dev only
 if (env.NODE_ENV !== "production") {
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
-// ── Health check ──────────────────────────
-app.get("/api/health", (_req, res) => {
-  res.json({
-    success: true,
-    data: {
-      status: "healthy",
-      env: env.NODE_ENV,
-      timestamp: new Date().toISOString(),
-    },
-  });
+// ─────────────────────────────────────────
+// DB middleware — all routes below require a live connection
+// ─────────────────────────────────────────
+
+app.use((_req, _res, next) => {
+  connectDB().then(() => next()).catch(next);
 });
 
-// ── Routes ────────────────────────────────
+// ── Static uploads ────────────────────────
+app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
+
+// ── API routes ────────────────────────────
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/teacher", teacherRouter);
@@ -96,7 +112,7 @@ app.use("/api/notifications", notificationRouter);
 // ── 404 ───────────────────────────────────
 app.use(notFoundHandler);
 
-// ── Error handler (must be last) ──────────
+// ── Error handler ─────────────────────────
 app.use(errorHandler);
 
 export default app;
