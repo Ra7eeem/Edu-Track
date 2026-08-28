@@ -15,6 +15,7 @@ import {
   CreateTeacherDto,
   UpdateTeacherDto,
   UpdateGroupDto,
+  CreateGroupAdminDto,
 } from "./admin.schemas";
 
 // ─────────────────────────────────────────
@@ -76,6 +77,24 @@ export async function deleteTeacher(id: string) {
 // ─────────────────────────────────────────
 // Groups (admin)
 // ─────────────────────────────────────────
+
+export async function createGroup(dto: CreateGroupAdminDto, adminId: string) {
+  const group = await Group.create({
+    name: dto.name,
+    description: dto.description,
+    createdBy: adminId,
+  });
+
+  // Optionally assign teachers on creation
+  if (dto.teacherIds && dto.teacherIds.length > 0) {
+    const validIds = dto.teacherIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    await Promise.all(
+      validIds.map(tid => GroupTeacher.create({ group: group._id, teacher: tid }))
+    );
+  }
+
+  return group;
+}
 
 export async function getGroups(req: Request) {
   const { page, limit, skip } = parsePagination(req);

@@ -20,7 +20,7 @@ export function useGroupRanking(groupId: string, month?: number, year?: number) 
     queryKey: ["groups", groupId, "ranking", m, y],
     queryFn:  () =>
       clientFetch<RankingData>(
-        `/api/groups/${groupId}/ranking?month=${m}&year=${y}`
+        `/api/groups/${groupId}/ranking?month=${m}&year=${y}&limit=100`
       ),
     enabled: !!groupId,
   })

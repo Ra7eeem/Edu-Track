@@ -7,6 +7,7 @@ import {
   createTeacherSchema,
   updateTeacherSchema,
   updateGroupSchema,
+  createGroupSchema,
   addTeacherToGroupSchema,
 } from "./admin.schemas";
 import * as AdminController from "./admin.controller";
@@ -29,6 +30,7 @@ adminRouter.delete("/teachers/:id", AdminController.deleteTeacher);
 // ── Groups ────────────────────────────────
 adminRouter.get("/groups", AdminController.getGroups);
 adminRouter.get("/groups/:id", AdminController.getGroupById);
+adminRouter.post("/groups", validate(createGroupSchema), AdminController.createGroup);
 adminRouter.patch("/groups/:id", validate(updateGroupSchema), AdminController.updateGroup);
 adminRouter.delete("/groups/:id", AdminController.deleteGroup);
 

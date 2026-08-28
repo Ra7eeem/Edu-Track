@@ -1,10 +1,13 @@
+"use client"
+
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
-import { serverFetch, resolveList } from "@/shared/lib/api-server"
-import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup, ApiNotification, PaginatedResponse } from "@/shared/types/api"
-import { BookOpen, TrendingUp, Users } from "lucide-react"
+import { useTeacherGroups, useTeacherCreateGroup } from "@/features/teacher/hooks/use-teacher-groups"
+import { useJoinRequestCounts } from "@/features/teacher/hooks/use-join-requests"
+import { resolveId } from "@/shared/types/api"
+import { BookOpen, Plus, TrendingUp, Users, X } from "lucide-react"
 import Link from "next/link"
+import { useRef, useState } from "react"
 
 const COLORS = [
   "from-violet-500 to-violet-600",
@@ -14,74 +17,194 @@ const COLORS = [
   "from-rose-500 to-rose-600",
 ]
 
-export default async function TeacherGroupsPage() {
-  const session = await getSessionData()
+// ─── Create Group Modal ───────────────────────────────────────────────────────
+function CreateGroupModal({ onClose }: { onClose: () => void }) {
+  const createMut  = useTeacherCreateGroup()
+  const overlayRef = useRef<HTMLDivElement>(null)
 
-  const [groupsRes, notifsRes] = await Promise.allSettled([
-    serverFetch<PaginatedResponse<ApiGroup>>("/api/teacher/groups?limit=50"),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
-  ])
+  const [name,        setName]        = useState("")
+  const [description, setDescription] = useState("")
+  const [error,       setError]       = useState<string | null>(null)
 
-  const groups = resolveList(groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>)
-  const unread = resolveList(notifsRes as PromiseSettledResult<PaginatedResponse<ApiNotification> | ApiNotification[] | null>)
-    .filter((n) => !n.isRead).length
+  const handleSubmit = async () => {
+    if (!name.trim()) { setError("اسم المجموعة مطلوب"); return }
+    setError(null)
+    try {
+      await createMut.mutateAsync({
+        name:        name.trim(),
+        description: description.trim() || undefined,
+      })
+      onClose()
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      setError(err?.message ?? "حدث خطأ")
+    }
+  }
 
   return (
-    <div className="flex flex-col">
-      <TopBar
-        title="مجموعاتي"
-        notifHref="/teacher/notifications"
-        unreadCount={unread}
-        userName={session?.name ?? ""}
-        userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
-        profileHref="/teacher/profile"
-      />
-
-      <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{groups.length} مجموعات</p>
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      onClick={e => { if (e.target === overlayRef.current) onClose() }}
+    >
+      <div className="w-full max-w-md rounded-3xl bg-background border border-border/60 shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+          <h2 className="text-base font-bold">إنشاء مجموعة جديدة</h2>
+          <button
+            onClick={onClose}
+            className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <X className="size-4" />
+          </button>
         </div>
 
-        {groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-20 text-center">
-            <BookOpen className="mb-3 size-10 text-muted-foreground/40" />
-            <p className="font-medium">لا توجد مجموعات بعد</p>
-            <p className="mt-1 text-sm text-muted-foreground">تواصل مع الإدارة لإنشاء مجموعتك الأولى</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {groups.map((g, i) => (
-              <div key={g._id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-                <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
-                <div className="p-5">
-                  <h3 className="text-base font-bold">{g.name}</h3>
-                  {g.description && (
-                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{g.description}</p>
-                  )}
+        <div className="p-5 space-y-4">
+          {error && (
+            <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          )}
 
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    <span>آخر تحديث: {new Date(g.updatedAt).toLocaleDateString("ar-EG")}</span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/teacher/group/${g._id}/attendance`}>
-                        <Users className="size-3.5" />تسجيل الحضور
-                      </Link>
-                    </Button>
-                    <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-                      <Link href={`/teacher/group/${g._id}`}>
-                        <TrendingUp className="size-3.5" />إدارة المجموعة
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">اسم المجموعة *</label>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              placeholder="مثال: مجموعة الرياضيات — الصف العاشر"
+              autoFocus
+              className="flex h-10 w-full rounded-2xl border border-input bg-card px-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"
+            />
           </div>
-        )}
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">الوصف (اختياري)</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="وصف مختصر عن المجموعة..."
+              rows={3}
+              className="flex w-full rounded-2xl border border-input bg-card px-4 py-3 text-sm outline-none resize-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-2 border-t border-border/60 px-5 py-4">
+          <Button variant="outline" className="flex-1" onClick={onClose}>إلغاء</Button>
+          <Button
+            className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+            onClick={handleSubmit}
+            disabled={createMut.isPending}
+          >
+            <Plus className="size-4" />
+            {createMut.isPending ? "جارٍ الإنشاء..." : "إنشاء المجموعة"}
+          </Button>
+        </div>
       </div>
     </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export default function TeacherGroupsPage() {
+  const [showCreate, setShowCreate] = useState(false)
+
+  const { data: groupsRaw, isLoading } = useTeacherGroups()
+  const { data: pendingCount = 0 }     = useJoinRequestCounts()
+  const groups = groupsRaw ?? []
+
+  return (
+    <>
+      {showCreate && <CreateGroupModal onClose={() => setShowCreate(false)} />}
+
+      <div className="flex flex-col">
+        <TopBar
+          title="مجموعاتي"
+          notifHref="/teacher/notifications"
+          unreadCount={pendingCount}
+          userName=""
+          userAvatar="م"
+          userAvatarColor="bg-violet-500"
+          profileHref="/teacher/profile"
+        />
+
+        <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
+          {/* Header row */}
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {isLoading ? "جارٍ التحميل..." : `${groups.length} مجموعة`}
+            </p>
+            <Button
+              onClick={() => setShowCreate(true)}
+              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+            >
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">إنشاء مجموعة</span>
+            </Button>
+          </div>
+
+          {/* Loading */}
+          {isLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-36 animate-pulse rounded-2xl border border-border/60 bg-muted" />
+              ))}
+            </div>
+          ) : groups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-20 text-center">
+              <BookOpen className="mb-3 size-10 text-muted-foreground/40" />
+              <p className="font-medium">لا توجد مجموعات بعد</p>
+              <p className="mt-1 text-sm text-muted-foreground">أنشئ مجموعتك الأولى الآن</p>
+              <Button
+                className="mt-4 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                onClick={() => setShowCreate(true)}
+              >
+                <Plus className="size-4" />إنشاء مجموعة
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {groups.map((g, i) => (
+                <div
+                  key={resolveId(g)}
+                  className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
+                  <div className="p-5">
+                    <h3 className="text-base font-bold">{g.name}</h3>
+                    {g.description && (
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{g.description}</p>
+                    )}
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      <span>آخر تحديث: {new Date(g.updatedAt).toLocaleDateString("ar-EG")}</span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/teacher/group/${resolveId(g)}/attendance`}>
+                          <Users className="size-3.5" />تسجيل الحضور
+                        </Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                        asChild
+                      >
+                        <Link href={`/teacher/group/${resolveId(g)}`}>
+                          <TrendingUp className="size-3.5" />إدارة المجموعة
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

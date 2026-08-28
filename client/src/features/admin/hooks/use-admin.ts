@@ -90,3 +90,70 @@ export function useToggleTeacherStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "teachers"] }),
   })
 }
+
+export function useCreateGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; description?: string; teacherIds?: string[] }) =>
+      clientFetch<ApiGroup>("/api/admin/groups", {
+        method: "POST",
+        data:   body,
+      } as never),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "groups"] }),
+  })
+}
+
+export function useUpdateGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: string; name?: string; description?: string; isActive?: boolean }) =>
+      clientFetch<ApiGroup>(`/api/admin/groups/${id}`, {
+        method: "PATCH",
+        data:   body,
+      } as never),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin", "groups"] })
+      qc.invalidateQueries({ queryKey: ["admin", "group", vars.id] })
+    },
+  })
+}
+
+export function useDeleteGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      clientFetch<void>(`/api/admin/groups/${id}`, {
+        method: "DELETE",
+      } as never),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "groups"] }),
+  })
+}
+
+export function useAddTeacherToGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ groupId, teacherId }: { groupId: string; teacherId: string }) =>
+      clientFetch<void>(`/api/admin/groups/${groupId}/teachers`, {
+        method: "POST",
+        data:   { teacherId },
+      } as never),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin", "group", vars.groupId] })
+      qc.invalidateQueries({ queryKey: ["admin", "group", vars.groupId, "teachers"] })
+    },
+  })
+}
+
+export function useRemoveTeacherFromGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ groupId, teacherId }: { groupId: string; teacherId: string }) =>
+      clientFetch<void>(`/api/admin/groups/${groupId}/teachers/${teacherId}`, {
+        method: "DELETE",
+      } as never),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin", "group", vars.groupId] })
+      qc.invalidateQueries({ queryKey: ["admin", "group", vars.groupId, "teachers"] })
+    },
+  })
+}

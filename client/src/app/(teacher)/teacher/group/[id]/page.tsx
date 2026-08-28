@@ -15,9 +15,22 @@ import { removeStudentAction } from "@/features/teacher/actions/student.action"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
 import { useTeacherGroups } from "@/features/teacher/hooks/use-teacher-groups"
+import {
+  useJoinRequests,
+  useApproveJoinRequest,
+  useRejectJoinRequest,
+} from "@/features/teacher/hooks/use-join-requests"
 import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
-import { resolveId, AttendanceStatus, type ApiGroup, type ApiPost, type ApiRankingEntry } from "@/shared/types/api"
+import {
+  resolveId,
+  AttendanceStatus,
+  JoinRequestStatus,
+  type ApiGroup,
+  type ApiJoinRequest,
+  type ApiPost,
+  type ApiRankingEntry,
+} from "@/shared/types/api"
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
@@ -30,11 +43,12 @@ import { use, useMemo, useState, useTransition } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 const TABS = [
-  { key: "overview",   label: "نظرة عامة",  icon: BarChart3     },
-  { key: "students",   label: "الطلاب",      icon: Users         },
-  { key: "attendance", label: "الحضور",      icon: CalendarCheck },
-  { key: "posts",      label: "المنشورات",   icon: BookOpen      },
-  { key: "ranking",    label: "الترتيب",     icon: Trophy        },
+  { key: "overview",      label: "نظرة عامة",      icon: BarChart3     },
+  { key: "students",      label: "الطلاب",           icon: Users         },
+  { key: "attendance",    label: "الحضور",           icon: CalendarCheck },
+  { key: "posts",         label: "المنشورات",        icon: BookOpen      },
+  { key: "ranking",       label: "الترتيب",          icon: Trophy        },
+  { key: "join-requests", label: "طلبات الانضمام",   icon: Bell          },
 ]
 
 const MEDALS = ["🥇", "🥈", "🥉"]
@@ -352,6 +366,143 @@ function RankingTab({ groupId }: { groupId: string }) {
   )
 }
 
+// ─── Join Requests sub-component ──────────────────────────────────────────────
+function JoinRequestsTab({ groupId }: { groupId: string }) {
+  const { data: allRequests = [], isLoading } = useJoinRequests()
+  const approveMut = useApproveJoinRequest()
+  const rejectMut  = useRejectJoinRequest()
+
+  // Filter to only requests belonging to this group
+  const requests = allRequests.filter(r => {
+    const gid = (r.group as { _id?: string; id?: string } | undefined)
+    return gid ? (resolveId(gid) === groupId) : false
+  })
+
+  const pending  = requests.filter(r => r.status === JoinRequestStatus.PENDING)
+  const resolved = requests.filter(r => r.status !== JoinRequestStatus.PENDING)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-16 animate-pulse rounded-2xl border border-border/60 bg-muted" />
+        ))}
+      </div>
+    )
+  }
+
+  if (requests.length === 0) {
+    return (
+      <div className="flex flex-col items-center py-16 text-center">
+        <p className="text-4xl mb-3">📬</p>
+        <p className="font-medium">لا توجد طلبات انضمام</p>
+        <p className="mt-1 text-sm text-muted-foreground">ستظهر هنا طلبات الطلاب للانضمام إلى مجموعتك</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Pending */}
+      {pending.length > 0 && (
+        <section>
+          <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-amber-600">
+            <span className="inline-flex size-5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 dark:bg-amber-900/40">
+              {pending.length}
+            </span>
+            في انتظار الموافقة
+          </h3>
+          <div className="space-y-2">
+            {pending.map((req: ApiJoinRequest) => {
+              const rid     = resolveId(req)
+              const student = req.student as { name?: string; email?: string; grade?: string } | undefined
+              const name    = student?.name  ?? "طالب"
+              const email   = student?.email ?? ""
+              const isApproving = approveMut.isPending && approveMut.variables === rid
+              const isRejecting = rejectMut.isPending  && rejectMut.variables  === rid
+              return (
+                <div
+                  key={rid}
+                  className="flex items-center gap-3 rounded-2xl border border-amber-200/60 bg-amber-50/40 px-4 py-3 dark:border-amber-800/30 dark:bg-amber-950/10"
+                >
+                  <span className="grid size-10 place-items-center rounded-xl bg-amber-100 text-sm font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 shrink-0">
+                    {name[0]}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{email}</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      {new Date(req.createdAt).toLocaleDateString("ar-EG")}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => rejectMut.mutate(rid)}
+                      disabled={isApproving || isRejecting}
+                      className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-400"
+                    >
+                      {isRejecting ? "..." : "رفض"}
+                    </button>
+                    <button
+                      onClick={() => approveMut.mutate(rid)}
+                      disabled={isApproving || isRejecting}
+                      className="rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {isApproving ? "..." : "قبول"}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Resolved */}
+      {resolved.length > 0 && (
+        <section>
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            السابقة ({resolved.length})
+          </h3>
+          <div className="space-y-2">
+            {resolved.map((req: ApiJoinRequest) => {
+              const rid     = resolveId(req)
+              const student = req.student as { name?: string; email?: string } | undefined
+              const name    = student?.name  ?? "طالب"
+              const email   = student?.email ?? ""
+              const approved = req.status === JoinRequestStatus.APPROVED
+              return (
+                <div
+                  key={rid}
+                  className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 opacity-80"
+                >
+                  <span className="grid size-10 place-items-center rounded-xl bg-muted text-sm font-bold text-muted-foreground shrink-0">
+                    {name[0]}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{email}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold",
+                      approved
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                    )}
+                  >
+                    {approved ? "✓ مقبول" : "✗ مرفوض"}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function GroupManagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -417,9 +568,6 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
         <div className="mx-auto max-w-5xl flex flex-wrap gap-2">
           <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
             <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-3.5"/>تسجيل حضور منفصل</Link>
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link href="/teacher/join-requests"><Bell className="size-3.5"/>طلبات الانضمام</Link>
           </Button>
         </div>
       </div>
@@ -542,6 +690,9 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
 
         {/* ── Ranking ── */}
         {tab === "ranking" && <RankingTab groupId={id}/>}
+
+        {/* ── Join Requests ── */}
+        {tab === "join-requests" && <JoinRequestsTab groupId={id}/>}
       </div>
     </div>
   )

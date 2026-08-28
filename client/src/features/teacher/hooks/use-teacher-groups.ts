@@ -2,7 +2,7 @@
 
 import { clientFetch } from "@/shared/lib/api-client"
 import { ApiGroup, PaginatedResponse } from "@/shared/types/api"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 function extractArray<T>(raw: unknown): T[] {
   if (!raw) return []
@@ -36,5 +36,17 @@ export function useGroupDetails(groupId: string) {
         `/api/groups/${groupId}`
       ),
     enabled: !!groupId,
+  })
+}
+
+export function useTeacherCreateGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { name: string; description?: string }) =>
+      clientFetch<ApiGroup>("/api/groups", {
+        method: "POST",
+        data:   body,
+      } as never),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["teacher", "groups"] }),
   })
 }

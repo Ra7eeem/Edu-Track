@@ -7,6 +7,7 @@ import {
   UpdateTeacherDto,
   UpdateGroupDto,
   AddTeacherToGroupDto,
+  CreateGroupAdminDto,
 } from "./admin.schemas";
 
 const p = (v: string | string[]): string => String(v);
@@ -50,6 +51,14 @@ export const deleteTeacher = asyncHandler(async (req: Request, res: Response) =>
 export const getGroups = asyncHandler(async (req: Request, res: Response) => {
   const { data, pagination } = await AdminService.getGroups(req);
   sendPaginated(res, data, pagination);
+});
+
+export const createGroup = asyncHandler(async (req: Request, res: Response) => {
+  const group = await AdminService.createGroup(
+    req.body as CreateGroupAdminDto,
+    req.user!.userId
+  );
+  sendSuccess(res, group, 201, "تم إنشاء المجموعة بنجاح");
 });
 
 export const getGroupById = asyncHandler(async (req: Request, res: Response) => {
