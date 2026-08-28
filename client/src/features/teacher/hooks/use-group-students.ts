@@ -1,7 +1,7 @@
 "use client"
 
 import { clientFetch } from "@/shared/lib/api-client"
-import { ApiGroupMembership, PaginatedResponse } from "@/shared/types/api"
+import { ApiUser, PaginatedResponse } from "@/shared/types/api"
 import { useQuery } from "@tanstack/react-query"
 
 function extractArray<T>(raw: unknown): T[] {
@@ -16,14 +16,17 @@ function extractArray<T>(raw: unknown): T[] {
   return []
 }
 
+// Server returns plain user objects for students in a group
+export type GroupStudent = Pick<ApiUser, "_id" | "id" | "name" | "email" | "avatarUrl" | "grade" | "phone">
+
 export function useGroupStudents(groupId: string, search = "") {
   return useQuery({
     queryKey: ["teacher", "groups", groupId, "students", search],
     queryFn:  async () => {
-      const raw = await clientFetch<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[]>(
+      const raw = await clientFetch<PaginatedResponse<GroupStudent> | GroupStudent[]>(
         `/api/teacher/groups/${groupId}/students?limit=100${search ? `&search=${encodeURIComponent(search)}` : ""}`
       )
-      return extractArray<ApiGroupMembership>(raw)
+      return extractArray<GroupStudent>(raw)
     },
     enabled: !!groupId,
   })

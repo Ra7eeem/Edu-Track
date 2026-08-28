@@ -14,11 +14,11 @@ import { createPostAction, deletePostAction, toggleLikeAction } from "@/features
 import { removeStudentAction } from "@/features/teacher/actions/student.action"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
-import { useGroupStudents } from "@/features/teacher/hooks/use-group-students"
 import { useTeacherGroups } from "@/features/teacher/hooks/use-teacher-groups"
 import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
-import { resolveId, AttendanceStatus, type ApiGroup, type ApiGroupMembership, type ApiPost, type ApiRankingEntry } from "@/shared/types/api"
+import { resolveId, AttendanceStatus, type ApiGroup, type ApiPost, type ApiRankingEntry } from "@/shared/types/api"
+import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
   CheckCircle2, Heart, MessageCircle, MoreVertical,
@@ -44,9 +44,9 @@ const ARABIC_MONTHS = [
 ]
 
 // ─── Attendance sub-component ──────────────────────────────────────────────────
-function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGroupMembership[] }) {
+function AttendanceTab({ groupId, students }: { groupId: string; students: GroupStudent[] }) {
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus | "none">>(
-    Object.fromEntries(students.map(s => [s.studentId, "none"]))
+    Object.fromEntries(students.map(s => [resolveId(s), "none"]))
   )
   const [search,    setSearch]    = useState("")
   const [saved,     setSaved]     = useState(false)
@@ -54,10 +54,7 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGr
   const [isPending, startTransition] = useTransition()
 
   const filtered = useMemo(
-    () => students.filter(s => {
-      const name = (s.student as { name?: string } | undefined)?.name ?? ""
-      return name.includes(search)
-    }),
+    () => students.filter(s => s.name?.includes(search) ?? false),
     [students, search]
   )
 
@@ -69,10 +66,10 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGr
     setAttendance(p => ({ ...p, [sid]: p[sid] === status ? "none" : status }))
 
   const markAll = (status: AttendanceStatus) =>
-    setAttendance(Object.fromEntries(students.map(s => [s.studentId, status])))
+    setAttendance(Object.fromEntries(students.map(s => [resolveId(s), status])))
 
   const reset = () => {
-    setAttendance(Object.fromEntries(students.map(s => [s.studentId, "none"])))
+    setAttendance(Object.fromEntries(students.map(s => [resolveId(s), "none"])))
     setSaved(false); setError(null)
   }
 
@@ -80,10 +77,10 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGr
 
   const handleSave = () => {
     const records = students.map(s => ({
-      studentId: s.studentId,
-      status: attendance[s.studentId] === "none"
+      studentId: resolveId(s),
+      status: attendance[resolveId(s)] === "none"
         ? AttendanceStatus.ABSENT
-        : (attendance[s.studentId] as AttendanceStatus),
+        : (attendance[resolveId(s)] as AttendanceStatus),
     }))
     startTransition(async () => {
       const res = await saveAttendanceAction(groupId, today, records)
@@ -136,27 +133,29 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGr
 
       {/* Students list */}
       <div className="space-y-2">
-        {filtered.map(m => {
-          const name   = (m.student as { name?: string } | undefined)?.name ?? m.studentId
-          const status = attendance[m.studentId]
+        {filtered.map(s => {
+          const sid    = resolveId(s)
+          const name   = s.name ?? "طالب"
+          const avatar = name.length > 0 ? name[0] : "؟"
+          const status = attendance[sid]
           return (
-            <div key={m.studentId}
+            <div key={sid}
               className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all",
                 status === AttendanceStatus.PRESENT ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/50 dark:bg-emerald-950/20"
                 : status === AttendanceStatus.ABSENT ? "border-rose-200 bg-rose-50/60 dark:border-rose-800/50 dark:bg-rose-950/20"
                 : "border-border/60 bg-card")}>
               <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
-                {name[0]}
+                {avatar}
               </span>
               <span className="flex-1 text-sm font-medium">{name}</span>
               <div className="flex gap-2">
-                <button onClick={() => mark(m.studentId, AttendanceStatus.PRESENT)}
+                <button onClick={() => mark(sid, AttendanceStatus.PRESENT)}
                   className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
                     status === AttendanceStatus.PRESENT ? "bg-emerald-500 text-white shadow-sm"
                     : "border border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400")}>
                   حاضر
                 </button>
-                <button onClick={() => mark(m.studentId, AttendanceStatus.ABSENT)}
+                <button onClick={() => mark(sid, AttendanceStatus.ABSENT)}
                   className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
                     status === AttendanceStatus.ABSENT ? "bg-rose-500 text-white shadow-sm"
                     : "border border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400")}>
@@ -356,10 +355,11 @@ function RankingTab({ groupId }: { groupId: string }) {
 // ─── Main page ─────────────────────────────────────────────────────────────────
 export default function GroupManagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [tab,     setTab]     = useState("overview")
-  const [search,  setSearch]  = useState("")
-  const [removing, setRemoving] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [tab,          setTab]          = useState("overview")
+  const [search,       setSearch]       = useState("")
+  const [deleteTarget, setDeleteTarget] = useState<{ studentId: string; name: string } | null>(null)
+  const [removeErr,    setRemoveErr]    = useState<string | null>(null)
+  const [isPending,    startTransition] = useTransition()
   const qc = useQueryClient()
 
   // Fetch group info from teacher groups list (cached)
@@ -369,7 +369,7 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
 
   // Students
   const { data: studentsData, isLoading: sLoading } = useGroupStudents(id, search)
-  const students: ApiGroupMembership[] = studentsData ?? []
+  const students: GroupStudent[] = studentsData ?? []
   
 
   // Session info for author name
@@ -382,15 +382,22 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
 
   const unread = 0 // handled per-page separately
 
-  const handleRemove = (membershipId: string, studentId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الطالب؟")) return
-    setRemoving(studentId)
+  const handleRemove = (studentId: string) => {
+    if (!deleteTarget) return
+    setRemoveErr(null)
     startTransition(async () => {
-      await removeStudentAction(id, studentId)
-      qc.invalidateQueries({ queryKey: ["teacher", "groups", id, "students"] })
-      setRemoving(null)
+      const res = await removeStudentAction(id, studentId)
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["teacher", "groups", id, "students"] })
+        setDeleteTarget(null)
+      } else {
+        setRemoveErr(res.error ?? "حدث خطأ أثناء الحذف")
+      }
     })
   }
+
+  console.log("students" , students);
+  
 
   return (
     <div className="flex flex-col">
@@ -493,20 +500,28 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
                 <p className="text-3xl mb-2">👤</p>
                 <p className="text-sm text-muted-foreground">لا يوجد طلاب في هذه المجموعة بعد</p>
               </div>
-            ) : students.map((m: ApiGroupMembership, i: number) => {
-              const name  = (m.student as { name?: string }  | undefined)?.name  ?? m.studentId
-              const email = (m.student as { email?: string } | undefined)?.email ?? ""
+            ) : students.map((s: GroupStudent, i: number) => {
+              const sid    = resolveId(s)
+              const name   = s.name ?? "طالب"
+              const email  = s.email ?? ""
+              const avatar = name.length > 0 ? name[0] : "؟"
               return (
-                <div key={m.studentId} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-                  <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{name[0]}</span>
+                <div key={sid} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+                  <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                    {avatar}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{name}</p>
                     <p className="truncate text-xs text-muted-foreground">{email}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">#{i+1}</span>
-                  <button disabled={removing === m.studentId || isPending}
-                    onClick={() => handleRemove(resolveId(m), m.studentId)}
-                    className="text-xs text-rose-500 hover:text-rose-600 transition-colors disabled:opacity-40 shrink-0">حذف</button>
+                  <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">#{i + 1}</span>
+                  <button
+                    onClick={() => { setRemoveErr(null); setDeleteTarget({ studentId: sid, name }) }}
+                    className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 transition-colors dark:border-rose-800 dark:hover:bg-rose-950/20 shrink-0"
+                    aria-label="حذف الطالب"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                 </div>
               )
             })}

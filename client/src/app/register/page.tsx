@@ -6,11 +6,14 @@ import Link from "next/link"
 
 async function getGroups() {
   try {
-    const res = await serverFetch<PaginatedResponse<ApiGroup>>(
+    const raw = await serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>(
       "/api/groups?limit=100",
       { token: "", revalidate: 300 }
     )
-    return res.data
+    // Handle both shapes: PaginatedResponse OR plain array
+    if (Array.isArray(raw)) return raw
+    if (raw && "data" in raw && Array.isArray(raw.data)) return raw.data
+    return []
   } catch {
     return []
   }
@@ -43,11 +46,11 @@ export default async function RegisterPage() {
 
             <div className="mt-5">
               <RegisterStudentForm
-            groups={groups.map(g => ({
-              id:   (g._id ?? g.id ?? ""),
-              name: g.name,
-            }))}
-          />
+                groups={groups.map(g => ({
+                  id:   g._id ?? g.id ?? "",
+                  name: g.name,
+                }))}
+              />
             </div>
           </div>
 

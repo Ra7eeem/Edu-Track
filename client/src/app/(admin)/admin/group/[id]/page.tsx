@@ -190,13 +190,13 @@ export default function AdminGroupDetailPage({
                   <div className="py-12 text-center text-sm text-muted-foreground">لا يوجد طلاب مسجّلون بعد</div>
                 )}
                 {studentsList.map((m: ApiGroupMembership, i: number) => {
-                  const uid   = resolveId(m.student) || m.studentId
-                  const name  = (m.student as { name?: string } | undefined)?.name  ?? m.studentId
-                  const email = (m.student as { email?: string } | undefined)?.email ?? ""
+                  const uid   = resolveId(m as unknown as { _id?: string; id?: string })
+                  const name  = (m as unknown as { name?: string }).name  ?? "طالب"
+                  const email = (m as unknown as { email?: string }).email ?? ""
                   return (
                     <div key={uid || i} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3">
                       <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
-                        {name[0] ?? "؟"}
+                        {name.slice(0, 1)}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{name}</p>

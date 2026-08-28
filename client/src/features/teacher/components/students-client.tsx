@@ -5,8 +5,9 @@ import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { addStudentAction } from "@/features/teacher/actions/student.action"
 import { removeStudentAction } from "@/features/teacher/actions/student.action"
-import { useGroupStudents } from "@/features/teacher/hooks/use-group-students"
-import { Grade, GRADE_LABELS, ApiGroupMembership } from "@/shared/types/api"
+import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
+import { Grade, GRADE_LABELS } from "@/shared/types/api"
+import { resolveId } from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle2, ChevronDown, Search, UserPlus, X } from "lucide-react"
 import { useActionState, useState, useTransition } from "react"
@@ -24,7 +25,7 @@ type AddFormValues = z.infer<typeof addSchema>
 
 interface Props {
   groupId:         string
-  initialStudents: ApiGroupMembership[]
+  initialStudents: GroupStudent[]
 }
 
 export function StudentsClient({ groupId, initialStudents }: Props) {
@@ -36,8 +37,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
 
   // Prefer live data from React Query, fall back to SSR data
   const { data } = useGroupStudents(groupId, search)
-  // hook now returns ApiGroupMembership[] directly (not PaginatedResponse)
-  const students: ApiGroupMembership[] = data ?? initialStudents
+  const students: GroupStudent[] = data ?? initialStudents
 
   const [state, formAction] = useActionState(addStudentAction, {})
 
@@ -103,12 +103,14 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
 
       {/* List */}
       <div className="space-y-2">
-        {students.map((m: ApiGroupMembership, i: number) => {
-          const name = (m.student as { name?: string } | undefined)?.name ?? m.studentId
-          const avatar = name[0] ?? "؟"
+        {students.map((s: GroupStudent, i: number) => {
+          const sid    = resolveId(s)
+          const name   = s.name ?? "طالب"
+          const email  = s.email ?? ""
+          const avatar = name.length > 0 ? name[0] : "؟"
           return (
             <div
-              key={m.id}
+              key={sid || i}
               className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm"
             >
               <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
@@ -116,13 +118,11 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {(m.student as { email?: string } | undefined)?.email ?? ""}
-                </p>
+                <p className="truncate text-xs text-muted-foreground">{email}</p>
               </div>
               <button
-                disabled={removing === m.studentId || isPending}
-                onClick={() => handleRemove(m.studentId)}
+                disabled={removing === sid || isPending}
+                onClick={() => handleRemove(sid)}
                 className="text-xs text-rose-500 hover:text-rose-600 transition-colors disabled:opacity-40"
               >
                 حذف
