@@ -1,9 +1,15 @@
 import { Grade } from "../types";
 
 export const GRADE_LABELS: Record<Grade, string> = {
-  [Grade.GRADE_7]: "الصف الأول الإعدادي",
-  [Grade.GRADE_8]: "الصف الثاني الإعدادي",
-  [Grade.GRADE_9]: "الصف الثالث الإعدادي",
+  [Grade.GRADE_1]:  "الصف الأول الابتدائي",
+  [Grade.GRADE_2]:  "الصف الثاني الابتدائي",
+  [Grade.GRADE_3]:  "الصف الثالث الابتدائي",
+  [Grade.GRADE_4]:  "الصف الرابع الابتدائي",
+  [Grade.GRADE_5]:  "الصف الخامس الابتدائي",
+  [Grade.GRADE_6]:  "الصف السادس الابتدائي",
+  [Grade.GRADE_7]:  "الصف الأول الإعدادي",
+  [Grade.GRADE_8]:  "الصف الثاني الإعدادي",
+  [Grade.GRADE_9]:  "الصف الثالث الإعدادي",
   [Grade.GRADE_10]: "الصف الأول الثانوي",
   [Grade.GRADE_11]: "الصف الثاني الثانوي",
   [Grade.GRADE_12]: "الصف الثالث الثانوي",

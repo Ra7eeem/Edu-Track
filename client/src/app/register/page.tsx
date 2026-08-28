@@ -49,7 +49,7 @@ export default async function RegisterPage() {
                 groups={groups.map(g => ({
                   id:     g._id ?? g.id ?? "",
                   name:   g.name,
-                  grades: (g as { grades?: string[] }).grades ?? [],
+                  grades: g.grades ?? [],
                 }))}
               />
             </div>

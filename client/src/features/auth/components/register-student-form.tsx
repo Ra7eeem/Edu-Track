@@ -34,7 +34,9 @@ export function RegisterStudentForm({ groups }: Props) {
   // Only show groups that target this grade (or have no grade restrictions)
   const filteredGroups = selectedGrade
     ? groups.filter(g =>
-        !g.grades || g.grades.length === 0 || g.grades.includes(selectedGrade)
+        !g.grades ||
+        g.grades.length === 0 ||
+        g.grades.includes(selectedGrade as string)
       )
     : []
 
