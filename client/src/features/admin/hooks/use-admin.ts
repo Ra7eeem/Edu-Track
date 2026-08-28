@@ -94,7 +94,7 @@ export function useToggleTeacherStatus() {
 export function useCreateGroup() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { name: string; description?: string; teacherIds?: string[] }) =>
+    mutationFn: (body: { name: string; description?: string; grades?: string[]; teacherIds?: string[] }) =>
       clientFetch<ApiGroup>("/api/admin/groups", {
         method: "POST",
         data:   body,
