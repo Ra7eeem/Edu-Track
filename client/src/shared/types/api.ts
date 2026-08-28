@@ -33,6 +33,7 @@ export enum JoinRequestStatus {
 export enum AttendanceStatus {
   PRESENT = "PRESENT",
   ABSENT  = "ABSENT",
+  LATE    = "LATE",
 }
 
 export enum NotificationType {
@@ -151,7 +152,9 @@ export interface ApiRankingEntry {
   rank:         number
   score:        number
   presentCount: number
+  lateCount:    number
   absentCount:  number
+  bonusPoints:  number
   student:      Pick<ApiUser, "id" | "_id" | "name" | "email" | "avatarUrl" | "grade">
 }
 
@@ -196,7 +199,60 @@ export interface ApiNotification {
   createdAt: string
 }
 
-// ─── API Response wrappers ────────────────────────────────────────────────────
+// ─── Anonymous Messages ───────────────────────────────────────────────────────
+
+export interface ApiAnonymousMessage {
+  _id?:       string
+  id?:        string
+  groupId?:   string
+  group?:     Pick<ApiGroup, "id" | "_id" | "name"> | null
+  teacher?:   Pick<ApiUser,  "id" | "_id" | "name" | "avatarUrl"> | null
+  content:    string
+  reply:      string | null
+  repliedAt:  string | null
+  createdAt:  string
+}
+
+// ─── Assignments ──────────────────────────────────────────────────────────────
+
+export enum AssignmentType {
+  HOMEWORK = "HOMEWORK",
+  EXAM     = "EXAM",
+}
+
+export const ASSIGNMENT_TYPE_LABELS: Record<AssignmentType, string> = {
+  [AssignmentType.HOMEWORK]: "واجب",
+  [AssignmentType.EXAM]:     "امتحان",
+}
+
+export interface ApiChoice {
+  id:   string
+  text: string
+}
+
+export interface ApiQuestion {
+  _id?:          string
+  text:          string
+  choices:       ApiChoice[]
+  correctAnswer: string
+  points:        number
+}
+
+export interface ApiAssignment {
+  _id?:            string
+  id?:             string
+  groupId?:        string
+  type:            AssignmentType
+  title:           string
+  description:     string | null
+  youtubeUrl:      string | null
+  dueDate:         string | null
+  durationMinutes: number | null
+  questions:       ApiQuestion[]
+  author?:         Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl">
+  createdAt:       string
+  updatedAt:       string
+}
 
 export interface ApiSuccess<T> {
   success: true

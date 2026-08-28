@@ -14,7 +14,7 @@ import { createPostAction, deletePostAction, toggleLikeAction } from "@/features
 import { removeStudentAction } from "@/features/teacher/actions/student.action"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
-import { useTeacherGroups } from "@/features/teacher/hooks/use-teacher-groups"
+import { useTeacherGroups, useGroupDetails } from "@/features/teacher/hooks/use-teacher-groups"
 import {
   useJoinRequests,
   useApproveJoinRequest,
@@ -34,7 +34,7 @@ import {
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
-  CheckCircle2, Heart, MessageCircle, MoreVertical,
+  CheckCircle2, Clock, ClipboardList, Heart, MessageCircle, MoreVertical,
   PenLine, Plus, RotateCcw, Save, Search,
   Trash2, Trophy, Users, XCircle,
 } from "lucide-react"
@@ -43,12 +43,13 @@ import { use, useMemo, useState, useTransition } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 const TABS = [
-  { key: "overview",      label: "نظرة عامة",      icon: BarChart3     },
-  { key: "students",      label: "الطلاب",           icon: Users         },
-  { key: "attendance",    label: "الحضور",           icon: CalendarCheck },
-  { key: "posts",         label: "المنشورات",        icon: BookOpen      },
-  { key: "ranking",       label: "الترتيب",          icon: Trophy        },
-  { key: "join-requests", label: "طلبات الانضمام",   icon: Bell          },
+  { key: "overview",      label: "نظرة عامة",        icon: BarChart3     },
+  { key: "students",      label: "الطلاب",             icon: Users         },
+  { key: "attendance",    label: "الحضور",             icon: CalendarCheck },
+  { key: "posts",         label: "المنشورات",          icon: BookOpen      },
+  { key: "ranking",       label: "الترتيب",            icon: Trophy        },
+  { key: "join-requests", label: "طلبات الانضمام",     icon: Bell          },
+  { key: "assignments",   label: "الواجبات",           icon: ClipboardList },
 ]
 
 const MEDALS = ["🥇", "🥈", "🥉"]
@@ -513,10 +514,9 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
   const [isPending,    startTransition] = useTransition()
   const qc = useQueryClient()
 
-  // Fetch group info from teacher groups list (cached)
-  const { data: groupsData, isLoading: gLoading } = useTeacherGroups()
-  const groups = groupsData ?? []
-  const group  = groups.find((g: ApiGroup) => resolveId(g) === id)
+  // Fetch group details directly by ID (reliable, no list-search needed)
+  const { data: groupDetails, isLoading: gLoading } = useGroupDetails(id)
+  const group = groupDetails?.group ?? null
 
   // Students
   const { data: studentsData, isLoading: sLoading } = useGroupStudents(id, search)
@@ -693,6 +693,24 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
 
         {/* ── Join Requests ── */}
         {tab === "join-requests" && <JoinRequestsTab groupId={id}/>}
+
+        {/* ── Assignments ── */}
+        {tab === "assignments" && (
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <p className="text-4xl">📚</p>
+            <p className="font-medium">إدارة الواجبات والامتحانات</p>
+            <p className="text-sm text-muted-foreground">
+              أضف واجبات وامتحانات مع وصف ورابط يوتيوب وتاريخ تسليم
+            </p>
+            <Link
+              href={`/teacher/group/${id}/assignments`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+            >
+              <ClipboardList className="size-4" />
+              فتح صفحة الواجبات
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

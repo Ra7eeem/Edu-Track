@@ -31,10 +31,25 @@ export function useTeacherGroups() {
 export function useGroupDetails(groupId: string) {
   return useQuery({
     queryKey: ["groups", groupId],
-    queryFn:  () =>
-      clientFetch<{ group: ApiGroup; teachers: unknown[]; studentsCount: number }>(
-        `/api/groups/${groupId}`
-      ),
+    queryFn:  async () => {
+      const raw = await clientFetch<Record<string, unknown>>(`/api/groups/${groupId}`)
+      // Backend returns the group fields merged with teachers+membersCount
+      // Normalise to { group, teachers, studentsCount }
+      if (raw && typeof raw === "object") {
+        if ("group" in raw) {
+          // Already wrapped
+          return raw as unknown as { group: ApiGroup; teachers: unknown[]; studentsCount: number }
+        }
+        // Flat shape — extract teachers+membersCount out
+        const { teachers, membersCount, ...groupFields } = raw as Record<string, unknown>
+        return {
+          group:         groupFields as unknown as ApiGroup,
+          teachers:      (teachers as unknown[]) ?? [],
+          studentsCount: (membersCount as number) ?? 0,
+        }
+      }
+      return { group: raw as unknown as ApiGroup, teachers: [], studentsCount: 0 }
+    },
     enabled: !!groupId,
   })
 }

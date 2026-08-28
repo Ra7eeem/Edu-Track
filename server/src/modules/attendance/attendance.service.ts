@@ -103,15 +103,17 @@ async function recalculateMonthlyScores(
   // Aggregate per student
   const stats = new Map<
     string,
-    { presentCount: number; absentCount: number }
+    { presentCount: number; lateCount: number; absentCount: number }
   >();
 
   for (const session of sessions) {
     for (const rec of session.records) {
       const sid = String(rec.student);
-      const existing = stats.get(sid) ?? { presentCount: 0, absentCount: 0 };
+      const existing = stats.get(sid) ?? { presentCount: 0, lateCount: 0, absentCount: 0 };
       if (rec.status === AttendanceStatus.PRESENT) {
         existing.presentCount++;
+      } else if (rec.status === AttendanceStatus.LATE) {
+        existing.lateCount++;
       } else {
         existing.absentCount++;
       }
@@ -119,20 +121,28 @@ async function recalculateMonthlyScores(
     }
   }
 
-  // Upsert monthly scores
-  const ops = Array.from(stats.entries()).map(([studentId, s]) =>
-    MonthlyScore.findOneAndUpdate(
+  // Upsert monthly scores — preserve existing bonusPoints
+  const ops = Array.from(stats.entries()).map(([studentId, s]) => {
+    const attendanceScore =
+      s.presentCount * ATTENDANCE_SCORE.PRESENT +
+      s.lateCount    * ATTENDANCE_SCORE.LATE    +
+      s.absentCount  * ATTENDANCE_SCORE.ABSENT;
+    return MonthlyScore.findOneAndUpdate(
       { student: studentId, group: groupId, month, year },
-      {
-        $set: {
-          score: s.presentCount * ATTENDANCE_SCORE.PRESENT,
-          presentCount: s.presentCount,
-          absentCount: s.absentCount,
+      [
+        {
+          $set: {
+            presentCount: s.presentCount,
+            lateCount:    s.lateCount,
+            absentCount:  s.absentCount,
+            // score = attendance score + existing bonusPoints
+            score: { $add: [attendanceScore, { $ifNull: ["$bonusPoints", 0] }] },
+          },
         },
-      },
+      ],
       { upsert: true, new: true }
-    )
-  );
+    );
+  });
 
   await Promise.all(ops);
 }

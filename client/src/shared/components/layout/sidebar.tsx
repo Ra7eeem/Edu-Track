@@ -6,9 +6,11 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  ClipboardList,
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   Settings,
   Trophy,
   UserCheck,
@@ -26,19 +28,22 @@ interface NavItem {
 }
 
 const teacherNav: NavItem[] = [
-  { label: "الرئيسية",         href: "/teacher/dashboard",     icon: LayoutDashboard },
-  { label: "مجموعاتي",         href: "/teacher/groups",         icon: BookOpen        },
-  { label: "طلبات الانضمام",   href: "/teacher/join-requests",  icon: UserCheck       },
-  { label: "الإشعارات",        href: "/teacher/notifications",  icon: Bell            },
-  { label: "الحساب",           href: "/teacher/profile",        icon: Settings        },
+  { label: "الرئيسية",         href: "/teacher/dashboard",    icon: LayoutDashboard },
+  { label: "مجموعاتي",         href: "/teacher/groups",        icon: BookOpen        },
+  { label: "طلبات الانضمام",   href: "/teacher/join-requests", icon: UserCheck       },
+  { label: "الرسائل المجهولة", href: "/teacher/messages",      icon: MessageCircle   },
+  { label: "الإشعارات",        href: "/teacher/notifications", icon: Bell            },
+  { label: "الحساب",           href: "/teacher/profile",       icon: Settings        },
 ]
 
 const studentNav: NavItem[] = [
-  { label: "الرئيسية",   href: "/student/dashboard",    icon: LayoutDashboard },
-  { label: "مجموعتي",   href: "/student/group",         icon: BookOpen        },
-  { label: "الترتيب",   href: "/student/ranking",       icon: Trophy          },
-  { label: "الإشعارات", href: "/student/notifications", icon: Bell            },
-  { label: "الحساب",    href: "/student/profile",       icon: Settings        },
+  { label: "الرئيسية",         href: "/student/dashboard",    icon: LayoutDashboard },
+  { label: "مجموعتي",          href: "/student/group",         icon: BookOpen        },
+  { label: "الواجبات",         href: "/student/assignments",   icon: ClipboardList   },
+  { label: "الترتيب",          href: "/student/ranking",       icon: Trophy          },
+  { label: "الرسائل المجهولة", href: "/student/messages",      icon: MessageCircle   },
+  { label: "الإشعارات",        href: "/student/notifications", icon: Bell            },
+  { label: "الحساب",           href: "/student/profile",       icon: Settings        },
 ]
 
 const adminNav: NavItem[] = [

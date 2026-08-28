@@ -27,7 +27,8 @@ export enum JoinRequestStatus {
 
 export enum AttendanceStatus {
   PRESENT = "PRESENT",
-  ABSENT = "ABSENT",
+  ABSENT  = "ABSENT",
+  LATE    = "LATE",
 }
 
 export enum NotificationType {

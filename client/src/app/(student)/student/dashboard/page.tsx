@@ -1,7 +1,6 @@
 import { TopBar } from "@/shared/components/layout/topbar"
-import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
-import { serverFetch } from "@/shared/lib/api-server"
+import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
 import { getSessionData } from "@/shared/lib/session"
 import {
   ApiGroup,
@@ -12,6 +11,7 @@ import {
 } from "@/shared/types/api"
 import { ArrowLeft, CalendarCheck, Heart, MessageCircle, Trophy, XCircle } from "lucide-react"
 import Link from "next/link"
+import { resolveId } from "@/shared/types/api"
 
 interface RankEntry {
   rank: number; score: number
@@ -24,13 +24,13 @@ export default async function StudentDashboard() {
 
   const [profileRes, groupsRes, notifsRes] = await Promise.allSettled([
     serverFetch<ApiUser>("/api/students/me"),
-    serverFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups"),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=5"),
+    serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>("/api/students/me/groups"),
+    serverFetch<PaginatedResponse<ApiNotification> | ApiNotification[]>("/api/notifications?limit=5"),
   ])
 
-  const profile = profileRes.status === "fulfilled" ? profileRes.value : null
-  const groups  = groupsRes.status  === "fulfilled" ? groupsRes.value.data : []
-  const notifs  = notifsRes.status  === "fulfilled" ? notifsRes.value.data : []
+  const profile = resolveOne(profileRes as PromiseSettledResult<ApiUser | null>, null)
+  const groups  = resolveList(groupsRes  as PromiseSettledResult<PaginatedResponse<ApiGroup>       | ApiGroup[]       | null>)
+  const notifs  = resolveList(notifsRes  as PromiseSettledResult<PaginatedResponse<ApiNotification>| ApiNotification[] | null>)
   const unread  = notifs.filter((n) => !n.isRead).length
 
   const firstGroup = groups[0] ?? null
@@ -40,15 +40,18 @@ export default async function StudentDashboard() {
   let rankData: RankEntry | null = null
 
   if (firstGroup) {
+    const gid = firstGroup._id ?? firstGroup.id ?? ""
     const [postsRes, rankRes] = await Promise.allSettled([
-      serverFetch<PaginatedResponse<ApiPost>>(
-        `/api/groups/${firstGroup.id}/posts?limit=3`
+      serverFetch<PaginatedResponse<ApiPost> | ApiPost[]>(
+        `/api/groups/${gid}/posts?limit=3`
       ),
       serverFetch<RankEntry>(
-        `/api/groups/${firstGroup.id}/ranking/students/me?month=${now.getMonth() + 1}&year=${now.getFullYear()}`
+        `/api/groups/${gid}/ranking/students/me?month=${now.getMonth() + 1}&year=${now.getFullYear()}`
       ),
     ])
-    if (postsRes.status === "fulfilled") posts = postsRes.value.data
+    if (postsRes.status === "fulfilled") {
+      posts = resolveList(postsRes as PromiseSettledResult<PaginatedResponse<ApiPost> | ApiPost[] | null>)
+    }
     if (rankRes.status  === "fulfilled") rankData = rankRes.value
   }
 
@@ -136,10 +139,11 @@ export default async function StudentDashboard() {
             </div>
             <div className="space-y-3">
               {posts.map((p) => {
+                const pid    = resolveId(p)
                 const author = (p.author as { name?: string } | undefined)
                 return (
                   <article
-                    key={p.id}
+                    key={pid || p.createdAt}
                     className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
                   >
                     <div className="flex items-center gap-2.5 mb-2">

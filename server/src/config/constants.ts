@@ -10,8 +10,9 @@ export const GRADE_LABELS: Record<Grade, string> = {
 };
 
 export const ATTENDANCE_SCORE = {
-  PRESENT: 1,
-  ABSENT: 0,
+  PRESENT: 2,
+  LATE:    1,
+  ABSENT:  0,
 } as const;
 
 export const DEFAULT_PAGE = 1;

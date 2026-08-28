@@ -8,11 +8,13 @@ export interface IMonthlyScore extends Document {
   _id: mongoose.Types.ObjectId;
   student: mongoose.Types.ObjectId;
   group: mongoose.Types.ObjectId;
-  month: number;       // 1–12
+  month: number;
   year: number;
-  score: number;       // +1 per PRESENT
+  score: number;       // PRESENT=2, LATE=1, ABSENT=0 + bonus
   presentCount: number;
+  lateCount: number;
   absentCount: number;
+  bonusPoints: number; // extra points added manually by teacher
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,7 +55,17 @@ const monthlyScoreSchema = new Schema<IMonthlyScore>(
       default: 0,
       min: 0,
     },
+    lateCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     absentCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    bonusPoints: {
       type: Number,
       default: 0,
       min: 0,

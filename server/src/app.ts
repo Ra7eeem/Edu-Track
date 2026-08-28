@@ -16,6 +16,8 @@ import { teacherRouter } from "./modules/teachers/teacher.routes";
 import { groupRouter } from "./modules/groups/group.routes";
 import { studentRouter } from "./modules/students/student.routes";
 import { notificationRouter } from "./modules/notifications/notification.routes";
+import { anonymousRouter } from "./modules/anonymous/anonymous.routes";
+import { assignmentRouter } from "./modules/assignments/assignment.routes";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
@@ -102,12 +104,14 @@ app.use((_req, _res, next) => {
 app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
 
 // ── API routes ────────────────────────────
-app.use("/api/auth", authRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/teacher", teacherRouter);
-app.use("/api/groups", groupRouter);
-app.use("/api/students", studentRouter);
+app.use("/api/auth",          authRouter);
+app.use("/api/admin",         adminRouter);
+app.use("/api/teacher",       teacherRouter);
+app.use("/api/groups",        groupRouter);
+app.use("/api/students",      studentRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/anonymous",     anonymousRouter);
+app.use("/api/assignments",   assignmentRouter);
 
 // ── 404 ───────────────────────────────────
 app.use(notFoundHandler);
