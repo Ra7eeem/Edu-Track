@@ -19,16 +19,25 @@ export async function listGroups(req: Request) {
   const grade  = req.query.grade as string | undefined;
 
   const filter: mongoose.FilterQuery<typeof Group> = { isActive: true };
-  if (search) filter.$or = [
-    { name:        { $regex: search, $options: "i" } },
-    { description: { $regex: search, $options: "i" } },
-  ];
-  // Filter by grade: return groups that either have no grade restrictions
-  // OR explicitly include the requested grade
-  if (grade) {
+
+  if (search) {
     filter.$or = [
-      { grades: { $size: 0 } },   // open to all
-      { grades: grade },           // includes this grade
+      { name:        { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (grade) {
+    // Return groups that have no grade restriction OR include this grade
+    filter.$and = [
+      {
+        $or: [
+          { grades: { $exists: false } },   // field not set at all
+          { grades: null },                  // field is null
+          { grades: { $size: 0 } },          // empty array = open to all
+          { grades: { $elemMatch: { $eq: grade } } }, // array contains this grade
+        ],
+      },
     ];
   }
 

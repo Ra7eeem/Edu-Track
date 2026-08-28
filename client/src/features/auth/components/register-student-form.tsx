@@ -4,25 +4,27 @@ import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { registerStudentAction } from "@/features/auth/actions/register.action"
+import { fetchGroupsByGradeAction, PublicGroup } from "@/features/auth/actions/groups.action"
 import { registerStudentSchema, RegisterStudentFormValues } from "@/features/auth/schemas/register.schema"
-import { Grade, GRADE_LABELS } from "@/shared/types/api"
+import { GRADE_LABELS } from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ChevronDown, Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react"
-import { useActionState, useState, useTransition } from "react"
+import { ChevronDown, Eye, EyeOff, Lock, Loader2, Mail, Phone, User } from "lucide-react"
+import { useActionState, useState, useTransition, useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 
-interface Group { id: string; name: string; grades?: string[] }
-interface Props  { groups: Group[] }
-
-export function RegisterStudentForm({ groups }: Props) {
+export function RegisterStudentForm() {
   const [showPassword, setShowPassword] = useState(false)
-  const [state, formAction] = useActionState(registerStudentAction, {})
-  const [isPending, startTransition] = useTransition()
+  const [state, formAction]             = useActionState(registerStudentAction, {})
+  const [isPending, startTransition]    = useTransition()
+
+  const [groups,        setGroups]        = useState<PublicGroup[]>([])
+  const [groupsLoading, setGroupsLoading] = useState(false)
 
   const {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<RegisterStudentFormValues>({
     resolver: zodResolver(registerStudentSchema),
@@ -31,14 +33,18 @@ export function RegisterStudentForm({ groups }: Props) {
 
   const selectedGrade = watch("grade")
 
-  // Only show groups that target this grade (or have no grade restrictions)
-  const filteredGroups = selectedGrade
-    ? groups.filter(g =>
-        !g.grades ||
-        g.grades.length === 0 ||
-        g.grades.includes(selectedGrade as string)
-      )
-    : []
+  useEffect(() => {
+    if (!selectedGrade) { setGroups([]); return }
+    setValue("groupId", "")
+    setGroupsLoading(true)
+    fetchGroupsByGradeAction(selectedGrade).then(data => {
+      console.log(selectedGrade);
+      console.log(data);
+      
+      setGroups(data)
+      setGroupsLoading(false)
+    })
+  }, [selectedGrade, setValue])
 
   const onSubmit = (values: RegisterStudentFormValues) => {
     const fd = new FormData()
@@ -68,7 +74,6 @@ export function RegisterStudentForm({ groups }: Props) {
             startIcon={<User />}
             error={!!fieldErr("name")}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              // Block any key that produces a non-Arabic, non-space character
               const ch = e.key
               if (ch.length === 1 && !/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s]/.test(ch)) {
                 e.preventDefault()
@@ -84,7 +89,8 @@ export function RegisterStudentForm({ groups }: Props) {
       <div className="space-y-1.5">
         <Label htmlFor="st-email">البريد الإلكتروني</Label>
         <Controller name="email" control={control} render={({ field }) => (
-          <Input {...field} id="st-email" type="email" placeholder="you@example.com" startIcon={<Mail />} error={!!fieldErr("email")} />
+          <Input {...field} id="st-email" type="email" placeholder="you@example.com"
+            startIcon={<Mail />} error={!!fieldErr("email")} />
         )} />
         {fieldErr("email") && <p className="text-xs text-destructive">{fieldErr("email")}</p>}
       </div>
@@ -93,12 +99,13 @@ export function RegisterStudentForm({ groups }: Props) {
       <div className="space-y-1.5">
         <Label htmlFor="phone">رقم الهاتف</Label>
         <Controller name="phone" control={control} render={({ field }) => (
-          <Input {...field} id="phone" type="tel" placeholder="01012345678" startIcon={<Phone />} error={!!fieldErr("phone")} />
+          <Input {...field} id="phone" type="tel" placeholder="01012345678"
+            startIcon={<Phone />} error={!!fieldErr("phone")} />
         )} />
         {fieldErr("phone") && <p className="text-xs text-destructive">{fieldErr("phone")}</p>}
       </div>
 
-      {/* Grade — must be chosen first */}
+      {/* Grade — must pick first */}
       <div className="space-y-1.5">
         <Label htmlFor="grade">الصف الدراسي</Label>
         <Controller name="grade" control={control} render={({ field }) => (
@@ -116,13 +123,22 @@ export function RegisterStudentForm({ groups }: Props) {
         {fieldErr("grade") && <p className="text-xs text-destructive">{fieldErr("grade")}</p>}
       </div>
 
-      {/* Group — only shown after grade is selected */}
-      {selectedGrade ? (
+      {/* Group — shown after grade selected */}
+      {!selectedGrade ? (
+        <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          اختر صفك الدراسي أولاً لتظهر المجموعات المتاحة لك
+        </div>
+      ) : groupsLoading ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+          جارٍ تحميل المجموعات...
+        </div>
+      ) : (
         <div className="space-y-1.5">
           <Label htmlFor="groupId">اختر مجموعتك</Label>
-          {filteredGroups.length === 0 ? (
+          {groups.length === 0 ? (
             <div className="rounded-2xl border border-amber-200/60 bg-amber-50/50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-400">
-              لا توجد مجموعات متاحة لهذا الصف حالياً
+              لا توجد مجموعات متاحة لهذا الصف حالياً — تواصل مع المدرسة
             </div>
           ) : (
             <Controller name="groupId" control={control} render={({ field }) => (
@@ -130,8 +146,8 @@ export function RegisterStudentForm({ groups }: Props) {
                 <select {...field} id="groupId"
                   className="flex h-11 w-full appearance-none rounded-2xl border border-input bg-background px-3.5 pe-10 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all">
                   <option value="">-- اختر مجموعتك --</option>
-                  {filteredGroups.map(g => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
+                  {groups.map(g => (
+                    <option key={g._id} value={g._id}>{g.name}</option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -140,18 +156,17 @@ export function RegisterStudentForm({ groups }: Props) {
           )}
           {fieldErr("groupId") && <p className="text-xs text-destructive">{fieldErr("groupId")}</p>}
         </div>
-      ) : (
-        <div className="rounded-2xl border border-border/40 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          اختر صفك الدراسي أولاً لتظهر المجموعات المتاحة لك
-        </div>
       )}
 
       {/* Password */}
       <div className="space-y-1.5">
         <Label htmlFor="st-password">كلمة المرور</Label>
         <Controller name="password" control={control} render={({ field }) => (
-          <Input {...field} id="st-password" type={showPassword ? "text" : "password"}
-            placeholder="٨ أحرف على الأقل" startIcon={<Lock />} error={!!fieldErr("password")}
+          <Input {...field} id="st-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="٨ أحرف على الأقل"
+            startIcon={<Lock />}
+            error={!!fieldErr("password")}
             endIcon={
               <button type="button" onClick={() => setShowPassword(v => !v)}
                 className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors">

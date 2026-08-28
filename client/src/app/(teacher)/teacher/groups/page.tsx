@@ -188,6 +188,16 @@ export default function TeacherGroupsPage() {
                     {g.description && (
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{g.description}</p>
                     )}
+                    {/* Grades badges */}
+                    {(g.grades ?? []).length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {g.grades.map(gr => (
+                          <span key={gr} className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                            {GRADE_LABELS[gr as Grade]}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <div className="mt-3 text-xs text-muted-foreground">
                       <span>آخر تحديث: {new Date(g.updatedAt).toLocaleDateString("ar-EG")}</span>
                     </div>

@@ -1,27 +1,9 @@
 import { RegisterStudentForm } from "@/features/auth/components/register-student-form"
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiGroup, PaginatedResponse } from "@/shared/types/api"
 import { GraduationCap } from "lucide-react"
 import Link from "next/link"
 
-async function getGroups() {
-  try {
-    const raw = await serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>(
-      "/api/groups?limit=100",
-      { token: "", revalidate: 300 }
-    )
-    // Handle both shapes: PaginatedResponse OR plain array
-    if (Array.isArray(raw)) return raw
-    if (raw && "data" in raw && Array.isArray(raw.data)) return raw.data
-    return []
-  } catch {
-    return []
-  }
-}
-
-export default async function RegisterPage() {
-  const groups = await getGroups()
-
+// No SSR group fetching — the form fetches groups live after grade is selected
+export default function RegisterPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
@@ -45,13 +27,7 @@ export default async function RegisterPage() {
             <p className="mt-1 text-sm text-muted-foreground">انضم لمجموعتك وابدأ رحلتك التعليمية</p>
 
             <div className="mt-5">
-              <RegisterStudentForm
-                groups={groups.map(g => ({
-                  id:     g._id ?? g.id ?? "",
-                  name:   g.name,
-                  grades: g.grades ?? [],
-                }))}
-              />
+              <RegisterStudentForm />
             </div>
           </div>
 
