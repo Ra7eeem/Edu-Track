@@ -44,7 +44,7 @@ export default function AdminGroupsPage() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((g, i) => (
-            <div key={g.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all">
+            <div key={g._id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all">
               <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
               <div className="p-4">
                 <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
@@ -54,7 +54,7 @@ export default function AdminGroupsPage() {
                 <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
                   <span>{new Date(g.createdAt).toLocaleDateString("ar-EG")}</span>
                   <Button size="sm" variant="outline" className="h-6 text-[10px]" asChild>
-                    <Link href={`/admin/group/${g.id}`}>تفاصيل</Link>
+                    <Link href={`/admin/group/${g._id}`}>تفاصيل</Link>
                   </Button>
                 </div>
               </div>

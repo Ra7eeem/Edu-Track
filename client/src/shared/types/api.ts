@@ -44,10 +44,23 @@ export enum NotificationType {
   ADDED_TO_GROUP        = "ADDED_TO_GROUP",
 }
 
+// ─── Helper: resolve id from MongoDB _id or id ───────────────────────────────
+// MongoDB returns _id, Prisma/normalized returns id.
+// Use this everywhere instead of directly accessing .id
+export function resolveId(entity: { id?: string; _id?: string } | null | undefined): string {
+  if (!entity) return ""
+  return entity._id ?? entity.id ?? ""
+}
+
+export function resolveName(entity: { name?: string } | null | undefined): string {
+  return entity?.name ?? ""
+}
+
 // ─── Core Entities ────────────────────────────────────────────────────────────
 
 export interface ApiUser {
-  id:        string
+  _id?:      string   // MongoDB
+  id?:       string   // normalized
   name:      string
   email:     string
   role:      Role
@@ -60,41 +73,45 @@ export interface ApiUser {
 }
 
 export interface ApiGroup {
-  id:          string
+  _id?:        string   // MongoDB
+  id?:         string   // normalized
   name:        string
   description: string | null
   imageUrl:    string | null
   isActive:    boolean
   createdById: string
-  createdBy?:  Pick<ApiUser, "id" | "name" | "email">
+  createdBy?:  Pick<ApiUser, "id" | "_id" | "name" | "email">
   createdAt:   string
   updatedAt:   string
 }
 
 export interface ApiGroupTeacher {
-  id:         string
+  _id?:       string
+  id?:        string
   groupId:    string
   teacherId:  string
-  teacher?:   Pick<ApiUser, "id" | "name" | "email" | "avatarUrl">
+  teacher?:   Pick<ApiUser, "id" | "_id" | "name" | "email" | "avatarUrl">
   assignedAt: string
 }
 
 export interface ApiGroupMembership {
-  id:        string
+  _id?:      string
+  id?:       string
   studentId: string
   groupId:   string
-  student?:  Pick<ApiUser, "id" | "name" | "email" | "avatarUrl" | "grade">
+  student?:  Pick<ApiUser, "id" | "_id" | "name" | "email" | "avatarUrl" | "grade">
   isActive:  boolean
   joinedAt:  string
 }
 
 export interface ApiJoinRequest {
-  id:          string
+  _id?:        string
+  id?:         string
   studentId:   string
   groupId:     string
   status:      JoinRequestStatus
-  student?:    Pick<ApiUser, "id" | "name" | "email" | "avatarUrl" | "grade">
-  group?:      Pick<ApiGroup, "id" | "name">
+  student?:    Pick<ApiUser, "id" | "_id" | "name" | "email" | "avatarUrl" | "grade">
+  group?:      Pick<ApiGroup, "id" | "_id" | "name">
   reviewedAt:  string | null
   reviewedBy:  string | null
   createdAt:   string
@@ -104,28 +121,30 @@ export interface ApiJoinRequest {
 export interface ApiAttendanceRecord {
   studentId: string
   status:    AttendanceStatus
-  student?:  Pick<ApiUser, "id" | "name" | "avatarUrl">
+  student?:  Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl">
 }
 
 export interface ApiAttendanceSession {
-  id:        string
+  _id?:      string
+  id?:       string
   groupId:   string
-  date:      string        // "YYYY-MM-DD"
+  date:      string
   createdBy: string
   records:   ApiAttendanceRecord[]
   createdAt: string
 }
 
 export interface ApiMonthlyScore {
-  id:           string
+  _id?:         string
+  id?:          string
   studentId:    string
   groupId:      string
-  month:        number    // 1-12
+  month:        number
   year:         number
   score:        number
   presentCount: number
   absentCount:  number
-  student?:     Pick<ApiUser, "id" | "name" | "avatarUrl" | "grade">
+  student?:     Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl" | "grade">
 }
 
 export interface ApiRankingEntry {
@@ -133,16 +152,17 @@ export interface ApiRankingEntry {
   score:        number
   presentCount: number
   absentCount:  number
-  student:      Pick<ApiUser, "id" | "name" | "email" | "avatarUrl" | "grade">
+  student:      Pick<ApiUser, "id" | "_id" | "name" | "email" | "avatarUrl" | "grade">
 }
 
 export interface ApiPost {
-  id:           string
+  _id?:         string
+  id?:          string
   groupId:      string
   authorId:     string
   content:      string
   imageUrl:     string | null
-  author?:      Pick<ApiUser, "id" | "name" | "avatarUrl">
+  author?:      Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl">
   likeCount:    number
   commentCount: number
   isLiked:      boolean
@@ -151,12 +171,13 @@ export interface ApiPost {
 }
 
 export interface ApiComment {
-  id:              string
+  _id?:            string
+  id?:             string
   postId:          string
   authorId:        string
   content:         string
   parentCommentId: string | null
-  author?:         Pick<ApiUser, "id" | "name" | "avatarUrl">
+  author?:         Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl">
   replies?:        ApiComment[]
   replyCount:      number
   createdAt:       string
@@ -164,7 +185,8 @@ export interface ApiComment {
 }
 
 export interface ApiNotification {
-  id:        string
+  _id?:      string
+  id?:       string
   userId:    string
   type:      NotificationType
   title:     string
@@ -182,14 +204,14 @@ export interface ApiSuccess<T> {
   message?: string
 }
 
-export interface ApiError {
+export interface ApiErrorResponse {
   success: false
   message: string
   code?:   string
   errors?: Record<string, string[]>
 }
 
-export type ApiResponse<T> = ApiSuccess<T> | ApiError
+export type ApiResponse<T> = ApiSuccess<T> | ApiErrorResponse
 
 export interface PaginationMeta {
   page:       number
@@ -207,12 +229,12 @@ export interface PaginatedResponse<T> {
 
 export interface LoginResponse {
   token: string
-  user:  Pick<ApiUser, "id" | "name" | "email" | "role" | "avatarUrl" | "grade" | "phone">
+  user:  ApiUser
 }
 
 export interface RegisterStudentResponse {
   token: string
-  user:  Pick<ApiUser, "id" | "name" | "email" | "role" | "grade" | "phone">
+  user:  ApiUser
   joinRequest: {
     groupId:   string
     groupName: string
@@ -236,12 +258,12 @@ export interface AdminDashboardStats {
 // ─── Session (stored in iron-session cookie) ─────────────────────────────────
 
 export interface SessionData {
-  token:  string
-  userId: string
-  role:   Role
-  name:   string
-  email:  string
-  avatarUrl: string | null
-  grade:  Grade | null
+  token:      string
+  userId:     string
+  role:       Role
+  name:       string
+  email:      string
+  avatarUrl:  string | null
+  grade:      Grade | null
   isLoggedIn: boolean
 }

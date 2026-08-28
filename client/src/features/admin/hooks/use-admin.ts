@@ -72,7 +72,9 @@ export function useDeleteTeacher() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) =>
-      clientFetch<void>(`/api/admin/teachers/${id}`, { method: "DELETE" } as never),
+      clientFetch<void>(`/api/admin/teachers/${id}`, {
+        method: "DELETE",
+      } as never),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "teachers"] }),
   })
 }

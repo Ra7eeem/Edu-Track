@@ -52,10 +52,26 @@ export async function clientFetch<T>(
   path: string,
   config?: AxiosRequestConfig
 ): Promise<T> {
-  console.log(path)
-  const res = await apiClient.request<{ success: true; data: T }>({
+  const res = await apiClient.request<{ success: true; data: T } | T>({
     url: path,
     ...config,
   })
-  return res.data.data
+
+  // 204 No Content — nothing to return
+  if (res.status === 204 || res.data === undefined || res.data === null) {
+    return undefined as T
+  }
+
+  // Standard wrapper: { success: true, data: ... }
+  if (
+    typeof res.data === "object" &&
+    res.data !== null &&
+    "success" in (res.data as object) &&
+    "data" in (res.data as object)
+  ) {
+    return (res.data as { success: true; data: T }).data
+  }
+
+  // Plain response (array or object without wrapper)
+  return res.data as T
 }
