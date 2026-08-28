@@ -1,11 +1,11 @@
 "use client"
 
+import { logoutAction } from "@/features/auth/actions/logout.action"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   BarChart3,
   Bell,
   BookOpen,
-  CalendarCheck,
   GraduationCap,
   LayoutDashboard,
   LogOut,
@@ -20,52 +20,64 @@ export type SidebarVariant = "teacher" | "student" | "admin"
 
 interface NavItem {
   label: string
-  href: string
-  icon: React.ElementType
+  href:  string
+  icon:  React.ElementType
 }
 
 const teacherNav: NavItem[] = [
-  { label: "الرئيسية",    href: "/teacher/dashboard",      icon: LayoutDashboard },
-  { label: "مجموعاتي",   href: "/teacher/groups",          icon: BookOpen        },
-  { label: "الإشعارات",  href: "/teacher/notifications",   icon: Bell            },
-  { label: "الحساب",     href: "/teacher/profile",         icon: Settings        },
+  { label: "الرئيسية",   href: "/teacher/dashboard",    icon: LayoutDashboard },
+  { label: "مجموعاتي",  href: "/teacher/groups",        icon: BookOpen        },
+  { label: "الإشعارات", href: "/teacher/notifications", icon: Bell            },
+  { label: "الحساب",    href: "/teacher/profile",       icon: Settings        },
 ]
 
 const studentNav: NavItem[] = [
-  { label: "الرئيسية",    href: "/student/dashboard",     icon: LayoutDashboard },
-  { label: "مجموعتي",    href: "/student/group",          icon: BookOpen        },
-  { label: "الترتيب",    href: "/student/ranking",        icon: Trophy          },
-  { label: "الإشعارات",  href: "/student/notifications",  icon: Bell            },
-  { label: "الحساب",     href: "/student/profile",        icon: Settings        },
+  { label: "الرئيسية",   href: "/student/dashboard",    icon: LayoutDashboard },
+  { label: "مجموعتي",   href: "/student/group",         icon: BookOpen        },
+  { label: "الترتيب",   href: "/student/ranking",       icon: Trophy          },
+  { label: "الإشعارات", href: "/student/notifications", icon: Bell            },
+  { label: "الحساب",    href: "/student/profile",       icon: Settings        },
 ]
 
 const adminNav: NavItem[] = [
-  { label: "الرئيسية",    href: "/admin/dashboard",  icon: LayoutDashboard },
-  { label: "المدرسون",   href: "/admin/teachers",    icon: Users           },
-  { label: "المجموعات",  href: "/admin/groups",      icon: BookOpen        },
-  { label: "التقارير",   href: "/admin/reports",     icon: BarChart3       },
+  { label: "الرئيسية",   href: "/admin/dashboard", icon: LayoutDashboard },
+  { label: "المدرسون",  href: "/admin/teachers",   icon: Users           },
+  { label: "المجموعات", href: "/admin/groups",     icon: BookOpen        },
+  { label: "التقارير",  href: "/admin/reports",    icon: BarChart3       },
 ]
 
 const navMap: Record<SidebarVariant, NavItem[]> = {
   teacher: teacherNav,
   student: studentNav,
-  admin: adminNav,
+  admin:   adminNav,
 }
 
-const userMap = {
-  teacher: { name: "أ. محمد السيد",   role: "مدرس رياضيات",     avatar: "م", color: "bg-violet-500" },
-  student: { name: "أحمد محمد علي",   role: "طالب — رياضيات أ", avatar: "أ", color: "bg-cyan-500"   },
-  admin:   { name: "مدير النظام",     role: "Admin",             avatar: "ا", color: "bg-rose-500"   },
+const avatarColors: Record<SidebarVariant, string> = {
+  teacher: "bg-violet-500",
+  student: "bg-cyan-500",
+  admin:   "bg-rose-500",
+}
+
+const roleLabels: Record<SidebarVariant, string> = {
+  teacher: "مدرس",
+  student: "طالب",
+  admin:   "مدير النظام",
 }
 
 interface SidebarProps {
-  variant: SidebarVariant
+  variant:  SidebarVariant
+  userName?: string
+  userAvatar?: string
 }
 
-export function Sidebar({ variant }: SidebarProps) {
+export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
   const pathname = usePathname()
-  const nav = navMap[variant]
-  const user = userMap[variant]
+  const nav      = navMap[variant]
+  const color    = avatarColors[variant]
+  const roleLabel = roleLabels[variant]
+
+  const displayName   = userName   || roleLabels[variant]
+  const displayAvatar = userAvatar || displayName[0] || "؟"
 
   return (
     <aside className="flex h-full w-64 flex-col border-e border-border bg-card">
@@ -82,7 +94,8 @@ export function Sidebar({ variant }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {nav.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/")
+          const active =
+            pathname === item.href || pathname.startsWith(item.href + "/")
           return (
             <Link
               key={item.href}
@@ -101,22 +114,32 @@ export function Sidebar({ variant }: SidebarProps) {
         })}
       </nav>
 
-      {/* User */}
+      {/* User + Logout */}
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-3 rounded-xl p-2">
-          <span className={cn("grid size-9 place-items-center rounded-xl text-sm font-bold text-white shrink-0", user.color)}>
-            {user.avatar}
+          <span
+            className={cn(
+              "grid size-9 place-items-center rounded-xl text-sm font-bold text-white shrink-0",
+              color
+            )}
+          >
+            {displayAvatar}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.role}</p>
+            <p className="truncate text-sm font-semibold">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
           </div>
-          <button
-            aria-label="تسجيل الخروج"
-            className="text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <LogOut className="size-4" />
-          </button>
+
+          {/* Logout — form triggers Server Action */}
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              aria-label="تسجيل الخروج"
+              className="grid size-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </form>
         </div>
       </div>
     </aside>

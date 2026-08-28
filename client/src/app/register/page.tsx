@@ -43,12 +43,11 @@ export default async function RegisterPage() {
 
             <div className="mt-5">
               <RegisterStudentForm
-                groups={groups.map(g => ({
-                  id:           g.id,
-                  name:         g.name,
-                  studentCount: undefined,
-                }))}
-              />
+            groups={groups.map(g => ({
+              id:   (g._id ?? g.id ?? ""),
+              name: g.name,
+            }))}
+          />
             </div>
           </div>
 

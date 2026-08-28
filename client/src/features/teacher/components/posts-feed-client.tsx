@@ -4,7 +4,7 @@ import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
 import { createPostAction, deletePostAction, toggleLikeAction } from "@/features/teacher/actions/post.action"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
-import { ApiPost } from "@/shared/types/api"
+import { ApiPost, resolveId } from "@/shared/types/api"
 import { Heart, MessageCircle, MoreVertical, PenLine, Plus, Trash2 } from "lucide-react"
 import { useTransition, useState } from "react"
 
@@ -127,7 +127,7 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
                     </div>
                   </div>
                   <button
-                    onClick={() => handleDelete(p.id)}
+                    onClick={() => handleDelete(resolveId(p))}
                     className="text-muted-foreground hover:text-destructive transition-colors"
                     aria-label="حذف المنشور"
                   >
@@ -141,7 +141,7 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
 
                 <div className="flex items-center gap-4 border-t border-border/40 px-4 py-3 text-xs text-muted-foreground">
                   <button
-                    onClick={() => handleLike(p.id)}
+                    onClick={() => handleLike(resolveId(p))}
                     className="flex items-center gap-1.5 hover:text-primary transition-colors"
                   >
                     <Heart className={`size-3.5 ${p.isLiked ? "fill-primary text-primary" : ""}`} />

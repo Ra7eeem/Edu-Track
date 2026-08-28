@@ -45,10 +45,10 @@ export function useAdminGroupStudents(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId, "students"],
     queryFn:  async () => {
+      // Correct endpoint: GET /api/admin/students?groupId=xxx
       const raw = await clientFetch<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[]>(
-        `/api/admin/groups/${groupId}/students?limit=200`
+        `/api/admin/students?groupId=${groupId}&limit=200`
       )
-      // Fallback: try admin students endpoint with groupId filter
       return toArray<ApiGroupMembership>(raw)
     },
     enabled: !!groupId,

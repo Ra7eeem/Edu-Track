@@ -52,7 +52,7 @@ export default async function TeacherGroupsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {groups.map((g, i) => (
-              <div key={g.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+              <div key={g._id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
                 <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
                 <div className="p-5">
                   <h3 className="text-base font-bold">{g.name}</h3>
@@ -66,12 +66,12 @@ export default async function TeacherGroupsPage() {
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/teacher/group/${g.id}/attendance`}>
+                      <Link href={`/teacher/group/${g._id}/attendance`}>
                         <Users className="size-3.5" />تسجيل الحضور
                       </Link>
                     </Button>
                     <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-                      <Link href={`/teacher/group/${g.id}`}>
+                      <Link href={`/teacher/group/${g._id}`}>
                         <TrendingUp className="size-3.5" />إدارة المجموعة
                       </Link>
                     </Button>

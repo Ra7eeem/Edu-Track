@@ -40,6 +40,9 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
   const students = getStudentsByGroup(id)
   const posts = getPostsByGroup(id)
 
+  console.log(group);
+  
+
   if (!group) return (
     <div className="flex flex-col">
       <TopBar title="مجموعة غير موجودة" notifHref="/teacher/notifications" unreadCount={unread} userName={currentTeacher.name} userAvatar={currentTeacher.avatar} userAvatarColor="bg-violet-500" profileHref="/teacher/profile"/>

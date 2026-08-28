@@ -7,6 +7,7 @@ import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
 import { useStudentGroups } from "@/features/student/hooks/use-student"
 import { toggleLikeAction } from "@/features/teacher/actions/post.action"
 import { cn } from "@/shared/lib/tailwind-cn"
+import { resolveId } from "@/shared/types/api"
 import { Heart, MessageCircle, Users } from "lucide-react"
 import { useState, useTransition } from "react"
 import { useNotifications } from "@/features/groups/hooks/use-notifications"
@@ -100,7 +101,7 @@ export default function StudentGroupPage() {
                   <p className="px-4 pt-3 pb-4 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
                   <div className="flex items-center gap-4 border-t border-border/40 px-4 py-3 text-xs text-muted-foreground">
                     <button
-                      onClick={() => handleLike(p.id)}
+                      onClick={() => handleLike(resolveId(p))}
                       disabled={pending}
                       className="flex items-center gap-1.5 hover:text-primary transition-colors"
                     >

@@ -108,7 +108,7 @@ export default async function AdminDashboard() {
                   <div className="flex items-center justify-between px-3 py-2">
                     <p className="truncate text-xs font-medium">{g.name}</p>
                     <Button size="sm" variant="outline" className="h-6 text-[10px] shrink-0 ms-2" asChild>
-                      <Link href={`/admin/group/${g.id}`}>تفاصيل</Link>
+                      <Link href={`/admin/group/${g._id}`}>تفاصيل</Link>
                     </Button>
                   </div>
                 </div>

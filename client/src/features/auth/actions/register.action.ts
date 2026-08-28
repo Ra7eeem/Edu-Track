@@ -2,7 +2,7 @@
 
 import { serverFetch } from "@/shared/lib/api-server"
 import { getSession } from "@/shared/lib/session"
-import { RegisterStudentResponse, Role } from "@/shared/types/api"
+import { RegisterStudentResponse, Role, resolveId } from "@/shared/types/api"
 import { redirect } from "next/navigation"
 import { registerStudentSchema } from "../schemas/register.schema"
 
@@ -42,14 +42,14 @@ export async function registerStudentAction(
     return { error: err?.message ?? "حدث خطأ أثناء إنشاء الحساب" }
   }
 
-  const session = await getSession()
+  const session      = await getSession()
   session.token      = result.token
-  session.userId     = result.user.id
+  session.userId     = resolveId(result.user)       // handles _id OR id
   session.role       = Role.STUDENT
   session.name       = result.user.name
   session.email      = result.user.email
   session.avatarUrl  = null
-  session.grade      = result.user.grade
+  session.grade      = result.user.grade ?? null
   session.isLoggedIn = true
   await session.save()
 

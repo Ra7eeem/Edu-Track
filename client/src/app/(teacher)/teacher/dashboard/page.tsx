@@ -86,7 +86,7 @@ export default async function TeacherDashboard() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {groups.map((g, i) => (
-                <div key={g.id} className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                <div key={g._id} className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
                   <div className={`h-1.5 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
@@ -102,7 +102,7 @@ export default async function TeacherDashboard() {
                         {new Date(g.updatedAt).toLocaleDateString("ar-EG")}
                       </span>
                       <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
-                        <Link href={`/teacher/group/${g.id}`}>إدارة</Link>
+                        <Link href={`/teacher/group/${g._id}`}>إدارة</Link>
                       </Button>
                     </div>
                   </div>
