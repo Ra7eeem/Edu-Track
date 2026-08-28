@@ -74,12 +74,13 @@ export interface ApiUser {
 }
 
 export interface ApiGroup {
-  _id?:        string   // MongoDB
-  id?:         string   // normalized
+  _id?:        string
+  id?:         string
   name:        string
   description: string | null
   imageUrl:    string | null
   isActive:    boolean
+  grades:      Grade[]           // school grades this group accepts (empty = all)
   createdById: string
   createdBy?:  Pick<ApiUser, "id" | "_id" | "name" | "email">
   createdAt:   string

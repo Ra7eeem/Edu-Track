@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Grade } from "../../types";
 
 export const createTeacherSchema = z.object({
   name: z.string().min(2).max(100).trim(),
@@ -14,9 +15,10 @@ export const updateTeacherSchema = z.object({
 });
 
 export const createGroupSchema = z.object({
-  name: z.string().min(2, "اسم المجموعة مطلوب").max(150).trim(),
+  name:        z.string().min(2, "اسم المجموعة مطلوب").max(150).trim(),
   description: z.string().max(1000).trim().optional(),
-  teacherIds: z.array(z.string()).optional(), // optional: assign teachers on creation
+  grades:      z.array(z.nativeEnum(Grade)).optional().default([]),
+  teacherIds:  z.array(z.string()).optional(),
 });
 
 export const updateGroupSchema = z.object({

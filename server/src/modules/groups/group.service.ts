@@ -16,11 +16,22 @@ import { getFileUrl } from "../../middleware/upload";
 export async function listGroups(req: Request) {
   const { page, limit, skip } = parsePagination(req);
   const search = String(req.query.search ?? "");
+  const grade  = req.query.grade as string | undefined;
+
   const filter: mongoose.FilterQuery<typeof Group> = { isActive: true };
   if (search) filter.$or = [
-    { name: { $regex: search, $options: "i" } },
+    { name:        { $regex: search, $options: "i" } },
     { description: { $regex: search, $options: "i" } },
   ];
+  // Filter by grade: return groups that either have no grade restrictions
+  // OR explicitly include the requested grade
+  if (grade) {
+    filter.$or = [
+      { grades: { $size: 0 } },   // open to all
+      { grades: grade },           // includes this grade
+    ];
+  }
+
   const [data, total] = await Promise.all([
     Group.find(filter)
       .populate("createdBy", "name")
@@ -64,10 +75,11 @@ export async function createGroup(
   imageFilename?: string
 ) {
   const group = await Group.create({
-    name: dto.name,
+    name:        dto.name,
     description: dto.description,
-    imageUrl: imageFilename ? getFileUrl(imageFilename) : undefined,
-    createdBy: createdById,
+    imageUrl:    imageFilename ? getFileUrl(imageFilename) : undefined,
+    grades:      dto.grades ?? [],
+    createdBy:   createdById,
   });
 
   // Auto-assign creator as teacher if they are a TEACHER

@@ -47,8 +47,9 @@ export default async function RegisterPage() {
             <div className="mt-5">
               <RegisterStudentForm
                 groups={groups.map(g => ({
-                  id:   g._id ?? g.id ?? "",
-                  name: g.name,
+                  id:     g._id ?? g.id ?? "",
+                  name:   g.name,
+                  grades: (g as { grades?: string[] }).grades ?? [],
                 }))}
               />
             </div>

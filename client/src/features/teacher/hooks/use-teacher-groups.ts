@@ -57,7 +57,7 @@ export function useGroupDetails(groupId: string) {
 export function useTeacherCreateGroup() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { name: string; description?: string }) =>
+    mutationFn: (body: { name: string; description?: string; grades?: string[] }) =>
       clientFetch<ApiGroup>("/api/groups", {
         method: "POST",
         data:   body,

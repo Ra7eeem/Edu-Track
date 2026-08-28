@@ -80,9 +80,10 @@ export async function deleteTeacher(id: string) {
 
 export async function createGroup(dto: CreateGroupAdminDto, adminId: string) {
   const group = await Group.create({
-    name: dto.name,
+    name:        dto.name,
     description: dto.description,
-    createdBy: adminId,
+    grades:      dto.grades ?? [],
+    createdBy:   adminId,
   });
 
   // Optionally assign teachers on creation

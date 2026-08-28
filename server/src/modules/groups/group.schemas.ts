@@ -1,13 +1,17 @@
 import { z } from "zod";
+import { Grade } from "../../types";
 
 export const createGroupSchema = z.object({
-  name: z.string().min(2).max(150).trim(),
+  name:        z.string().min(2).max(150).trim(),
   description: z.string().max(1000).trim().optional(),
+  grades:      z.array(z.nativeEnum(Grade)).optional().default([]),
 });
 
 export const updateGroupSchema = z.object({
-  name: z.string().min(2).max(150).trim().optional(),
+  name:        z.string().min(2).max(150).trim().optional(),
   description: z.string().max(1000).trim().optional(),
+  grades:      z.array(z.nativeEnum(Grade)).optional(),
+  isActive:    z.boolean().optional(),
 });
 
 export type CreateGroupDto = z.infer<typeof createGroupSchema>;
