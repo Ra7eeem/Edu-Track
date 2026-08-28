@@ -1,45 +1,51 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
+import { serverFetch, resolveList, resolveOne } from "@/shared/lib/api-server"
+import { getSessionData } from "@/shared/lib/session"
 import {
-  currentTeacher,
-  mockGroups,
-  mockNotifications,
-  mockStudents,
-} from "@/shared/data/mock"
-import {
-  ArrowLeft,
-  BarChart3,
-  BookOpen,
-  CalendarCheck,
-  TrendingUp,
-  Users,
-  XCircle,
-} from "lucide-react"
+  ApiGroup,
+  ApiNotification,
+  PaginatedResponse,
+} from "@/shared/types/api"
+import { ArrowLeft, BookOpen, CalendarCheck, TrendingUp, Users, XCircle } from "lucide-react"
 import Link from "next/link"
 
-const teacherGroups = mockGroups.filter(g => g.teacherIds.includes(currentTeacher.id))
-const totalStudents = teacherGroups.reduce((s, g) => s + g.studentCount, 0)
-const unread = mockNotifications.filter(n => n.userId === currentTeacher.id && !n.read).length
-
 const coverColors: Record<string, string> = {
-  violet: "from-violet-500 to-violet-600",
-  cyan:   "from-cyan-500 to-cyan-600",
-  amber:  "from-amber-500 to-amber-600",
-  emerald:"from-emerald-500 to-emerald-600",
-  rose:   "from-rose-500 to-rose-600",
+  // server groups don't have a cover color — we derive from index
 }
+const COLORS = [
+  "from-violet-500 to-violet-600",
+  "from-cyan-500 to-cyan-600",
+  "from-amber-500 to-amber-600",
+  "from-emerald-500 to-emerald-600",
+  "from-rose-500 to-rose-600",
+]
 
-export default function TeacherDashboard() {
+export default async function TeacherDashboard() {
+  const session = await getSessionData()
+
+  // Parallel fetches
+  const [groupsRes, notifsRes] = await Promise.allSettled([
+    serverFetch<PaginatedResponse<ApiGroup>>("/api/teacher/groups?limit=10"),
+    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=5"),
+  ])
+
+  const groups = resolveList(groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>)
+  const notifs = resolveList(notifsRes as PromiseSettledResult<PaginatedResponse<ApiNotification> | ApiNotification[] | null>)
+  const unread = notifs.filter((n) => !n.isRead).length
+
+  const totalStudents = groups.reduce((s, g) => s + ((g as unknown as { studentsCount?: number }).studentsCount ?? 0), 0)
+
   return (
     <div className="flex flex-col">
       <TopBar
         title="الرئيسية"
-        subtitle={`مرحباً، ${currentTeacher.name}`}
+        subtitle={`مرحباً، ${session?.name ?? ""}`}
         notifHref="/teacher/notifications"
         unreadCount={unread}
-        userName={currentTeacher.name}
-        userAvatar={currentTeacher.avatar}
+        userName={session?.name ?? ""}
+        userAvatar={(session?.name ?? "م")[0]}
         userAvatarColor="bg-violet-500"
         profileHref="/teacher/profile"
       />
@@ -48,14 +54,14 @@ export default function TeacherDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "المجموعات",    value: teacherGroups.length, icon: BookOpen,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20" },
-            { label: "إجمالي الطلاب",value: totalStudents,        icon: Users,         color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"     },
-            { label: "حضور اليوم",   value: 27,                   icon: CalendarCheck, color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-900/20"},
-            { label: "غياب اليوم",   value: 5,                    icon: XCircle,       color: "text-rose-600",   bg: "bg-rose-50 dark:bg-rose-900/20"     },
-          ].map(s => (
+            { label: "المجموعات",    value: groups.length, icon: BookOpen,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20"   },
+            { label: "إجمالي الطلاب",value: totalStudents, icon: Users,         color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"        },
+            { label: "حضور اليوم",   value: "—",           icon: CalendarCheck, color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-900/20"  },
+            { label: "غياب اليوم",   value: "—",           icon: XCircle,       color: "text-rose-600",   bg: "bg-rose-50 dark:bg-rose-900/20"        },
+          ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
               <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>
-                <s.icon className="size-4"/>
+                <s.icon className="size-4" />
               </div>
               <p className="text-2xl font-extrabold">{s.value}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
@@ -63,76 +69,71 @@ export default function TeacherDashboard() {
           ))}
         </div>
 
-        {/* Quick actions */}
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90">
-            <Link href="/teacher/groups"><BookOpen className="size-3.5"/>مجموعاتي</Link>
-          </Button>
-          <Button size="sm" variant="outline">
-            <Link href="/teacher/notifications"><BarChart3 className="size-3.5"/>الإشعارات</Link>
-          </Button>
-        </div>
-
         {/* Groups */}
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold">مجموعاتي</h2>
             <Link href="/teacher/groups" className="flex items-center gap-1 text-xs text-primary hover:underline">
-              عرض الكل <ArrowLeft className="size-3"/>
+              عرض الكل <ArrowLeft className="size-3" />
             </Link>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {teacherGroups.map(g => (
-              <div key={g.id} className="group rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md overflow-hidden">
-                {/* Cover strip */}
-                <div className={`h-1.5 bg-gradient-to-r ${coverColors[g.cover] ?? "from-violet-500 to-violet-600"}`}/>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{g.schedule}</p>
+
+          {groups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-16 text-center">
+              <BookOpen className="mb-3 size-10 text-muted-foreground/30" />
+              <p className="text-sm font-medium">لا توجد مجموعات بعد</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {groups.map((g, i) => (
+                <div key={g.id} className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+                  <div className={`h-1.5 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
+                        {g.description && (
+                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{g.description}</p>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="shrink-0 text-xs">{g.subject}</Badge>
-                  </div>
-                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Users className="size-3"/>{g.studentCount} طالب</span>
-                    <span className="flex items-center gap-1"><TrendingUp className="size-3"/>{g.attendanceRate}٪ حضور</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground">آخر نشاط: {g.lastActivity}</span>
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
-                      <Link href={`/teacher/group/${g.id}`}>إدارة</Link>
-                    </Button>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-[11px] text-muted-foreground">
+                        {new Date(g.updatedAt).toLocaleDateString("ar-EG")}
+                      </span>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                        <Link href={`/teacher/group/${g.id}`}>إدارة</Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* Recent students */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold">آخر الطلاب نشاطاً</h2>
-          </div>
-          <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
-            {mockStudents.slice(0, 5).map((s, i) => (
-              <div key={s.id} className={`flex items-center gap-3 px-4 py-3 ${i < 4 ? "border-b border-border/40" : ""}`}>
-                <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
-                  {s.avatar}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.attendanceCount} حضور · {s.absenceCount} غياب</p>
+        {/* Recent notifications */}
+        {notifs.length > 0 && (
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-bold">آخر الإشعارات</h2>
+              <Link href="/teacher/notifications" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                عرض الكل <ArrowLeft className="size-3" />
+              </Link>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+              {notifs.map((n, i) => (
+                <div key={n.id} className={`flex items-start gap-3 px-4 py-3 ${i < notifs.length - 1 ? "border-b border-border/40" : ""}`}>
+                  <span className={`mt-0.5 size-2 shrink-0 rounded-full ${n.isRead ? "bg-muted" : "bg-primary"}`} />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{n.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">{n.message}</p>
+                  </div>
                 </div>
-                <div className="text-end shrink-0">
-                  <p className="text-sm font-bold text-primary">{s.score}</p>
-                  <p className="text-[10px] text-muted-foreground">نقطة</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

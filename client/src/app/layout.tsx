@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_Arabic, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/shared/lib/tailwind-cn";
+import { QueryProvider } from "@/shared/providers/query-provider";
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       dir="rtl"
       className={cn("h-full antialiased", ibmPlexArabic.variable, geistMono.variable)}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <QueryProvider>{children}</QueryProvider>
+      </body>
     </html>
   );
 }
