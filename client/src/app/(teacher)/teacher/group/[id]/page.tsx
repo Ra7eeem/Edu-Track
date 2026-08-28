@@ -1,109 +1,431 @@
 "use client"
 
 import { TopBar } from "@/shared/components/layout/topbar"
-import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
 import {
-  currentTeacher,
-  getGroupById,
-  getPostsByGroup,
-  getStudentsByGroup,
-  mockNotifications,
-} from "@/shared/data/mock"
+  ListRowSkeleton,
+  PostCardSkeleton,
+  RankRowSkeleton,
+  Skeleton,
+  StatCardSkeleton,
+} from "@/shared/components/ui/skeleton"
+import { saveAttendanceAction } from "@/features/teacher/actions/attendance.action"
+import { createPostAction, deletePostAction, toggleLikeAction } from "@/features/teacher/actions/post.action"
+import { removeStudentAction } from "@/features/teacher/actions/student.action"
+import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
+import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
+import { useGroupStudents } from "@/features/teacher/hooks/use-group-students"
+import { useTeacherGroups } from "@/features/teacher/hooks/use-teacher-groups"
+import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
+import { resolveId, AttendanceStatus, type ApiGroup, type ApiGroupMembership, type ApiPost, type ApiRankingEntry } from "@/shared/types/api"
 import {
-  BarChart3,
-  BookOpen,
-  CalendarCheck,
-  Heart,
-  MessageCircle,
-  Trophy,
-  Users,
+  BarChart3, Bell, BookOpen, CalendarCheck,
+  CheckCircle2, Heart, MessageCircle, MoreVertical,
+  PenLine, Plus, RotateCcw, Save, Search,
+  Trash2, Trophy, Users, XCircle,
 } from "lucide-react"
 import Link from "next/link"
-import { use, useState } from "react"
+import { use, useMemo, useState, useTransition } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 const TABS = [
-  { key: "overview",    label: "نظرة عامة", icon: BarChart3       },
-  { key: "students",   label: "الطلاب",     icon: Users           },
-  { key: "attendance", label: "الحضور",     icon: CalendarCheck   },
-  { key: "posts",      label: "المنشورات",  icon: BookOpen        },
-  { key: "ranking",    label: "الترتيب",    icon: Trophy          },
+  { key: "overview",   label: "نظرة عامة",  icon: BarChart3     },
+  { key: "students",   label: "الطلاب",      icon: Users         },
+  { key: "attendance", label: "الحضور",      icon: CalendarCheck },
+  { key: "posts",      label: "المنشورات",   icon: BookOpen      },
+  { key: "ranking",    label: "الترتيب",     icon: Trophy        },
 ]
 
-const unread = mockNotifications.filter(n => n.userId === currentTeacher.id && !n.read).length
+const MEDALS = ["🥇", "🥈", "🥉"]
+const ARABIC_MONTHS = [
+  "", "يناير","فبراير","مارس","أبريل","مايو","يونيو",
+  "يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر",
+]
 
-export default function GroupManagePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
-  const [activeTab, setActiveTab] = useState("overview")
-  const group = getGroupById(id)
-  const students = getStudentsByGroup(id)
-  const posts = getPostsByGroup(id)
+// ─── Attendance sub-component ──────────────────────────────────────────────────
+function AttendanceTab({ groupId, students }: { groupId: string; students: ApiGroupMembership[] }) {
+  const [attendance, setAttendance] = useState<Record<string, AttendanceStatus | "none">>(
+    Object.fromEntries(students.map(s => [s.studentId, "none"]))
+  )
+  const [search,    setSearch]    = useState("")
+  const [saved,     setSaved]     = useState(false)
+  const [error,     setError]     = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  console.log(group);
-  
+  const filtered = useMemo(
+    () => students.filter(s => {
+      const name = (s.student as { name?: string } | undefined)?.name ?? ""
+      return name.includes(search)
+    }),
+    [students, search]
+  )
 
-  if (!group) return (
-    <div className="flex flex-col">
-      <TopBar title="مجموعة غير موجودة" notifHref="/teacher/notifications" unreadCount={unread} userName={currentTeacher.name} userAvatar={currentTeacher.avatar} userAvatarColor="bg-violet-500" profileHref="/teacher/profile"/>
-      <div className="flex flex-col items-center justify-center p-20 text-center">
-        <p className="text-muted-foreground">لم يتم العثور على المجموعة</p>
-        <Button className="mt-4" variant="outline" asChild><Link href="/teacher/groups">العودة للمجموعات</Link></Button>
+  const present = Object.values(attendance).filter(v => v === AttendanceStatus.PRESENT).length
+  const absent  = Object.values(attendance).filter(v => v === AttendanceStatus.ABSENT).length
+  const pending = students.length - present - absent
+
+  const mark = (sid: string, status: AttendanceStatus) =>
+    setAttendance(p => ({ ...p, [sid]: p[sid] === status ? "none" : status }))
+
+  const markAll = (status: AttendanceStatus) =>
+    setAttendance(Object.fromEntries(students.map(s => [s.studentId, status])))
+
+  const reset = () => {
+    setAttendance(Object.fromEntries(students.map(s => [s.studentId, "none"])))
+    setSaved(false); setError(null)
+  }
+
+  const today = new Date().toISOString().split("T")[0]
+
+  const handleSave = () => {
+    const records = students.map(s => ({
+      studentId: s.studentId,
+      status: attendance[s.studentId] === "none"
+        ? AttendanceStatus.ABSENT
+        : (attendance[s.studentId] as AttendanceStatus),
+    }))
+    startTransition(async () => {
+      const res = await saveAttendanceAction(groupId, today, records)
+      if (res.success) setSaved(true)
+      else setError(res.error ?? "حدث خطأ")
+    })
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Stats bar */}
+      <div className="rounded-2xl border border-border/60 bg-card p-3">
+        <div className="flex items-center gap-4 text-sm">
+          <span className="font-bold">{students.length} طالب</span>
+          <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="size-4"/>{present} حاضر</span>
+          <span className="flex items-center gap-1 text-rose-600"><XCircle className="size-4"/>{absent} غائب</span>
+          {pending > 0 && <span className="text-xs text-muted-foreground">{pending} لم يُسجَّل</span>}
+          <Button size="sm" variant="ghost" onClick={reset} className="ms-auto text-muted-foreground">
+            <RotateCcw className="size-3.5"/>
+          </Button>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+               style={{ width: students.length ? `${(present / students.length) * 100}%` : "0%" }}/>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>
+      )}
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث عن طالب..."
+          className="flex h-10 w-full rounded-2xl border border-input bg-card ps-10 pe-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"/>
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex gap-2">
+        <button onClick={() => markAll(AttendanceStatus.PRESENT)}
+          className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
+          ✓ تحضير الكل
+        </button>
+        <button onClick={() => markAll(AttendanceStatus.ABSENT)}
+          className="flex-1 rounded-xl border border-rose-200 bg-rose-50 py-2 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
+          ✗ غياب الكل
+        </button>
+      </div>
+
+      {/* Students list */}
+      <div className="space-y-2">
+        {filtered.map(m => {
+          const name   = (m.student as { name?: string } | undefined)?.name ?? m.studentId
+          const status = attendance[m.studentId]
+          return (
+            <div key={m.studentId}
+              className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all",
+                status === AttendanceStatus.PRESENT ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/50 dark:bg-emerald-950/20"
+                : status === AttendanceStatus.ABSENT ? "border-rose-200 bg-rose-50/60 dark:border-rose-800/50 dark:bg-rose-950/20"
+                : "border-border/60 bg-card")}>
+              <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                {name[0]}
+              </span>
+              <span className="flex-1 text-sm font-medium">{name}</span>
+              <div className="flex gap-2">
+                <button onClick={() => mark(m.studentId, AttendanceStatus.PRESENT)}
+                  className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+                    status === AttendanceStatus.PRESENT ? "bg-emerald-500 text-white shadow-sm"
+                    : "border border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400")}>
+                  حاضر
+                </button>
+                <button onClick={() => mark(m.studentId, AttendanceStatus.ABSENT)}
+                  className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+                    status === AttendanceStatus.ABSENT ? "bg-rose-500 text-white shadow-sm"
+                    : "border border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400")}>
+                  غائب
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Save */}
+      <div className="sticky bottom-20 md:bottom-4">
+        {saved ? (
+          <div className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3.5 text-sm font-bold text-white shadow-lg">
+            <CheckCircle2 className="size-5"/> تم حفظ الحضور بنجاح!
+          </div>
+        ) : (
+          <Button size="lg" className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg hover:opacity-90 disabled:opacity-50"
+            disabled={isPending} onClick={handleSave}>
+            <Save className="size-4"/>
+            {isPending ? "جارٍ الحفظ..." : "حفظ الحضور"}
+          </Button>
+        )}
       </div>
     </div>
   )
+}
+
+// ─── Posts sub-component ───────────────────────────────────────────────────────
+function PostsTab({ groupId, authorName }: { groupId: string; authorName: string }) {
+  const qc = useQueryClient()
+  const { data, isLoading } = useGroupPosts(groupId)
+  const posts = data?.data ?? []
+
+  const [content,     setContent]     = useState("")
+  const [showCompose, setShowCompose] = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [isPending,   startTransition] = useTransition()
+
+  const handleCreate = () => {
+    if (!content.trim()) return
+    setError(null)
+    startTransition(async () => {
+      const res = await createPostAction(groupId, content.trim())
+      if (res.success) { setContent(""); setShowCompose(false); qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] }) }
+      else setError(res.error ?? "حدث خطأ")
+    })
+  }
+
+  const handleDelete = (postId: string) => {
+    if (!confirm("حذف المنشور؟")) return
+    startTransition(async () => { await deletePostAction(groupId, postId); qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] }) })
+  }
+
+  const handleLike = (postId: string) => {
+    startTransition(async () => { await toggleLikeAction(groupId, postId); qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] }) })
+  }
+
+  if (isLoading) return <div className="space-y-4">{Array.from({length:3}).map((_,i)=><PostCardSkeleton key={i}/>)}</div>
+
+  return (
+    <div className="space-y-4">
+      {/* Compose */}
+      {!showCompose ? (
+        <button onClick={() => setShowCompose(true)}
+          className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3.5 text-sm text-primary/70 hover:border-primary/70 hover:text-primary transition-all">
+          <PenLine className="size-4 shrink-0"/>ما الذي تريد مشاركته مع طلابك؟
+        </button>
+      ) : (
+        <div className="rounded-2xl border border-primary/40 bg-card p-4 shadow-sm">
+          {error && <p className="mb-2 text-xs text-destructive">{error}</p>}
+          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="اكتب منشورك هنا..." rows={4} autoFocus
+            className="w-full resize-none rounded-xl bg-muted/40 p-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"/>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <Button size="sm" variant="ghost" onClick={() => { setShowCompose(false); setContent(""); setError(null) }}>إلغاء</Button>
+            <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" onClick={handleCreate} disabled={isPending || !content.trim()}>
+              <Plus className="size-3.5"/>{isPending ? "جارٍ النشر..." : "نشر"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {posts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-4xl mb-3">📝</p>
+          <p className="font-medium">لا توجد منشورات بعد</p>
+          <p className="mt-1 text-sm text-muted-foreground">كن أول من ينشر في هذه المجموعة!</p>
+        </div>
+      ) : posts.map((p: ApiPost) => {
+        const pid    = resolveId(p)
+        const author = p.author as { name?: string } | undefined
+        return (
+          <article key={pid} className="rounded-2xl border border-border/60 bg-card shadow-sm">
+            <div className="flex items-center justify-between px-4 pt-4">
+              <div className="flex items-center gap-3">
+                <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                  {(author?.name ?? authorName)[0]}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold">{author?.name ?? authorName}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(p.createdAt).toLocaleDateString("ar-EG")}</p>
+                </div>
+              </div>
+              <button onClick={() => handleDelete(pid)} className="text-muted-foreground hover:text-destructive transition-colors" aria-label="حذف">
+                <Trash2 className="size-4"/>
+              </button>
+            </div>
+            <p className="px-4 pt-3 pb-4 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
+            <div className="flex items-center gap-4 border-t border-border/40 px-4 py-3 text-xs text-muted-foreground">
+              <button onClick={() => handleLike(pid)} className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                <Heart className={cn("size-3.5", p.isLiked && "fill-primary text-primary")}/>{p.likeCount ?? 0} إعجاب
+              </button>
+              <span className="flex items-center gap-1.5"><MessageCircle className="size-3.5"/>{p.commentCount ?? 0} تعليق</span>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Ranking sub-component ─────────────────────────────────────────────────────
+function RankingTab({ groupId }: { groupId: string }) {
+  const now = new Date()
+  const { data, isLoading } = useGroupRanking(groupId, now.getMonth() + 1, now.getFullYear())
+  const ranking = data?.ranking ?? []
+
+  if (isLoading) return <div className="space-y-2">{Array.from({length:6}).map((_,i)=><RankRowSkeleton key={i}/>)}</div>
+  if (ranking.length === 0) return (
+    <div className="flex flex-col items-center py-16 text-center">
+      <p className="text-4xl mb-3">🏆</p>
+      <p className="font-medium">لا يوجد ترتيب بعد</p>
+      <p className="mt-1 text-sm text-muted-foreground">سيظهر الترتيب بعد تسجيل الحضور</p>
+    </div>
+  )
+
+  const top3 = ranking.slice(0, 3)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold">ترتيب {ARABIC_MONTHS[now.getMonth() + 1]} {now.getFullYear()}</p>
+        <span className="text-xs text-muted-foreground">{ranking.length} طالب</span>
+      </div>
+
+      {/* Podium */}
+      {top3.length >= 2 && (
+        <div className="mb-4 grid grid-cols-3 items-end gap-2 rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-50/10 p-4 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-transparent">
+          {([top3[1], top3[0], top3[2]] as (ApiRankingEntry|undefined)[]).map((entry, i) => {
+            if (!entry) return <div key={i}/>
+            const pos = i===0?2:i===1?1:3
+            const heights = ["h-20","h-28","h-16"]
+            const podColor = pos===1 ? "bg-gradient-to-t from-amber-400 to-amber-300"
+              : pos===2 ? "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600"
+              : "bg-gradient-to-t from-amber-700/60 to-amber-600/50"
+            return (
+              <div key={resolveId(entry.student)} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
+                <span className="text-2xl">{MEDALS[pos-1]}</span>
+                <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">{entry.student.name[0]}</span>
+                <p className="text-center text-[10px] font-semibold leading-tight">{entry.student.name.split(" ")[0]}</p>
+                <p className="text-[10px] text-muted-foreground">{entry.score} نقطة</p>
+                <div className={cn("w-full rounded-t-xl", heights[i], podColor)}/>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Full list */}
+      <div className="space-y-2">
+        {ranking.map((entry: ApiRankingEntry) => (
+          <div key={resolveId(entry.student)} className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm",
+            entry.rank<=3 ? "border-amber-200/60 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10" : "border-border/60 bg-card")}>
+            <span className="w-7 text-center shrink-0">
+              {entry.rank<=3 ? MEDALS[entry.rank-1] : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>}
+            </span>
+            <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{entry.student.name[0]}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{entry.student.name}</p>
+              <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-muted">
+                <div className="h-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all"
+                     style={{ width: ranking[0]?.score ? `${(entry.score/ranking[0].score)*100}%` : "0%" }}/>
+              </div>
+            </div>
+            <div className="text-end shrink-0">
+              <p className="text-sm font-bold text-primary">{entry.score}</p>
+              <p className="text-[10px] text-muted-foreground">{entry.presentCount} حضور</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────────
+export default function GroupManagePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const [tab,     setTab]     = useState("overview")
+  const [search,  setSearch]  = useState("")
+  const [removing, setRemoving] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const qc = useQueryClient()
+
+  // Fetch group info from teacher groups list (cached)
+  const { data: groupsData, isLoading: gLoading } = useTeacherGroups()
+  const groups = groupsData ?? []
+  const group  = groups.find((g: ApiGroup) => resolveId(g) === id)
+
+  // Students
+  const { data: studentsData, isLoading: sLoading } = useGroupStudents(id, search)
+  const students: ApiGroupMembership[] = studentsData ?? []
+  
+
+  // Session info for author name
+  const { data: sessionData } = useQuery({
+    queryKey: ["session"],
+    queryFn:  () => clientFetch<{ name: string; role: string }>("/api/teacher/profile"),
+    staleTime: Infinity,
+  })
+  const authorName = sessionData?.name ?? "المدرس"
+
+  const unread = 0 // handled per-page separately
+
+  const handleRemove = (membershipId: string, studentId: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الطالب؟")) return
+    setRemoving(studentId)
+    startTransition(async () => {
+      await removeStudentAction(id, studentId)
+      qc.invalidateQueries({ queryKey: ["teacher", "groups", id, "students"] })
+      setRemoving(null)
+    })
+  }
 
   return (
     <div className="flex flex-col">
       <TopBar
-        title={group.name}
-        subtitle={group.schedule}
+        title={gLoading ? "جارٍ التحميل..." : (group?.name ?? "إدارة المجموعة")}
+        subtitle={group?.description ?? undefined}
         notifHref="/teacher/notifications"
         unreadCount={unread}
-        userName={currentTeacher.name}
-        userAvatar={currentTeacher.avatar}
+        userName={authorName}
+        userAvatar={authorName[0]}
         userAvatarColor="bg-violet-500"
         profileHref="/teacher/profile"
       />
 
-      {/* Group header */}
-      <div className="border-b border-border/60 bg-card px-4 py-4 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge variant="secondary">{group.subject}</Badge>
-            <span className="text-sm text-muted-foreground">{group.studentCount} طالب</span>
-            <span className="text-sm text-muted-foreground">حضور {group.attendanceRate}٪</span>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-              <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-3.5"/>تسجيل الحضور</Link>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/teacher/group/${id}/posts`}><BookOpen className="size-3.5"/>منشور جديد</Link>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/teacher/group/${id}/students`}><Users className="size-3.5"/>إضافة طالب</Link>
-            </Button>
-          </div>
+      {/* Group actions */}
+      <div className="border-b border-border/60 bg-card px-4 py-3 sm:px-6">
+        <div className="mx-auto max-w-5xl flex flex-wrap gap-2">
+          <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
+            <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-3.5"/>تسجيل حضور منفصل</Link>
+          </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/teacher/join-requests"><Bell className="size-3.5"/>طلبات الانضمام</Link>
+          </Button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="sticky top-14 z-30 border-b border-border/60 bg-background/95 backdrop-blur">
-        <div className="mx-auto max-w-5xl overflow-x-auto px-4 sm:px-6">
-          <div className="flex gap-1 py-2">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all",
-                  activeTab === tab.key
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <tab.icon className="size-3.5"/>{tab.label}
+        <div className="mx-auto max-w-5xl overflow-x-auto px-4 py-2 sm:px-6">
+          <div className="flex gap-1">
+            {TABS.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={cn("flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all",
+                  tab===t.key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
+                <t.icon className="size-3.5"/>{t.label}
               </button>
             ))}
           </div>
@@ -111,112 +433,100 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
+
         {/* ── Overview ── */}
-        {activeTab === "overview" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { label: "الطلاب",    value: group.studentCount,   color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20"  },
-                { label: "نسبة الحضور", value: `${group.attendanceRate}٪`, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-                { label: "المنشورات", value: group.postCount,      color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"      },
-                { label: "آخر نشاط",  value: group.lastActivity,  color: "text-amber-600",  bg: "bg-amber-50 dark:bg-amber-900/20"    },
-              ].map(s => (
-                <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                  <p className={`text-xl font-extrabold ${s.color}`}>{s.value}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
+        {tab === "overview" && (
+          gLoading ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {Array.from({length:3}).map((_,i)=><StatCardSkeleton key={i}/>)}
+            </div>
+          ) : !group ? (
+            <div className="flex flex-col items-center py-16 text-center">
+              <p className="text-4xl mb-3">😕</p>
+              <p className="font-medium text-muted-foreground">المجموعة غير موجودة أو لا تملك صلاحية الوصول</p>
+              <Button className="mt-4" variant="outline" asChild><Link href="/teacher/groups">العودة للمجموعات</Link></Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {[
+                  { l: "الطلاب",    v: students.length,  c: "text-violet-600"  },
+                  { l: "المنشورات", v: "—",              c: "text-cyan-600"    },
+                  { l: "الحالة",    v: group.isActive ? "نشطة" : "موقوفة", c: group.isActive ? "text-emerald-600" : "text-rose-600" },
+                ].map(s => (
+                  <div key={s.l} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                    <p className={`text-xl font-extrabold ${s.c}`}>{s.v}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{s.l}</p>
+                  </div>
+                ))}
+              </div>
+              {group.description && (
+                <div className="rounded-2xl border border-border/60 bg-card p-4">
+                  <h3 className="mb-1 text-sm font-bold">عن المجموعة</h3>
+                  <p className="text-sm text-muted-foreground">{group.description}</p>
                 </div>
-              ))}
+              )}
             </div>
-            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-              <h3 className="mb-1 text-sm font-bold">عن المجموعة</h3>
-              <p className="text-sm text-muted-foreground">{group.description}</p>
-              <p className="mt-2 text-xs text-muted-foreground">📅 {group.schedule}</p>
-            </div>
-          </div>
+          )
         )}
 
         {/* ── Students ── */}
-        {activeTab === "students" && (
+        {tab === "students" && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{students.length} طالب</p>
-              <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-                <Link href={`/teacher/group/${id}/students`}><Users className="size-3.5"/>إدارة الطلاب</Link>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..."
+                  className="flex h-10 w-full rounded-2xl border border-input bg-card ps-10 pe-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"/>
+              </div>
+              <Button size="sm" className="shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
+                <Link href={`/teacher/group/${id}/students`}><Users className="size-3.5"/>إضافة طالب</Link>
               </Button>
             </div>
-            {students.map((s, i) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card px-4 py-3">
-                <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{s.avatar}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{s.name}</p>
-                  <p className="text-xs text-muted-foreground">{s.attendanceCount} حضور · {s.absenceCount} غياب</p>
-                </div>
-                <div className="text-end shrink-0">
-                  <p className="text-sm font-bold text-primary">#{i + 1}</p>
-                  <p className="text-xs text-muted-foreground">{s.score} نقطة</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {/* ── Attendance ── */}
-        {activeTab === "attendance" && (
-          <div className="space-y-3">
-            <Button className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-              <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-4"/>تسجيل حضور جديد</Link>
-            </Button>
-            <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-              <p className="text-sm font-bold">آخر جلسة — ٢٥ أغسطس ٢٠٢٦</p>
-              <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-muted/40 p-3 text-center">
-                <div><p className="text-lg font-bold text-emerald-600">٩</p><p className="text-xs text-muted-foreground">حاضر</p></div>
-                <div><p className="text-lg font-bold text-rose-600">٢</p><p className="text-xs text-muted-foreground">غائب</p></div>
-                <div><p className="text-lg font-bold text-amber-600">١</p><p className="text-xs text-muted-foreground">متأخر</p></div>
+            {sLoading ? (
+              Array.from({length:5}).map((_,i)=>(
+                <div key={i} className="rounded-2xl border border-border/60 bg-card"><ListRowSkeleton cols={4}/></div>
+              ))
+            ) : students.length === 0 ? (
+              <div className="flex flex-col items-center py-16 text-center">
+                <p className="text-3xl mb-2">👤</p>
+                <p className="text-sm text-muted-foreground">لا يوجد طلاب في هذه المجموعة بعد</p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Posts ── */}
-        {activeTab === "posts" && (
-          <div className="space-y-4">
-            <Button className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
-              <Link href={`/teacher/group/${id}/posts`}><BookOpen className="size-4"/>إنشاء منشور جديد</Link>
-            </Button>
-            {posts.map(p => (
-              <div key={p.id} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-                {p.pinned && <Badge className="mb-2 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-0">📌 مثبت</Badge>}
-                <p className="text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
-                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Heart className="size-3"/>{p.likes}</span>
-                  <span className="flex items-center gap-1"><MessageCircle className="size-3"/>{p.commentCount}</span>
-                  <span className="ms-auto">{p.createdAt}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Ranking ── */}
-        {activeTab === "ranking" && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">ترتيب أغسطس ٢٠٢٦</p>
-            {students.map((s, i) => {
-              const medals = ["🥇", "🥈", "🥉"]
+            ) : students.map((m: ApiGroupMembership, i: number) => {
+              const name  = (m.student as { name?: string }  | undefined)?.name  ?? m.studentId
+              const email = (m.student as { email?: string } | undefined)?.email ?? ""
               return (
-                <div key={s.id} className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm", i < 3 ? "border-amber-200 bg-amber-50/50 dark:border-amber-800/40 dark:bg-amber-950/20" : "border-border/60 bg-card")}>
-                  <span className="w-7 text-center text-base">{i < 3 ? medals[i] : <span className="text-sm font-bold text-muted-foreground">#{i+1}</span>}</span>
-                  <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 shrink-0">{s.avatar}</span>
+                <div key={m.studentId} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
+                  <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{name[0]}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{s.name}</p>
-                    <p className="text-xs text-muted-foreground">{s.attendanceCount} حضور</p>
+                    <p className="truncate text-sm font-medium">{name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{email}</p>
                   </div>
-                  <span className="text-sm font-bold text-primary">{s.score} نقطة</span>
+                  <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">#{i+1}</span>
+                  <button disabled={removing === m.studentId || isPending}
+                    onClick={() => handleRemove(resolveId(m), m.studentId)}
+                    className="text-xs text-rose-500 hover:text-rose-600 transition-colors disabled:opacity-40 shrink-0">حذف</button>
                 </div>
               )
             })}
           </div>
         )}
+
+        {/* ── Attendance ── */}
+        {tab === "attendance" && (
+          sLoading ? (
+            <div className="space-y-2">{Array.from({length:5}).map((_,i)=><div key={i} className="rounded-2xl border border-border/60 bg-card"><ListRowSkeleton/></div>)}</div>
+          ) : (
+            <AttendanceTab groupId={id} students={students}/>
+          )
+        )}
+
+        {/* ── Posts ── */}
+        {tab === "posts" && <PostsTab groupId={id} authorName={authorName}/>}
+
+        {/* ── Ranking ── */}
+        {tab === "ranking" && <RankingTab groupId={id}/>}
       </div>
     </div>
   )

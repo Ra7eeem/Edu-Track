@@ -1,4 +1,4 @@
-import { RankingClient } from "@/features/teacher/components/ranking-client"
+import { RankingClient } from "@/features/teacher/components/ranking-client";
 import { TopBar } from "@/shared/components/layout/topbar"
 import { resolveOne, serverFetch } from "@/shared/lib/api-server"
 import { getSessionData } from "@/shared/lib/session"

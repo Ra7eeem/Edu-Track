@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Settings,
   Trophy,
+  UserCheck,
   Users,
 } from "lucide-react"
 import Link from "next/link"
@@ -16,6 +17,7 @@ import type { SidebarVariant } from "./sidebar"
 const teacherItems = [
   { label: "الرئيسية",  href: "/teacher/dashboard",    icon: LayoutDashboard },
   { label: "مجموعاتي", href: "/teacher/groups",         icon: BookOpen        },
+  { label: "طلبات",    href: "/teacher/join-requests",  icon: UserCheck       },
   { label: "إشعارات",  href: "/teacher/notifications",  icon: Bell            },
   { label: "حسابي",    href: "/teacher/profile",        icon: Settings        },
 ]

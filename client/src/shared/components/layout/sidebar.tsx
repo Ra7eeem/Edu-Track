@@ -11,6 +11,7 @@ import {
   LogOut,
   Settings,
   Trophy,
+  UserCheck,
   Users,
 } from "lucide-react"
 import Link from "next/link"
@@ -25,10 +26,11 @@ interface NavItem {
 }
 
 const teacherNav: NavItem[] = [
-  { label: "الرئيسية",   href: "/teacher/dashboard",    icon: LayoutDashboard },
-  { label: "مجموعاتي",  href: "/teacher/groups",        icon: BookOpen        },
-  { label: "الإشعارات", href: "/teacher/notifications", icon: Bell            },
-  { label: "الحساب",    href: "/teacher/profile",       icon: Settings        },
+  { label: "الرئيسية",         href: "/teacher/dashboard",     icon: LayoutDashboard },
+  { label: "مجموعاتي",         href: "/teacher/groups",         icon: BookOpen        },
+  { label: "طلبات الانضمام",   href: "/teacher/join-requests",  icon: UserCheck       },
+  { label: "الإشعارات",        href: "/teacher/notifications",  icon: Bell            },
+  { label: "الحساب",           href: "/teacher/profile",        icon: Settings        },
 ]
 
 const studentNav: NavItem[] = [

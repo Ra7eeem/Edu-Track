@@ -36,7 +36,8 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
 
   // Prefer live data from React Query, fall back to SSR data
   const { data } = useGroupStudents(groupId, search)
-  const students = data?.data ?? initialStudents
+  // hook now returns ApiGroupMembership[] directly (not PaginatedResponse)
+  const students: ApiGroupMembership[] = data ?? initialStudents
 
   const [state, formAction] = useActionState(addStudentAction, {})
 
@@ -102,7 +103,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
 
       {/* List */}
       <div className="space-y-2">
-        {students.map((m, i) => {
+        {students.map((m: ApiGroupMembership, i: number) => {
           const name = (m.student as { name?: string } | undefined)?.name ?? m.studentId
           const avatar = name[0] ?? "؟"
           return (
