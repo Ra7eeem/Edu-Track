@@ -20,20 +20,20 @@ export function useJoinRequests(status?: JoinRequestStatus) {
   const qs = status ? `?status=${status}&limit=50` : "?limit=50"
   return useQuery({
     queryKey: ["teacher", "join-requests", status],
-    queryFn: async () => {
+    queryFn:  async () => {
       const raw = await clientFetch<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]>(
         `/api/teacher/join-requests${qs}`
       )
       return toArray<ApiJoinRequest>(raw)
     },
-    staleTime: 30 * 1000, // join requests need to feel current
+    staleTime: 30 * 1000,
   })
 }
 
 export function useJoinRequestCounts() {
   return useQuery({
-    queryKey: ["teacher", "join-requests", "pending"],
-    queryFn: async () => {
+    queryKey: ["teacher", "join-requests", JoinRequestStatus.PENDING],
+    queryFn:  async () => {
       const raw = await clientFetch<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]>(
         "/api/teacher/join-requests?status=PENDING&limit=50"
       )
@@ -51,7 +51,12 @@ export function useApproveJoinRequest() {
       clientFetch<void>(`/api/teacher/join-requests/${requestId}/approve`, {
         method: "POST",
       } as never),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["teacher", "join-requests"] }),
+    onSuccess: () => {
+      // Invalidate join requests (all statuses)
+      qc.invalidateQueries({ queryKey: ["teacher", "join-requests"] })
+      // Also bust the students list — the approved student should now appear
+      qc.invalidateQueries({ queryKey: ["teacher", "groups"] })
+    },
   })
 }
 
@@ -62,6 +67,8 @@ export function useRejectJoinRequest() {
       clientFetch<void>(`/api/teacher/join-requests/${requestId}/reject`, {
         method: "POST",
       } as never),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["teacher", "join-requests"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["teacher", "join-requests"] })
+    },
   })
 }

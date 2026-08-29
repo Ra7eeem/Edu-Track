@@ -15,6 +15,7 @@ teacherRouter.patch("/profile", validate(updateProfileSchema), TeacherController
 
 // My groups
 teacherRouter.get("/groups", TeacherController.getMyGroups);
+teacherRouter.get("/dashboard", TeacherController.getDashboard);
 
 // Join requests
 teacherRouter.get("/join-requests", TeacherController.getJoinRequests);

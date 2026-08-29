@@ -6,18 +6,18 @@ import { z } from "zod"
 import { Grade } from "@/shared/types/api"
 
 const addStudentSchema = z.object({
-  name:    z.string().min(2),
-  email:   z.string().email(),
-  password:z.string().min(8),
-  phone:   z.string().min(7),
-  grade:   z.nativeEnum(Grade),
-  groupId: z.string().min(1),
+  name:     z.string().min(2),
+  email:    z.string().email(),
+  password: z.string().min(8),
+  phone:    z.string().min(7),
+  grade:    z.nativeEnum(Grade),
+  groupId:  z.string().min(1),
 })
 
 export type StudentActionState = {
-  error?:      string
-  success?:    boolean
-  message?:    string
+  error?:       string
+  success?:     boolean
+  message?:     string
   fieldErrors?: Record<string, string[]>
 }
 
@@ -44,6 +44,7 @@ export async function addStudentAction(
       method: "POST",
       body:   parsed.data,
     })
+    revalidatePath(`/teacher/group/${parsed.data.groupId}`)
     revalidatePath(`/teacher/group/${parsed.data.groupId}/students`)
     return { success: true, message: "تم إنشاء حساب الطالب بنجاح" }
   } catch (e: unknown) {
@@ -53,12 +54,14 @@ export async function addStudentAction(
 }
 
 export async function removeStudentAction(
-  groupId: string, studentId: string
+  groupId: string,
+  studentId: string
 ): Promise<StudentActionState> {
   try {
     await serverFetch(`/api/teacher/groups/${groupId}/students/${studentId}`, {
       method: "DELETE",
     })
+    revalidatePath(`/teacher/group/${groupId}`)
     revalidatePath(`/teacher/group/${groupId}/students`)
     return { success: true }
   } catch (e: unknown) {

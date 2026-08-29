@@ -35,7 +35,7 @@ function BonusModal({
     startTransition(async () => {
       const res = await addBonusAction(groupId, studentId, val, month, year)
       if (res.success) {
-        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"], exact: false, refetchType: "active" })
         onClose()
       } else {
         setError(res.error ?? "حدث خطأ")
@@ -115,7 +115,7 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
     startTransition(async () => {
       const res = await resetRankingAction(groupId, currentMonth, currentYear)
       if (res.success) {
-        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"], exact: false, refetchType: "active" })
         setShowReset(false)
       } else {
         setResetErr(res.error ?? "حدث خطأ")

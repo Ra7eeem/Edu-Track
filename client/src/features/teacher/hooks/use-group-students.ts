@@ -16,7 +16,6 @@ function extractArray<T>(raw: unknown): T[] {
   return []
 }
 
-// Server returns plain user objects for students in a group
 export type GroupStudent = Pick<ApiUser, "_id" | "id" | "name" | "email" | "avatarUrl" | "grade" | "phone">
 
 export function useGroupStudents(groupId: string, search = "") {
@@ -28,6 +27,7 @@ export function useGroupStudents(groupId: string, search = "") {
       )
       return extractArray<GroupStudent>(raw)
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 30 * 1000, // 30s — students should reflect joins quickly
   })
 }

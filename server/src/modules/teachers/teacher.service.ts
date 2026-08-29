@@ -240,6 +240,18 @@ export async function removeStudentFromGroup(
     group: groupId,
   });
   if (!membership) throw ApiError.notFound("الطالب غير موجود في هذه المجموعة");
+
+  // Clean up the student's scores + attendance records for this group
+  const { MonthlyScore } = await import("../../models/MonthlyScore");
+  const { Attendance }   = await import("../../models/Attendance");
+
+  await MonthlyScore.deleteMany({ student: studentId, group: groupId });
+
+  // Remove this student's records from all attendance sessions of this group
+  await Attendance.updateMany(
+    { group: groupId },
+    { $pull: { records: { student: studentId } } }
+  );
 }
 
 // ─────────────────────────────────────────
@@ -259,4 +271,28 @@ export async function updateProfile(teacherId: string, dto: UpdateProfileDto) {
   });
   if (!teacher) throw ApiError.notFound("المدرس غير موجود");
   return teacher;
+}
+
+// ─────────────────────────────────────────
+// Dashboard — all data in one roundtrip
+// ─────────────────────────────────────────
+
+export async function getDashboard(teacherId: string) {
+  const { Notification } = await import("../../models/Notification");
+
+  // All data fetched in parallel
+  const [groupLinks, recentNotifs, unreadCount] = await Promise.all([
+    GroupTeacher.find({ teacher: teacherId })
+      .populate({ path: "group", match: { isActive: true } })
+      .limit(10),
+    Notification.find({ recipient: teacherId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+    Notification.countDocuments({ recipient: teacherId, isRead: false }),
+  ]);
+
+  const groups = groupLinks.map((l) => l.group).filter(Boolean);
+
+  return { groups, notifications: recentNotifs, unreadCount };
 }

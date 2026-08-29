@@ -59,3 +59,8 @@ export const updateProfile = asyncHandler(async (req, res: Response) => {
   const teacher = await TeacherService.updateProfile(uid(req), req.body as UpdateProfileDto);
   sendSuccess(res, teacher, 200, "تم تحديث الملف الشخصي");
 });
+
+export const getDashboard = asyncHandler(async (req, res: Response) => {
+  const data = await TeacherService.getDashboard(uid(req));
+  sendSuccess(res, data);
+});

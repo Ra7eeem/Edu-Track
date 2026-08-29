@@ -30,6 +30,8 @@ function SendModal({ onClose }: { onClose: () => void }) {
     queryKey: ["student", "groups"],
     queryFn:  () => clientFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups?limit=20"),
   })
+  console.log(groupsRaw);
+  
   const groups = toArray<ApiGroup>(groupsRaw)
 
   const [groupId,   setGroupId]   = useState("")

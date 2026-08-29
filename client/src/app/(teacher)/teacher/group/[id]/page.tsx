@@ -35,7 +35,7 @@ import {
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
-  CheckCircle2, Clock, ClipboardList, Gift, Heart, MessageCircle, MoreVertical,
+  AlertTriangle, CheckCircle2, Clock, ClipboardList, Gift, Heart, MessageCircle, MoreVertical,
   PenLine, Plus, RefreshCcw, RotateCcw, Save, Search,
   Trash2, Trophy, Users, X, XCircle,
 } from "lucide-react"
@@ -61,6 +61,7 @@ const ARABIC_MONTHS = [
 
 // ─── Attendance sub-component ──────────────────────────────────────────────────
 function AttendanceTab({ groupId, students }: { groupId: string; students: GroupStudent[] }) {
+  const qc = useQueryClient()
   const [attendance, setAttendance] = useState<Record<string, AttendanceStatus | "none">>(
     Object.fromEntries(students.map(s => [resolveId(s), "none"]))
   )
@@ -101,13 +102,19 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
     }))
     startTransition(async () => {
       const res = await saveAttendanceAction(groupId, today, records)
-      if (res.success) setSaved(true)
-      else setError(res.error ?? "حدث خطأ")
+      if (res.success) {
+        setSaved(true)
+        // Force immediate refetch of ranking — scores update after attendance
+        qc.invalidateQueries({
+          queryKey:    ["groups", groupId, "ranking"],
+          exact:       false,
+          refetchType: "active",   // refetch right now if RankingTab is open
+        })
+      } else {
+        setError(res.error ?? "حدث خطأ")
+      }
     })
   }
-
-  console.log(filtered);
-  
 
   return (
     <div className="space-y-3">
@@ -341,7 +348,7 @@ function RankingTab({ groupId }: { groupId: string }) {
     startTransition(async () => {
       const res = await addBonusAction(groupId, bonusTarget.id, val, month, year)
       if (res.success) {
-        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"], exact: false, refetchType: "active" })
         setBonusTarget(null); setBonusVal("")
       } else { setBonusErr(res.error ?? "حدث خطأ") }
     })
@@ -352,7 +359,7 @@ function RankingTab({ groupId }: { groupId: string }) {
     startTransition(async () => {
       const res = await resetRankingAction(groupId, month, year)
       if (res.success) {
-        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"], exact: false, refetchType: "active" })
         setShowReset(false)
       } else { setResetErr(res.error ?? "حدث خطأ") }
     })
@@ -645,7 +652,6 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
   // Students
   const { data: studentsData, isLoading: sLoading } = useGroupStudents(id, search)
   const students: GroupStudent[] = studentsData ?? []
-  
 
   // Session info for author name
   const { data: sessionData } = useQuery({
@@ -655,7 +661,7 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
   })
   const authorName = sessionData?.name ?? "المدرس"
 
-  const unread = 0 // handled per-page separately
+  const unread = 0
 
   const handleRemove = (studentId: string) => {
     if (!deleteTarget) return
@@ -663,7 +669,8 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
     startTransition(async () => {
       const res = await removeStudentAction(id, studentId)
       if (res.success) {
-        qc.invalidateQueries({ queryKey: ["teacher", "groups", id, "students"] })
+        qc.invalidateQueries({ queryKey: ["teacher", "groups", id, "students"], exact: false, refetchType: "active" })
+        qc.invalidateQueries({ queryKey: ["groups", id, "ranking"], exact: false, refetchType: "active" })
         setDeleteTarget(null)
       } else {
         setRemoveErr(res.error ?? "حدث خطأ أثناء الحذف")
@@ -671,11 +678,68 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
     })
   }
 
-  console.log("students" , students);
-  
-
   return (
     <div className="flex flex-col">
+
+      {/* ── Delete Student Modal ── */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={e => e.target === e.currentTarget && setDeleteTarget(null)}
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-card border border-border/60 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-rose-600">
+                <Trash2 className="size-4" />حذف الطالب
+              </h2>
+              <button
+                onClick={() => { setDeleteTarget(null); setRemoveErr(null) }}
+                className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="flex justify-center">
+                <div className="grid size-16 place-items-center rounded-2xl bg-rose-100 dark:bg-rose-900/30">
+                  <AlertTriangle className="size-8 text-rose-500" />
+                </div>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="font-semibold">هل تريد حذف هذا الطالب؟</p>
+                <p className="text-sm text-muted-foreground">
+                  سيتم إزالة{" "}
+                  <span className="font-bold text-foreground">{deleteTarget.name}</span>{" "}
+                  من المجموعة نهائياً
+                </p>
+              </div>
+              {removeErr && (
+                <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive text-center">
+                  {removeErr}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 border-t border-border/60 px-5 py-4">
+              <Button
+                variant="outline" className="flex-1"
+                onClick={() => { setDeleteTarget(null); setRemoveErr(null) }}
+                disabled={isPending}
+              >
+                إلغاء
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:opacity-90"
+                onClick={() => handleRemove(deleteTarget.studentId)}
+                disabled={isPending}
+              >
+                <Trash2 className="size-3.5" />
+                {isPending ? "جارٍ الحذف..." : "تأكيد الحذف"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <TopBar
         title={gLoading ? "جارٍ التحميل..." : (group?.name ?? "إدارة المجموعة")}
         subtitle={group?.description ?? undefined}

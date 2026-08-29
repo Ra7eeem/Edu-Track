@@ -1,41 +1,44 @@
-import { TopBar } from "@/shared/components/layout/topbar"
-import { Badge } from "@/shared/components/ui/badge"
-import { Button } from "@/shared/components/ui/button"
-import { serverFetch, resolveList, resolveOne } from "@/shared/lib/api-server"
+import { TopBar }      from "@/shared/components/layout/topbar"
+import { Button }      from "@/shared/components/ui/button"
+import { serverFetch } from "@/shared/lib/api-server"
 import { getSessionData } from "@/shared/lib/session"
-import {
-  ApiGroup,
-  ApiNotification,
-  PaginatedResponse,
-} from "@/shared/types/api"
-import { ArrowLeft, BookOpen, CalendarCheck, TrendingUp, Users, XCircle } from "lucide-react"
+import { ApiGroup, ApiNotification } from "@/shared/types/api"
+import { ArrowLeft, BookOpen, CalendarCheck, Users, XCircle } from "lucide-react"
 import Link from "next/link"
 
-const coverColors: Record<string, string> = {
-  // server groups don't have a cover color — we derive from index
+interface TeacherDashboardData {
+  groups:        ApiGroup[]
+  notifications: (ApiNotification & { isRead: boolean })[]
+  unreadCount:   number
 }
+
 const COLORS = [
-  "from-violet-500 to-violet-600",
-  "from-cyan-500 to-cyan-600",
-  "from-amber-500 to-amber-600",
-  "from-emerald-500 to-emerald-600",
+  "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
+  "from-amber-500 to-amber-600",   "from-emerald-500 to-emerald-600",
   "from-rose-500 to-rose-600",
 ]
 
 export default async function TeacherDashboard() {
   const session = await getSessionData()
 
-  // Parallel fetches
-  const [groupsRes, notifsRes] = await Promise.allSettled([
-    serverFetch<PaginatedResponse<ApiGroup>>("/api/teacher/groups?limit=10",       { revalidate: 60, tags: ["teacher-groups"]  }),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=5",  { revalidate: 30, tags: ["notifications"]   }),
-  ])
+  // Single request — all dashboard data
+  let data: TeacherDashboardData | null = null
+  try {
+    data = await serverFetch<TeacherDashboardData>("/api/teacher/dashboard", {
+      revalidate: 60,
+      tags: ["teacher-dashboard"],
+    })
+  } catch {
+    // graceful fallback
+  }
 
-  const groups = resolveList(groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>)
-  const notifs = resolveList(notifsRes as PromiseSettledResult<PaginatedResponse<ApiNotification> | ApiNotification[] | null>)
-  const unread = notifs.filter((n) => !n.isRead).length
+  const groups   = data?.groups        ?? []
+  const notifs   = data?.notifications ?? []
+  const unread   = data?.unreadCount   ?? 0
 
-  const totalStudents = groups.reduce((s, g) => s + ((g as unknown as { studentsCount?: number }).studentsCount ?? 0), 0)
+  const totalStudents = groups.reduce(
+    (s, g) => s + ((g as unknown as { studentsCount?: number }).studentsCount ?? 0), 0
+  )
 
   return (
     <div className="flex flex-col">
@@ -54,10 +57,10 @@ export default async function TeacherDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "المجموعات",    value: groups.length, icon: BookOpen,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20"   },
-            { label: "إجمالي الطلاب",value: totalStudents, icon: Users,         color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"        },
-            { label: "حضور اليوم",   value: "—",           icon: CalendarCheck, color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-900/20"  },
-            { label: "غياب اليوم",   value: "—",           icon: XCircle,       color: "text-rose-600",   bg: "bg-rose-50 dark:bg-rose-900/20"        },
+            { label: "المجموعات",     value: groups.length, icon: BookOpen,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20"  },
+            { label: "إجمالي الطلاب", value: totalStudents, icon: Users,         color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"       },
+            { label: "حضور اليوم",    value: "—",           icon: CalendarCheck, color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+            { label: "غياب اليوم",    value: "—",           icon: XCircle,       color: "text-rose-600",   bg: "bg-rose-50 dark:bg-rose-900/20"       },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
               <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>
@@ -89,14 +92,10 @@ export default async function TeacherDashboard() {
                 <div key={g._id} className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
                   <div className={`h-1.5 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
                   <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
-                        {g.description && (
-                          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{g.description}</p>
-                        )}
-                      </div>
-                    </div>
+                    <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
+                    {g.description && (
+                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{g.description}</p>
+                    )}
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[11px] text-muted-foreground">
                         {new Date(g.updatedAt).toLocaleDateString("ar-EG")}
@@ -123,7 +122,7 @@ export default async function TeacherDashboard() {
             </div>
             <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
               {notifs.map((n, i) => (
-                <div key={n.id} className={`flex items-start gap-3 px-4 py-3 ${i < notifs.length - 1 ? "border-b border-border/40" : ""}`}>
+                <div key={String(n._id ?? n.id)} className={`flex items-start gap-3 px-4 py-3 ${i < notifs.length - 1 ? "border-b border-border/40" : ""}`}>
                   <span className={`mt-0.5 size-2 shrink-0 rounded-full ${n.isRead ? "bg-muted" : "bg-primary"}`} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{n.title}</p>

@@ -25,17 +25,17 @@ export async function saveAttendanceAction(
   records: Array<{ studentId: string; status: AttendanceStatus }>
 ): Promise<AttendanceActionState> {
   const parsed = saveAttendanceSchema.safeParse({ groupId, date, records })
-  if (!parsed.success) {
-    return { error: "بيانات غير صالحة" }
-  }
+  if (!parsed.success) return { error: "بيانات غير صالحة" }
 
   try {
     await serverFetch(`/api/groups/${groupId}/attendance`, {
       method: "POST",
       body:   { date, records },
     })
+    // Bust Next.js server cache for attendance + ranking (scores update after attendance)
     revalidatePath(`/teacher/group/${groupId}`)
     revalidatePath(`/teacher/group/${groupId}/attendance`)
+    revalidatePath(`/teacher/group/${groupId}/ranking`)
     return { success: true }
   } catch (e: unknown) {
     const err = e as { message?: string }
