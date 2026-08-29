@@ -15,9 +15,18 @@ export default async function AttendancePage({ params }: { params: Promise<{ id:
   ])
 
   const group    = resolveOne(groupRes as PromiseSettledResult<ApiGroup | null>, null)
-  const students = resolveList(studentsRes as PromiseSettledResult<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[] | null>)
+  const rawStudents = resolveList(studentsRes as PromiseSettledResult<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[] | null>)
   const unread   = resolveList(notifsRes  as PromiseSettledResult<PaginatedResponse<ApiNotification>    | ApiNotification[]    | null>)
     .filter((n) => !n.isRead).length
+
+  // API returns plain user objects (not ApiGroupMembership wrappers)
+  const students = rawStudents.map(s => {
+    // Handle both wrapped { student: {...} } and flat { _id, name, ... } shapes
+    const user = (s as unknown as { student?: { _id?: string; id?: string; name?: string } }).student ?? s as unknown as { _id?: string; id?: string; name?: string }
+    const sid  = user._id ?? user.id ?? ""
+    const name = user.name ?? ""
+    return { id: sid, name, avatar: name ? name[0] : "؟" }
+  }).filter(s => s.id)
 
   return (
     <div className="flex flex-col">
@@ -33,11 +42,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ id:
       />
       <AttendanceClient
         groupId={id}
-        students={students.map((m) => ({
-          id:     m.studentId,
-          name:   (m.student as { name?: string } | undefined)?.name ?? m.studentId,
-          avatar: ((m.student as { name?: string } | undefined)?.name ?? "؟")[0],
-        }))}
+        students={students}
       />
     </div>
   )

@@ -127,21 +127,29 @@ async function recalculateMonthlyScores(
       s.presentCount * ATTENDANCE_SCORE.PRESENT +
       s.lateCount    * ATTENDANCE_SCORE.LATE    +
       s.absentCount  * ATTENDANCE_SCORE.ABSENT;
+
+    // Two-step: ensure doc exists with bonusPoints=0 if new, then update counts+score
     return MonthlyScore.findOneAndUpdate(
       { student: studentId, group: groupId, month, year },
-      [
+      {
+        $setOnInsert: { bonusPoints: 0 }, // only on first creation
+      },
+      { upsert: true, new: false }        // return OLD doc (or null if new)
+    ).then(existing => {
+      const bonus = (existing as { bonusPoints?: number } | null)?.bonusPoints ?? 0;
+      return MonthlyScore.findOneAndUpdate(
+        { student: studentId, group: groupId, month, year },
         {
           $set: {
             presentCount: s.presentCount,
             lateCount:    s.lateCount,
             absentCount:  s.absentCount,
-            // score = attendance score + existing bonusPoints
-            score: { $add: [attendanceScore, { $ifNull: ["$bonusPoints", 0] }] },
+            score:        attendanceScore + bonus,
           },
         },
-      ],
-      { upsert: true, new: true }
-    );
+        { new: true }
+      );
+    });
   });
 
   await Promise.all(ops);

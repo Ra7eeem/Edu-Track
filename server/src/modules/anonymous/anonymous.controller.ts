@@ -42,3 +42,9 @@ export const getAllMessages = asyncHandler(async (req: Request, res: Response) =
   const { data, pagination } = await AnonymousService.getAllMessages(req);
   sendPaginated(res, data, pagination);
 });
+
+// Student: delete own message
+export const deleteMyMessage = asyncHandler(async (req: Request, res: Response) => {
+  await AnonymousService.deleteMyMessage(req.user!.userId, p(req.params.messageId));
+  sendSuccess(res, null, 200, "تم حذف الرسالة");
+});

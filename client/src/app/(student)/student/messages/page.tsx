@@ -9,7 +9,7 @@ import {
   PaginatedResponse, resolveId,
 } from "@/shared/types/api"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { MessageCircle, Send, X } from "lucide-react"
+import { MessageCircle, Send, Trash2, X } from "lucide-react"
 import { useRef, useState } from "react"
 
 function toArray<T>(raw: unknown): T[] {
@@ -154,6 +154,12 @@ function SendModal({ onClose }: { onClose: () => void }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function StudentMessagesPage() {
   const [showSend, setShowSend] = useState(false)
+  const qc = useQueryClient()
+  const deleteMut = useMutation({
+    mutationFn: (id: string) =>
+      clientFetch(`/api/anonymous/${id}`, { method: "DELETE" } as never),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["student", "anonymous"] }),
+  })
 
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["student", "anonymous"],
@@ -211,9 +217,21 @@ export default function StudentMessagesPage() {
                           <span className="text-[10px] bg-muted rounded-full px-2 py-0.5 text-muted-foreground">{group.name}</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-muted-foreground">
-                        {new Date(msg.createdAt).toLocaleDateString("ar-EG")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(msg.createdAt).toLocaleDateString("ar-EG")}
+                        </span>
+                        {!msg.reply && (
+                          <button
+                            onClick={() => deleteMut.mutate(mid)}
+                            disabled={deleteMut.isPending}
+                            className="grid size-6 place-items-center rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors dark:hover:bg-rose-950/20"
+                            title="حذف الرسالة"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm leading-relaxed whitespace-pre-line">{msg.content}</p>
                   </div>

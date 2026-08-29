@@ -24,6 +24,13 @@ anonymousRouter.get(
   AnonymousController.getMyMessages
 );
 
+// DELETE /api/anonymous/:messageId — student deletes own message (no reply yet)
+anonymousRouter.delete(
+  "/:messageId",
+  authorize(Role.STUDENT),
+  AnonymousController.deleteMyMessage
+);
+
 // ── Teacher ───────────────────────────────────────────────────────────────────
 // GET  /api/anonymous/inbox     — teacher views anonymous messages to them
 anonymousRouter.get(

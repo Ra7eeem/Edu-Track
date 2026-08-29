@@ -20,6 +20,7 @@ import {
   useApproveJoinRequest,
   useRejectJoinRequest,
 } from "@/features/teacher/hooks/use-join-requests"
+import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/ranking.action"
 import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
@@ -34,9 +35,9 @@ import {
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
-  CheckCircle2, Clock, ClipboardList, Heart, MessageCircle, MoreVertical,
-  PenLine, Plus, RotateCcw, Save, Search,
-  Trash2, Trophy, Users, XCircle,
+  CheckCircle2, Clock, ClipboardList, Gift, Heart, MessageCircle, MoreVertical,
+  PenLine, Plus, RefreshCcw, RotateCcw, Save, Search,
+  Trash2, Trophy, Users, X, XCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { use, useMemo, useState, useTransition } from "react"
@@ -74,8 +75,9 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
   )
 
   const present = Object.values(attendance).filter(v => v === AttendanceStatus.PRESENT).length
+  const late    = Object.values(attendance).filter(v => v === AttendanceStatus.LATE).length
   const absent  = Object.values(attendance).filter(v => v === AttendanceStatus.ABSENT).length
-  const pending = students.length - present - absent
+  const pending = students.length - present - late - absent
 
   const mark = (sid: string, status: AttendanceStatus) =>
     setAttendance(p => ({ ...p, [sid]: p[sid] === status ? "none" : status }))
@@ -104,6 +106,9 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
     })
   }
 
+  console.log(filtered);
+  
+
   return (
     <div className="space-y-3">
       {/* Stats bar */}
@@ -111,15 +116,18 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
         <div className="flex items-center gap-4 text-sm">
           <span className="font-bold">{students.length} طالب</span>
           <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="size-4"/>{present} حاضر</span>
+          <span className="flex items-center gap-1 text-amber-600"><Clock className="size-4"/>{late} متأخر</span>
           <span className="flex items-center gap-1 text-rose-600"><XCircle className="size-4"/>{absent} غائب</span>
           {pending > 0 && <span className="text-xs text-muted-foreground">{pending} لم يُسجَّل</span>}
           <Button size="sm" variant="ghost" onClick={reset} className="ms-auto text-muted-foreground">
             <RotateCcw className="size-3.5"/>
           </Button>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all"
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted flex">
+          <div className="h-full bg-emerald-500 transition-all"
                style={{ width: students.length ? `${(present / students.length) * 100}%` : "0%" }}/>
+          <div className="h-full bg-amber-400 transition-all"
+               style={{ width: students.length ? `${(late / students.length) * 100}%` : "0%" }}/>
         </div>
       </div>
 
@@ -140,6 +148,10 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
           className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400">
           ✓ تحضير الكل
         </button>
+        <button onClick={() => markAll(AttendanceStatus.LATE)}
+          className="flex-1 rounded-xl border border-amber-200 bg-amber-50 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400">
+          ⏰ تأخر الكل
+        </button>
         <button onClick={() => markAll(AttendanceStatus.ABSENT)}
           className="flex-1 rounded-xl border border-rose-200 bg-rose-50 py-2 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">
           ✗ غياب الكل
@@ -151,27 +163,34 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
         {filtered.map(s => {
           const sid    = resolveId(s)
           const name   = s.name ?? "طالب"
-          const avatar = name.length > 0 ? name[0] : "؟"
+          const avatar = name.length > 0 ? name.slice(0,1) : "؟"
           const status = attendance[sid]
           return (
             <div key={sid}
               className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all",
                 status === AttendanceStatus.PRESENT ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/50 dark:bg-emerald-950/20"
-                : status === AttendanceStatus.ABSENT ? "border-rose-200 bg-rose-50/60 dark:border-rose-800/50 dark:bg-rose-950/20"
+                : status === AttendanceStatus.LATE    ? "border-amber-200 bg-amber-50/60 dark:border-amber-800/50 dark:bg-amber-950/20"
+                : status === AttendanceStatus.ABSENT  ? "border-rose-200 bg-rose-50/60 dark:border-rose-800/50 dark:bg-rose-950/20"
                 : "border-border/60 bg-card")}>
               <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
                 {avatar}
               </span>
-              <span className="flex-1 text-sm font-medium">{name}</span>
-              <div className="flex gap-2">
+              <span className="flex-1 text-sm font-medium truncate">{name}</span>
+              <div className="flex gap-1.5 shrink-0">
                 <button onClick={() => mark(sid, AttendanceStatus.PRESENT)}
-                  className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+                  className={cn("rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all",
                     status === AttendanceStatus.PRESENT ? "bg-emerald-500 text-white shadow-sm"
                     : "border border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400")}>
                   حاضر
                 </button>
+                <button onClick={() => mark(sid, AttendanceStatus.LATE)}
+                  className={cn("rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all",
+                    status === AttendanceStatus.LATE ? "bg-amber-500 text-white shadow-sm"
+                    : "border border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400")}>
+                  متأخر
+                </button>
                 <button onClick={() => mark(sid, AttendanceStatus.ABSENT)}
-                  className={cn("rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
+                  className={cn("rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all",
                     status === AttendanceStatus.ABSENT ? "bg-rose-500 text-white shadow-sm"
                     : "border border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400")}>
                   غائب
@@ -204,7 +223,13 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
 function PostsTab({ groupId, authorName }: { groupId: string; authorName: string }) {
   const qc = useQueryClient()
   const { data, isLoading } = useGroupPosts(groupId)
-  const posts = data?.data ?? []
+  const posts: ApiPost[] = (() => {
+    if (!data) return []
+    if (Array.isArray(data)) return data as ApiPost[]
+    if (typeof data === "object" && "data" in (data as object))
+      return ((data as { data: ApiPost[] }).data) ?? []
+    return []
+  })()
 
   const [content,     setContent]     = useState("")
   const [showCompose, setShowCompose] = useState(false)
@@ -296,74 +321,172 @@ function PostsTab({ groupId, authorName }: { groupId: string; authorName: string
 // ─── Ranking sub-component ─────────────────────────────────────────────────────
 function RankingTab({ groupId }: { groupId: string }) {
   const now = new Date()
-  const { data, isLoading } = useGroupRanking(groupId, now.getMonth() + 1, now.getFullYear())
+  const month = now.getMonth() + 1
+  const year  = now.getFullYear()
+  const { data, isLoading } = useGroupRanking(groupId, month, year)
   const ranking = data?.ranking ?? []
+  const qc = useQueryClient()
+
+  const [bonusTarget, setBonusTarget]  = useState<{ id: string; name: string } | null>(null)
+  const [showReset,   setShowReset]    = useState(false)
+  const [bonusVal,    setBonusVal]     = useState("")
+  const [bonusErr,    setBonusErr]     = useState<string | null>(null)
+  const [resetErr,    setResetErr]     = useState<string | null>(null)
+  const [isPending,   startTransition] = useTransition()
+
+  const handleBonus = () => {
+    const val = Number(bonusVal)
+    if (!val || val <= 0 || !bonusTarget) { setBonusErr("أدخل رقماً موجباً"); return }
+    setBonusErr(null)
+    startTransition(async () => {
+      const res = await addBonusAction(groupId, bonusTarget.id, val, month, year)
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        setBonusTarget(null); setBonusVal("")
+      } else { setBonusErr(res.error ?? "حدث خطأ") }
+    })
+  }
+
+  const handleReset = () => {
+    setResetErr(null)
+    startTransition(async () => {
+      const res = await resetRankingAction(groupId, month, year)
+      if (res.success) {
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "ranking"] })
+        setShowReset(false)
+      } else { setResetErr(res.error ?? "حدث خطأ") }
+    })
+  }
 
   if (isLoading) return <div className="space-y-2">{Array.from({length:6}).map((_,i)=><RankRowSkeleton key={i}/>)}</div>
-  if (ranking.length === 0) return (
-    <div className="flex flex-col items-center py-16 text-center">
-      <p className="text-4xl mb-3">🏆</p>
-      <p className="font-medium">لا يوجد ترتيب بعد</p>
-      <p className="mt-1 text-sm text-muted-foreground">سيظهر الترتيب بعد تسجيل الحضور</p>
-    </div>
-  )
-
-  const top3 = ranking.slice(0, 3)
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-bold">ترتيب {ARABIC_MONTHS[now.getMonth() + 1]} {now.getFullYear()}</p>
-        <span className="text-xs text-muted-foreground">{ranking.length} طالب</span>
-      </div>
-
-      {/* Podium */}
-      {top3.length >= 2 && (
-        <div className="mb-4 grid grid-cols-3 items-end gap-2 rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-50/10 p-4 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-transparent">
-          {([top3[1], top3[0], top3[2]] as (ApiRankingEntry|undefined)[]).map((entry, i) => {
-            if (!entry) return <div key={i}/>
-            const pos = i===0?2:i===1?1:3
-            const heights = ["h-20","h-28","h-16"]
-            const podColor = pos===1 ? "bg-gradient-to-t from-amber-400 to-amber-300"
-              : pos===2 ? "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600"
-              : "bg-gradient-to-t from-amber-700/60 to-amber-600/50"
-            return (
-              <div key={resolveId(entry.student)} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
-                <span className="text-2xl">{MEDALS[pos-1]}</span>
-                <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">{entry.student.name[0]}</span>
-                <p className="text-center text-[10px] font-semibold leading-tight">{entry.student.name.split(" ")[0]}</p>
-                <p className="text-[10px] text-muted-foreground">{entry.score} نقطة</p>
-                <div className={cn("w-full rounded-t-xl", heights[i], podColor)}/>
-              </div>
-            )
-          })}
+    <>
+      {/* Bonus Modal */}
+      {bonusTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-background border border-border/60 shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+              <p className="text-sm font-bold flex items-center gap-2"><Gift className="size-4 text-amber-500"/>نقاط مكافأة لـ {bonusTarget.name}</p>
+              <button onClick={() => { setBonusTarget(null); setBonusVal(""); setBonusErr(null) }}
+                className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted"><X className="size-4"/></button>
+            </div>
+            <div className="p-5 space-y-3">
+              {bonusErr && <p className="text-xs text-destructive">{bonusErr}</p>}
+              <input type="number" min="1" value={bonusVal} onChange={e => setBonusVal(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleBonus()}
+                placeholder="عدد النقاط (مثل: 5)" autoFocus
+                className="flex h-10 w-full rounded-2xl border border-input bg-card px-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"/>
+            </div>
+            <div className="flex gap-2 border-t border-border/60 px-5 py-4">
+              <Button variant="outline" className="flex-1" onClick={() => { setBonusTarget(null); setBonusVal("") }}>إلغاء</Button>
+              <Button className="flex-1 bg-gradient-to-r from-amber-500 to-amber-400 text-white hover:opacity-90"
+                onClick={handleBonus} disabled={isPending}>
+                <Gift className="size-4"/>{isPending ? "..." : "إضافة"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Full list */}
-      <div className="space-y-2">
-        {ranking.map((entry: ApiRankingEntry) => (
-          <div key={resolveId(entry.student)} className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm",
-            entry.rank<=3 ? "border-amber-200/60 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10" : "border-border/60 bg-card")}>
-            <span className="w-7 text-center shrink-0">
-              {entry.rank<=3 ? MEDALS[entry.rank-1] : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>}
-            </span>
-            <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{entry.student.name[0]}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{entry.student.name}</p>
-              <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-muted">
-                <div className="h-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all"
-                     style={{ width: ranking[0]?.score ? `${(entry.score/ranking[0].score)*100}%` : "0%" }}/>
-              </div>
-            </div>
-            <div className="text-end shrink-0">
-              <p className="text-sm font-bold text-primary">{entry.score}</p>
-              <p className="text-[10px] text-muted-foreground">{entry.presentCount} حضور</p>
+      {/* Reset confirm */}
+      {showReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-3xl bg-background border border-border/60 shadow-2xl p-6 text-center space-y-4">
+            <p className="text-4xl">🔄</p>
+            <p className="font-bold">تصفير الترتيب؟</p>
+            <p className="text-sm text-muted-foreground">سيُصفَّر ترتيب {ARABIC_MONTHS[month]} {year} للجميع</p>
+            {resetErr && <p className="text-xs text-destructive">{resetErr}</p>}
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setShowReset(false)}>إلغاء</Button>
+              <Button variant="destructive" className="flex-1" onClick={handleReset} disabled={isPending}>
+                {isPending ? "جارٍ التصفير..." : "تأكيد التصفير"}
+              </Button>
             </div>
           </div>
-        ))}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-bold">ترتيب {ARABIC_MONTHS[month]} {year}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{ranking.length} طالب</span>
+            <Button size="sm" variant="outline"
+              className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800"
+              onClick={() => setShowReset(true)}>
+              <RefreshCcw className="size-3.5"/>تصفير
+            </Button>
+          </div>
+        </div>
+
+        {ranking.length === 0 ? (
+          <div className="flex flex-col items-center py-16 text-center">
+            <p className="text-4xl mb-3">🏆</p>
+            <p className="font-medium">لا يوجد ترتيب بعد</p>
+            <p className="mt-1 text-sm text-muted-foreground">سيظهر الترتيب بعد تسجيل الحضور</p>
+          </div>
+        ) : (
+          <>
+            {/* Podium */}
+            {ranking.length >= 2 && (() => {
+              const top3 = ranking.slice(0, 3)
+              return (
+                <div className="mb-4 grid grid-cols-3 items-end gap-2 rounded-3xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-50/10 p-4 dark:border-amber-800/30 dark:from-amber-950/20 dark:to-transparent">
+                  {([top3[1], top3[0], top3[2]] as (ApiRankingEntry|undefined)[]).map((entry, i) => {
+                    if (!entry) return <div key={i}/>
+                    const pos = i===0?2:i===1?1:3
+                    const heights = ["h-20","h-28","h-16"]
+                    const podColor = pos===1 ? "bg-gradient-to-t from-amber-400 to-amber-300"
+                      : pos===2 ? "bg-gradient-to-t from-slate-300 to-slate-200 dark:from-slate-600"
+                      : "bg-gradient-to-t from-amber-700/60 to-amber-600/50"
+                    return (
+                      <div key={resolveId(entry.student)} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
+                        <span className="text-2xl">{MEDALS[pos-1]}</span>
+                        <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">{entry.student.name[0]}</span>
+                        <p className="text-center text-[10px] font-semibold leading-tight">{entry.student.name.split(" ")[0]}</p>
+                        <p className="text-[10px] text-muted-foreground">{entry.score} نقطة</p>
+                        <div className={cn("w-full rounded-t-xl", heights[i], podColor)}/>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+
+            {/* Full list */}
+            <div className="space-y-2">
+              {ranking.map((entry: ApiRankingEntry) => {
+                const sid = resolveId(entry.student)
+                return (
+                  <div key={sid} className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm",
+                    entry.rank<=3 ? "border-amber-200/60 bg-amber-50/30 dark:border-amber-800/30 dark:bg-amber-950/10" : "border-border/60 bg-card")}>
+                    <span className="w-7 text-center shrink-0">
+                      {entry.rank<=3 ? MEDALS[entry.rank-1] : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>}
+                    </span>
+                    <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{entry.student.name[0]}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{entry.student.name}</p>
+                      <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                        <span className="text-emerald-600">{entry.presentCount} حضور</span>
+                        {(entry as ApiRankingEntry & { lateCount?: number }).lateCount ? <span className="text-amber-600">{(entry as ApiRankingEntry & { lateCount?: number }).lateCount} متأخر</span> : null}
+                        {entry.bonusPoints > 0 && <span className="text-violet-600">+{entry.bonusPoints} مكافأة</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => { setBonusTarget({ id: sid, name: entry.student.name }); setBonusVal("") }}
+                        className="grid size-7 place-items-center rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition-colors dark:border-amber-800 dark:hover:bg-amber-950/20"
+                        title="إضافة نقاط مكافأة"><Gift className="size-3.5"/></button>
+                      <p className="text-sm font-bold text-primary min-w-[2.5rem] text-end">{entry.score}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
       </div>
-    </div>
+    </>
   )
 }
 
@@ -432,6 +555,7 @@ function JoinRequestsTab({ groupId }: { groupId: string }) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{name}</p>
                     <p className="truncate text-xs text-muted-foreground">{email}</p>
+                    <p className="truncate text-xs text-muted-foreground">{student?.grade}</p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
                       {new Date(req.createdAt).toLocaleDateString("ar-EG")}
                     </p>

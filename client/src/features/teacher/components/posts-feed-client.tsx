@@ -1,12 +1,12 @@
 "use client"
 
-import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
 import { createPostAction, deletePostAction, toggleLikeAction } from "@/features/teacher/actions/post.action"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { ApiPost, resolveId } from "@/shared/types/api"
-import { Heart, MessageCircle, MoreVertical, PenLine, Plus, Trash2 } from "lucide-react"
+import { Heart, MessageCircle, PenLine, Plus, Trash2 } from "lucide-react"
 import { useTransition, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface Props {
   groupId:      string
@@ -21,8 +21,11 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
   const [error,       setError]       = useState<string | null>(null)
   const [isPending,   startTransition] = useTransition()
 
+  const qc = useQueryClient()
+
   const { data, refetch } = useGroupPosts(groupId)
-  const posts = data?.data ?? initialPosts
+  const posts = (data as { data?: ApiPost[] } | undefined)?.data
+    ?? (Array.isArray(data) ? data as ApiPost[] : initialPosts)
 
   const handleCreate = () => {
     if (!content.trim()) return
@@ -32,7 +35,8 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
       if (res.success) {
         setContent("")
         setShowCompose(false)
-        refetch()
+        // invalidate React Query cache so feed refreshes immediately
+        qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] })
       } else {
         setError(res.error ?? "حدث خطأ")
       }
@@ -43,14 +47,14 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
     if (!confirm("هل أنت متأكد من حذف هذا المنشور؟")) return
     startTransition(async () => {
       await deletePostAction(groupId, postId)
-      refetch()
+      qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] })
     })
   }
 
   const handleLike = (postId: string) => {
     startTransition(async () => {
       await toggleLikeAction(groupId, postId)
-      refetch()
+      qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] })
     })
   }
 
@@ -109,11 +113,12 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
       ) : (
         <div className="space-y-4">
           {posts.map((p) => {
+            const pid    = resolveId(p)
             const author = (p.author as { name?: string; avatarUrl?: string } | undefined)
             const aName   = author?.name   ?? authorName
             const aAvatar = aName[0]       ?? authorAvatar
             return (
-              <article key={p.id} className="rounded-2xl border border-border/60 bg-card shadow-sm">
+              <article key={pid} className="rounded-2xl border border-border/60 bg-card shadow-sm">
                 <div className="flex items-center justify-between px-4 pt-4">
                   <div className="flex items-center gap-3">
                     <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">

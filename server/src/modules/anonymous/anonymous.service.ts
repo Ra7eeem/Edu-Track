@@ -106,6 +106,18 @@ export async function replyToMessage(
   };
 }
 
+// ─── Student deletes their own message (only if no reply yet) ────────────────
+export async function deleteMyMessage(studentId: string, messageId: string) {
+  if (!mongoose.Types.ObjectId.isValid(messageId))
+    throw ApiError.badRequest("معرّف غير صالح");
+
+  const msg = await AnonymousMessage.findOne({ _id: messageId, sender: studentId });
+  if (!msg) throw ApiError.notFound("الرسالة غير موجودة");
+  if (msg.reply) throw ApiError.conflict("لا يمكن حذف رسالة تم الرد عليها");
+
+  await msg.deleteOne();
+}
+
 // ─── Admin views all messages (with sender revealed) ─────────────────────────
 export async function getAllMessages(req: Request) {
   const { page, limit, skip } = parsePagination(req);

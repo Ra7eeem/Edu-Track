@@ -43,7 +43,7 @@ export function AttendanceClient({ groupId, students }: Props) {
   const [isPending,   startTransition] = useTransition()
 
   const filtered = useMemo(
-    () => students.filter(s => s.name.includes(search)),
+    () => students.filter(s => (s.name ?? "").toLowerCase().includes(search.toLowerCase())),
     [students, search]
   )
 

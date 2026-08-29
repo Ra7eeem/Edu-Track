@@ -97,9 +97,10 @@ interface Props {
   initialRanking: ApiRankingEntry[]
   currentMonth:   number
   currentYear:    number
+  isTeacher?:     boolean   // controls bonus+reset visibility
 }
 
-export function RankingClient({ groupId, initialRanking, currentMonth, currentYear }: Props) {
+export function RankingClient({ groupId, initialRanking, currentMonth, currentYear, isTeacher = false }: Props) {
   const qc = useQueryClient()
   const { data } = useGroupRanking(groupId, currentMonth, currentYear)
   const ranking  = data?.ranking ?? initialRanking
@@ -164,14 +165,16 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
             <p className="text-lg font-extrabold">ترتيب {ARABIC_MONTHS[currentMonth]} {currentYear}</p>
             <p className="text-xs text-muted-foreground">{ranking.length} طالب</p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20"
-            onClick={() => setShowReset(true)}
-          >
-            <RefreshCcw className="size-3.5" />تصفير الترتيب
-          </Button>
+          {isTeacher && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20"
+              onClick={() => setShowReset(true)}
+            >
+              <RefreshCcw className="size-3.5" />تصفير الترتيب
+            </Button>
+          )}
         </div>
 
         {ranking.length === 0 ? (
@@ -245,13 +248,15 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => setBonusTarget({ id: sid, name: entry.student.name })}
-                        className="grid size-7 place-items-center rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition-colors dark:border-amber-800 dark:hover:bg-amber-950/20"
-                        title="إضافة نقاط مكافأة"
-                      >
-                        <Gift className="size-3.5" />
-                      </button>
+                      {isTeacher && (
+                        <button
+                          onClick={() => setBonusTarget({ id: sid, name: entry.student.name })}
+                          className="grid size-7 place-items-center rounded-lg border border-amber-200 text-amber-600 hover:bg-amber-50 transition-colors dark:border-amber-800 dark:hover:bg-amber-950/20"
+                          title="إضافة نقاط مكافأة"
+                        >
+                          <Gift className="size-3.5" />
+                        </button>
+                      )}
                       <div className="text-end">
                         <p className="text-sm font-bold text-primary">{entry.score}</p>
                       </div>
