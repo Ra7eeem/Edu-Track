@@ -29,6 +29,7 @@ export function useAdminStats() {
   return useQuery({
     queryKey: ["admin", "stats"],
     queryFn:  () => clientFetch<AdminDashboardStats>("/api/admin/dashboard"),
+    staleTime: 2 * 60 * 1000, // 2 min — stats don't change every second
   })
 }
 
@@ -41,6 +42,7 @@ export function useAdminTeachers(search = "", page = 1) {
       )
       return toArray<ApiUser>(raw)
     },
+    staleTime: 60 * 1000,
   })
 }
 
@@ -53,6 +55,7 @@ export function useAdminGroups(search = "", page = 1) {
       )
       return toArray<ApiGroup>(raw)
     },
+    staleTime: 60 * 1000,
   })
 }
 

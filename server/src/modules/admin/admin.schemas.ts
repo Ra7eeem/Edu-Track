@@ -31,8 +31,19 @@ export const addTeacherToGroupSchema = z.object({
   teacherId: z.string().min(1, "معرّف المدرس مطلوب"),
 });
 
+export const updateAdminProfileSchema = z.object({
+  name:        z.string().min(2).max(100).trim().optional(),
+  phone:       z.string().min(7).max(20).trim().optional(),
+  oldPassword: z.string().min(8).optional(),
+  newPassword: z.string().min(8, "كلمة المرور 8 أحرف على الأقل").optional(),
+}).refine(d => !(d.newPassword && !d.oldPassword), {
+  message: "يجب إدخال كلمة المرور القديمة لتغيير كلمة المرور",
+  path: ["oldPassword"],
+})
+
 export type CreateTeacherDto      = z.infer<typeof createTeacherSchema>;
 export type UpdateTeacherDto      = z.infer<typeof updateTeacherSchema>;
 export type CreateGroupAdminDto   = z.infer<typeof createGroupSchema>;
 export type UpdateGroupDto        = z.infer<typeof updateGroupSchema>;
 export type AddTeacherToGroupDto  = z.infer<typeof addTeacherToGroupSchema>;
+export type UpdateAdminProfileDto = z.infer<typeof updateAdminProfileSchema>;

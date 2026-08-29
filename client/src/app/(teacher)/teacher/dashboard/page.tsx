@@ -27,8 +27,8 @@ export default async function TeacherDashboard() {
 
   // Parallel fetches
   const [groupsRes, notifsRes] = await Promise.allSettled([
-    serverFetch<PaginatedResponse<ApiGroup>>("/api/teacher/groups?limit=10"),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=5"),
+    serverFetch<PaginatedResponse<ApiGroup>>("/api/teacher/groups?limit=10",       { revalidate: 60, tags: ["teacher-groups"]  }),
+    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=5",  { revalidate: 30, tags: ["notifications"]   }),
   ])
 
   const groups = resolveList(groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>)

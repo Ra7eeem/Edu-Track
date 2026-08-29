@@ -44,3 +44,8 @@ export const getMyScores = asyncHandler(async (req, res: Response) => {
   const result = await StudentService.getMyScores(uid(req), req);
   sendSuccess(res, result);
 });
+
+export const getDashboard = asyncHandler(async (req, res: Response) => {
+  const data = await StudentService.getDashboard(uid(req));
+  sendSuccess(res, data);
+});

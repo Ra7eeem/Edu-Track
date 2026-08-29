@@ -25,6 +25,7 @@ export function useTeacherGroups() {
       )
       return extractArray<ApiGroup>(raw)
     },
+    staleTime: 5 * 60 * 1000, // groups rarely change mid-session
   })
 }
 
@@ -33,14 +34,10 @@ export function useGroupDetails(groupId: string) {
     queryKey: ["groups", groupId],
     queryFn:  async () => {
       const raw = await clientFetch<Record<string, unknown>>(`/api/groups/${groupId}`)
-      // Backend returns the group fields merged with teachers+membersCount
-      // Normalise to { group, teachers, studentsCount }
       if (raw && typeof raw === "object") {
         if ("group" in raw) {
-          // Already wrapped
           return raw as unknown as { group: ApiGroup; teachers: unknown[]; studentsCount: number }
         }
-        // Flat shape — extract teachers+membersCount out
         const { teachers, membersCount, ...groupFields } = raw as Record<string, unknown>
         return {
           group:         groupFields as unknown as ApiGroup,
@@ -50,7 +47,8 @@ export function useGroupDetails(groupId: string) {
       }
       return { group: raw as unknown as ApiGroup, teachers: [], studentsCount: 0 }
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }
 

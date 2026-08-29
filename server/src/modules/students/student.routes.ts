@@ -11,6 +11,7 @@ export const studentRouter = Router();
 studentRouter.use(authenticate, authorize(Role.STUDENT));
 
 studentRouter.get("/me", StudentController.getMyProfile);
+studentRouter.get("/me/dashboard", StudentController.getDashboard);
 studentRouter.patch(
   "/me",
   upload.single("avatar"),

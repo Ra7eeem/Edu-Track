@@ -26,6 +26,7 @@ export function useJoinRequests(status?: JoinRequestStatus) {
       )
       return toArray<ApiJoinRequest>(raw)
     },
+    staleTime: 30 * 1000, // join requests need to feel current
   })
 }
 
@@ -38,6 +39,7 @@ export function useJoinRequestCounts() {
       )
       return toArray<ApiJoinRequest>(raw).length
     },
+    staleTime:       20 * 1000,
     refetchInterval: 30_000,
   })
 }

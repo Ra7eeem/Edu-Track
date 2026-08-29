@@ -51,6 +51,7 @@ const adminNav: NavItem[] = [
   { label: "المدرسون",  href: "/admin/teachers",   icon: Users           },
   { label: "المجموعات", href: "/admin/groups",     icon: BookOpen        },
   { label: "التقارير",  href: "/admin/reports",    icon: BarChart3       },
+  { label: "الحساب",    href: "/admin/profile",    icon: Settings        },
 ]
 
 const navMap: Record<SidebarVariant, NavItem[]> = {

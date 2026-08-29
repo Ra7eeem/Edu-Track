@@ -1,14 +1,15 @@
-import { TopBar } from "@/shared/components/layout/topbar"
-import { Button } from "@/shared/components/ui/button"
-import { serverFetch, resolveList, resolveOne } from "@/shared/lib/api-server"
-import {
-  AdminDashboardStats,
-  ApiGroup,
-  ApiUser,
-  PaginatedResponse,
-} from "@/shared/types/api"
+import { TopBar }    from "@/shared/components/layout/topbar"
+import { Button }    from "@/shared/components/ui/button"
+import { serverFetch } from "@/shared/lib/api-server"
+import { AdminDashboardStats, ApiGroup, ApiUser } from "@/shared/types/api"
 import { BookOpen, CalendarCheck, MessageCircle, Users, XCircle } from "lucide-react"
 import Link from "next/link"
+
+interface DashboardFull {
+  stats:    AdminDashboardStats
+  teachers: ApiUser[]
+  groups:   ApiGroup[]
+}
 
 const COLORS = [
   "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
@@ -17,15 +18,20 @@ const COLORS = [
 ]
 
 export default async function AdminDashboard() {
-  const [statsRes, groupsRes, teachersRes] = await Promise.allSettled([
-    serverFetch<AdminDashboardStats>("/api/admin/dashboard"),
-    serverFetch<PaginatedResponse<ApiGroup>>("/api/admin/groups?limit=6"),
-    serverFetch<PaginatedResponse<ApiUser>>("/api/admin/teachers?limit=5"),
-  ])
+  // Single request — all dashboard data in one roundtrip
+  let data: DashboardFull | null = null
+  try {
+    data = await serverFetch<DashboardFull>("/api/admin/dashboard-full", {
+      revalidate: 120,
+      tags: ["admin-dashboard"],
+    })
+  } catch {
+    // graceful degradation — show empty state
+  }
 
-  const stats    = resolveOne(statsRes as PromiseSettledResult<AdminDashboardStats | null>, null)
-  const groups   = resolveList(groupsRes   as PromiseSettledResult<PaginatedResponse<ApiGroup>   | ApiGroup[]   | null>)
-  const teachers = resolveList(teachersRes as PromiseSettledResult<PaginatedResponse<ApiUser>    | ApiUser[]    | null>)
+  const stats    = data?.stats
+  const groups   = data?.groups   ?? []
+  const teachers = data?.teachers ?? []
 
   return (
     <div className="flex flex-col">
@@ -36,19 +42,19 @@ export default async function AdminDashboard() {
         userName="مدير"
         userAvatar="ا"
         userAvatarColor="bg-rose-500"
-        profileHref="/admin/dashboard"
+        profileHref="/admin/profile"
       />
 
       <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6">
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-violet-600",  bg: "bg-violet-50 dark:bg-violet-900/20"   },
-            { label: "الطلاب",     value: stats?.totalStudents ?? "—", icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20"        },
-            { label: "المجموعات",  value: stats?.totalGroups   ?? "—", icon: BookOpen,      color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20"  },
-            { label: "حضور اليوم", value: stats?.todayPresent  ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20"  },
-            { label: "غياب اليوم", value: stats?.todayAbsent   ?? "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20"        },
-            { label: "المنشورات",  value: stats?.totalPosts    ?? "—", icon: MessageCircle, color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-900/20"      },
+            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-violet-600",  bg: "bg-violet-50 dark:bg-violet-900/20"  },
+            { label: "الطلاب",     value: stats?.totalStudents ?? "—", icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20"       },
+            { label: "المجموعات",  value: stats?.totalGroups   ?? "—", icon: BookOpen,      color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+            { label: "حضور اليوم", value: stats?.todayPresent  ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+            { label: "غياب اليوم", value: stats?.todayAbsent   ?? "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20"       },
+            { label: "المنشورات",  value: stats?.totalPosts    ?? "—", icon: MessageCircle, color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-900/20"     },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
               <div className={`mb-2 inline-grid size-8 place-items-center rounded-xl ${s.bg} ${s.color}`}>
@@ -61,20 +67,16 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {/* Top teachers */}
+          {/* Teachers */}
           <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-bold">المدرسون</h3>
-              <Link href="/admin/teachers" className="text-xs text-primary hover:underline">
-                عرض الكل
-              </Link>
+              <Link href="/admin/teachers" className="text-xs text-primary hover:underline">عرض الكل</Link>
             </div>
             <div className="space-y-3">
               {teachers.map((t, i) => (
-                <div key={t.id} className="flex items-center gap-3">
-                  <span className="text-xs font-bold text-muted-foreground w-4 shrink-0">
-                    #{i + 1}
-                  </span>
+                <div key={String(t._id ?? t.id)} className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-muted-foreground w-4 shrink-0">#{i + 1}</span>
                   <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
                     {t.name[0]}
                   </span>
@@ -97,13 +99,11 @@ export default async function AdminDashboard() {
           <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-bold">المجموعات</h3>
-              <Link href="/admin/groups" className="text-xs text-primary hover:underline">
-                عرض الكل
-              </Link>
+              <Link href="/admin/groups" className="text-xs text-primary hover:underline">عرض الكل</Link>
             </div>
             <div className="space-y-2">
               {groups.map((g, i) => (
-                <div key={g.id} className="overflow-hidden rounded-xl border border-border/40">
+                <div key={String(g._id ?? g.id)} className="overflow-hidden rounded-xl border border-border/40">
                   <div className={`h-1 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
                   <div className="flex items-center justify-between px-3 py-2">
                     <p className="truncate text-xs font-medium">{g.name}</p>

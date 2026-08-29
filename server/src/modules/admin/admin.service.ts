@@ -189,6 +189,50 @@ export async function getStudentById(id: string) {
 }
 
 // ─────────────────────────────────────────
+// Dashboard — full page data in one query
+// ─────────────────────────────────────────
+
+export async function getDashboardFull() {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  const [
+    totalTeachers,
+    totalStudents,
+    totalGroups,
+    totalPosts,
+    totalComments,
+    todaySessions,
+    recentTeachers,
+    recentGroups,
+  ] = await Promise.all([
+    User.countDocuments({ role: Role.TEACHER }),
+    User.countDocuments({ role: Role.STUDENT }),
+    Group.countDocuments({ isActive: true }),
+    Post.countDocuments(),
+    Comment.countDocuments(),
+    Attendance.find({ date: today }).lean(),
+    User.find({ role: Role.TEACHER }).sort({ createdAt: -1 }).limit(5).select("-passwordHash").lean(),
+    Group.find({ isActive: true }).sort({ createdAt: -1 }).limit(6).lean(),
+  ]);
+
+  let todayPresent = 0;
+  let todayAbsent  = 0;
+  for (const session of todaySessions) {
+    for (const rec of session.records) {
+      if (rec.status === "PRESENT") todayPresent++;
+      else todayAbsent++;
+    }
+  }
+
+  return {
+    stats: { totalTeachers, totalStudents, totalGroups, totalPosts, totalComments, todayPresent, todayAbsent },
+    teachers: recentTeachers,
+    groups:   recentGroups,
+  };
+}
+
+// ─────────────────────────────────────────
 // Dashboard statistics
 // ─────────────────────────────────────────
 
@@ -232,4 +276,36 @@ export async function getDashboardStats() {
     todayPresent,
     todayAbsent,
   };
+}
+
+// ─────────────────────────────────────────
+// Admin Profile
+// ─────────────────────────────────────────
+
+export async function getAdminProfile(adminId: string) {
+  const admin = await User.findById(adminId).select("-passwordHash");
+  if (!admin) throw ApiError.notFound("المدير غير موجود");
+  return admin;
+}
+
+export async function updateAdminProfile(
+  adminId: string,
+  dto: import("./admin.schemas").UpdateAdminProfileDto
+) {
+  const admin = await User.findById(adminId);
+  if (!admin) throw ApiError.notFound("المدير غير موجود");
+
+  // Handle password change
+  if (dto.newPassword) {
+    if (!dto.oldPassword) throw ApiError.badRequest("يجب إدخال كلمة المرور القديمة");
+    const valid = await argon2.verify(admin.passwordHash as string, dto.oldPassword);
+    if (!valid) throw ApiError.badRequest("كلمة المرور القديمة غير صحيحة");
+    admin.passwordHash = await argon2.hash(dto.newPassword);
+  }
+
+  if (dto.name)  admin.name  = dto.name;
+  if (dto.phone !== undefined) (admin as unknown as { phone: string }).phone = dto.phone;
+
+  await admin.save();
+  return admin;
 }

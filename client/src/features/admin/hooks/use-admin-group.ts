@@ -15,7 +15,6 @@ function toArray<T>(raw: unknown): T[] {
   if (!raw) return []
   if (Array.isArray(raw)) return raw as T[]
   if (typeof raw === "object" && raw !== null) {
-    // { data: [...] }  or  { docs: [...] }
     const r = raw as Record<string, unknown>
     if (Array.isArray(r.data))  return r.data  as T[]
     if (Array.isArray(r.docs))  return r.docs  as T[]
@@ -24,38 +23,35 @@ function toArray<T>(raw: unknown): T[] {
   return []
 }
 
-// ── Group detail ──────────────────────────────────────────────────────────────
 export function useAdminGroupDetail(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId],
     queryFn:  async () => {
       const raw = await clientFetch<unknown>(`/api/admin/groups/${groupId}`)
-      // Server may return { group: {...}, teachers: [], studentsCount }
       if (raw && typeof raw === "object" && "group" in (raw as object)) {
         return (raw as { group: ApiGroup }).group
       }
       return raw as ApiGroup
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }
 
-// ── Students in group ─────────────────────────────────────────────────────────
 export function useAdminGroupStudents(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId, "students"],
     queryFn:  async () => {
-      // Correct endpoint: GET /api/admin/students?groupId=xxx
       const raw = await clientFetch<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[]>(
         `/api/admin/students?groupId=${groupId}&limit=200`
       )
       return toArray<ApiGroupMembership>(raw)
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }
 
-// ── Teachers of group ─────────────────────────────────────────────────────────
 export function useAdminGroupTeachers(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId, "teachers"],
@@ -66,11 +62,11 @@ export function useAdminGroupTeachers(groupId: string) {
       }
       return [] as ApiUser[]
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }
 
-// ── Posts in group ────────────────────────────────────────────────────────────
 export function useAdminGroupPosts(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId, "posts"],
@@ -80,16 +76,12 @@ export function useAdminGroupPosts(groupId: string) {
       )
       return toArray<ApiPost>(raw)
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 60 * 1000,
   })
 }
 
-// ── Ranking (all members, all months available) ───────────────────────────────
-export function useAdminGroupRanking(
-  groupId:  string,
-  month?:   number,
-  year?:    number
-) {
+export function useAdminGroupRanking(groupId: string, month?: number, year?: number) {
   const now = new Date()
   const m   = month ?? now.getMonth() + 1
   const y   = year  ?? now.getFullYear()
@@ -100,14 +92,13 @@ export function useAdminGroupRanking(
       const raw = await clientFetch<unknown>(
         `/api/groups/${groupId}/ranking?month=${m}&year=${y}`
       )
-      // Server shape: { month, year, groupId, ranking: [...] }
       if (raw && typeof raw === "object" && "ranking" in (raw as object)) {
         return (raw as { ranking: ApiRankingEntry[] }).ranking
       }
-      // Plain array
       if (Array.isArray(raw)) return raw as ApiRankingEntry[]
       return [] as ApiRankingEntry[]
     },
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }

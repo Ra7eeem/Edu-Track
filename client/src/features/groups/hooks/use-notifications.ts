@@ -8,7 +8,8 @@ export function useNotifications() {
   return useQuery({
     queryKey: ["notifications"],
     queryFn:  () => clientFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=50"),
-    refetchInterval: 30_000, // poll every 30s
+    staleTime:       20 * 1000, // slightly fresher than poll interval
+    refetchInterval: 30_000,   // poll every 30s
   })
 }
 

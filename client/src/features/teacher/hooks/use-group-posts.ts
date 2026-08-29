@@ -9,6 +9,7 @@ export function useGroupPosts(groupId: string) {
     queryKey: ["groups", groupId, "posts"],
     queryFn:  () =>
       clientFetch<PaginatedResponse<ApiPost>>(`/api/groups/${groupId}/posts?limit=20`),
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 60 * 1000,
   })
 }

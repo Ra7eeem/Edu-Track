@@ -8,6 +8,7 @@ import {
   UpdateGroupDto,
   AddTeacherToGroupDto,
   CreateGroupAdminDto,
+  UpdateAdminProfileDto,
 } from "./admin.schemas";
 
 const p = (v: string | string[]): string => String(v);
@@ -17,6 +18,11 @@ const p = (v: string | string[]): string => String(v);
 export const getDashboard = asyncHandler(async (_req, res: Response) => {
   const stats = await AdminService.getDashboardStats();
   sendSuccess(res, stats);
+});
+
+export const getDashboardFull = asyncHandler(async (_req, res: Response) => {
+  const data = await AdminService.getDashboardFull();
+  sendSuccess(res, data);
 });
 
 // ── Teachers ──────────────────────────────
@@ -99,4 +105,16 @@ export const getStudents = asyncHandler(async (req: Request, res: Response) => {
 export const getStudentById = asyncHandler(async (req: Request, res: Response) => {
   const result = await AdminService.getStudentById(p(req.params.id));
   sendSuccess(res, result);
+});
+
+// ── Admin Profile ─────────────────────────
+
+export const getAdminProfile = asyncHandler(async (req: Request, res: Response) => {
+  const admin = await AdminService.getAdminProfile(req.user!.userId);
+  sendSuccess(res, admin);
+});
+
+export const updateAdminProfile = asyncHandler(async (req: Request, res: Response) => {
+  const admin = await AdminService.updateAdminProfile(req.user!.userId, req.body as UpdateAdminProfileDto);
+  sendSuccess(res, admin, 200, "تم تحديث البيانات بنجاح");
 });

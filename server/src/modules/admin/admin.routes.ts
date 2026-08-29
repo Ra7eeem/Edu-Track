@@ -9,6 +9,7 @@ import {
   updateGroupSchema,
   createGroupSchema,
   addTeacherToGroupSchema,
+  updateAdminProfileSchema,
 } from "./admin.schemas";
 import * as AdminController from "./admin.controller";
 
@@ -17,8 +18,12 @@ export const adminRouter = Router();
 // All admin routes require ADMIN role
 adminRouter.use(authenticate, authorize(Role.ADMIN));
 
+// ── Admin Profile ─────────────────────────
+adminRouter.get( "/profile",  AdminController.getAdminProfile);
+adminRouter.patch("/profile", validate(updateAdminProfileSchema), AdminController.updateAdminProfile);
 // ── Dashboard ─────────────────────────────
-adminRouter.get("/dashboard", AdminController.getDashboard);
+adminRouter.get("/dashboard",      AdminController.getDashboard);
+adminRouter.get("/dashboard-full", AdminController.getDashboardFull);
 
 // ── Teachers ──────────────────────────────
 adminRouter.get("/teachers", AdminController.getTeachers);

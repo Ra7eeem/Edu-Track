@@ -22,6 +22,7 @@ export function useGroupRanking(groupId: string, month?: number, year?: number) 
       clientFetch<RankingData>(
         `/api/groups/${groupId}/ranking?month=${m}&year=${y}&limit=100`
       ),
-    enabled: !!groupId,
+    enabled:   !!groupId,
+    staleTime: 2 * 60 * 1000,
   })
 }
