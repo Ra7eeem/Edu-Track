@@ -50,7 +50,6 @@ const adminNav: NavItem[] = [
   { label: "الرئيسية",   href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "المدرسون",  href: "/admin/teachers",   icon: Users           },
   { label: "المجموعات", href: "/admin/groups",     icon: BookOpen        },
-  { label: "التقارير",  href: "/admin/reports",    icon: BarChart3       },
   { label: "الحساب",    href: "/admin/profile",    icon: Settings        },
 ]
 
