@@ -15,6 +15,7 @@ import {
   useAdminGroupRanking,
   useAdminGroupStudents,
   useAdminGroupTeachers,
+  useRemoveStudentFromGroup,
 } from "@/features/admin/hooks/use-admin-group"
 import {
   useAdminTeachers,
@@ -24,7 +25,6 @@ import {
 import { cn } from "@/shared/lib/tailwind-cn"
 import { resolveId } from "@/shared/types/api"
 import type {
-  ApiGroupMembership,
   ApiPost,
   ApiRankingEntry,
   ApiUser,
@@ -33,6 +33,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarCheck,
+  AlertTriangle,
   Heart,
   MessageCircle,
   Plus,
@@ -159,9 +160,10 @@ export default function AdminGroupDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const [tab,           setTab]           = useState("overview")
+  const [tab,            setTab]            = useState("overview")
   const [showAddTeacher, setShowAddTeacher] = useState(false)
-  const [removeTarget,  setRemoveTarget]  = useState<{ id: string; name: string } | null>(null)
+  const [removeTarget,   setRemoveTarget]   = useState<{ id: string; name: string } | null>(null)
+  const [deleteStudent,  setDeleteStudent]  = useState<{ id: string; name: string } | null>(null)
   const now = new Date()
 
   const { data: group,    isLoading: gLoading } = useAdminGroupDetail(id)
@@ -170,7 +172,8 @@ export default function AdminGroupDetailPage({
   const { data: posts,    isLoading: pLoading } = useAdminGroupPosts(id)
   const { data: ranking,  isLoading: rLoading } = useAdminGroupRanking(id)
 
-  const removeMut = useRemoveTeacherFromGroup()
+  const removeMut        = useRemoveTeacherFromGroup()
+  const removeStudentMut = useRemoveStudentFromGroup()
 
   const rankingList  = ranking  ?? []
   const postsList    = posts    ?? []
@@ -211,6 +214,61 @@ export default function AdminGroupDetailPage({
                 disabled={removeMut.isPending}
               >
                 {removeMut.isPending ? "جارٍ الإزالة..." : "تأكيد الإزالة"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete student modal */}
+      {deleteStudent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={e => e.target === e.currentTarget && setDeleteStudent(null)}
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-card border border-border/60 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-rose-600">
+                <Trash2 className="size-4" />حذف الطالب
+              </h2>
+              <button
+                onClick={() => setDeleteStudent(null)}
+                className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="flex justify-center">
+                <div className="grid size-16 place-items-center rounded-2xl bg-rose-100 dark:bg-rose-900/30">
+                  <AlertTriangle className="size-8 text-rose-500" />
+                </div>
+              </div>
+              <div className="text-center space-y-1">
+                <p className="font-semibold">هل تريد حذف هذا الطالب؟</p>
+                <p className="text-sm text-muted-foreground">
+                  سيتم إزالة{" "}
+                  <span className="font-bold text-foreground">{deleteStudent.name}</span>{" "}
+                  من المجموعة ومسح نقاطه نهائياً
+                </p>
+              </div>
+              {removeStudentMut.isError && (
+                <p className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive text-center">
+                  حدث خطأ أثناء الحذف
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2 border-t border-border/60 px-5 py-4">
+              <Button variant="outline" className="flex-1" onClick={() => setDeleteStudent(null)} disabled={removeStudentMut.isPending}>
+                إلغاء
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:opacity-90"
+                onClick={() => removeStudentMut.mutate({ groupId: id, studentId: deleteStudent.id }, { onSuccess: () => setDeleteStudent(null) })}
+                disabled={removeStudentMut.isPending}
+              >
+                <Trash2 className="size-3.5" />
+                {removeStudentMut.isPending ? "جارٍ الحذف..." : "تأكيد الحذف"}
               </Button>
             </div>
           </div>
@@ -328,12 +386,12 @@ export default function AdminGroupDetailPage({
                       {studentsList.length === 0 && (
                         <div className="py-12 text-center text-sm text-muted-foreground">لا يوجد طلاب مسجّلون بعد</div>
                       )}
-                      {studentsList.map((m: ApiGroupMembership, i: number) => {
-                        const uid   = resolveId(m as unknown as { _id?: string; id?: string })
-                        const name  = (m as unknown as { name?: string }).name  ?? "طالب"
-                        const email = (m as unknown as { email?: string }).email ?? ""
+                      {studentsList.map((s: ApiUser, i: number) => {
+                        const sid   = resolveId(s)
+                        const name  = s.name  ?? "طالب"
+                        const email = s.email ?? ""
                         return (
-                          <div key={uid || i} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3">
+                          <div key={sid || i} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 transition-all hover:border-border">
                             <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
                               {name.slice(0, 1)}
                             </span>
@@ -342,6 +400,13 @@ export default function AdminGroupDetailPage({
                               <p className="text-xs text-muted-foreground">{email}</p>
                             </div>
                             <span className="text-xs text-muted-foreground shrink-0">#{i + 1}</span>
+                            <button
+                              onClick={() => setDeleteStudent({ id: sid, name })}
+                              className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 transition-all dark:border-rose-800 dark:hover:bg-rose-950/20 shrink-0"
+                              aria-label="حذف الطالب"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
                           </div>
                         )
                       })}

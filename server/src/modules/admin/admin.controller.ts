@@ -118,3 +118,15 @@ export const updateAdminProfile = asyncHandler(async (req: Request, res: Respons
   const admin = await AdminService.updateAdminProfile(req.user!.userId, req.body as UpdateAdminProfileDto);
   sendSuccess(res, admin, 200, "تم تحديث البيانات بنجاح");
 });
+
+// ── Group Students ────────────────────────
+
+export const getGroupStudents = asyncHandler(async (req: Request, res: Response) => {
+  const { data, pagination } = await AdminService.getGroupStudents(p(req.params.id), req);
+  sendPaginated(res, data, pagination);
+});
+
+export const removeStudentFromGroup = asyncHandler(async (req: Request, res: Response) => {
+  await AdminService.removeStudentFromGroup(p(req.params.id), p(req.params.studentId));
+  sendSuccess(res, null, 200, "تم حذف الطالب من المجموعة بنجاح");
+});

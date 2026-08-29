@@ -179,6 +179,75 @@ export async function getStudents(req: Request) {
   return { data, pagination: buildPaginationMeta(total, page, limit) };
 }
 
+export async function getGroupStudents(groupId: string, req: Request) {
+  if (!mongoose.Types.ObjectId.isValid(groupId))
+    throw ApiError.badRequest("معرّف المجموعة غير صالح");
+
+  const { page, limit, skip } = parsePagination(req);
+  const search = String(req.query.search ?? "");
+
+  const membershipFilter: mongoose.FilterQuery<typeof GroupMembership> = {
+    group: groupId,
+    isActive: true,
+  };
+
+  const [memberships, total] = await Promise.all([
+    GroupMembership.find(membershipFilter)
+      .populate({
+        path: "student",
+        select: "name email phone grade avatarUrl isActive createdAt",
+        ...(search
+          ? {
+              match: {
+                $or: [
+                  { name:  { $regex: search, $options: "i" } },
+                  { email: { $regex: search, $options: "i" } },
+                ],
+              },
+            }
+          : {}),
+      })
+      .sort({ joinedAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    GroupMembership.countDocuments(membershipFilter),
+  ]);
+
+  // Filter out nulls when search match fails at populate stage
+  const data = memberships
+    .map((m) => m.student)
+    .filter(Boolean);
+
+  return { data, pagination: buildPaginationMeta(total, page, limit) };
+}
+
+export async function removeStudentFromGroup(groupId: string, studentId: string) {
+  if (
+    !mongoose.Types.ObjectId.isValid(groupId) ||
+    !mongoose.Types.ObjectId.isValid(studentId)
+  )
+    throw ApiError.badRequest("معرّف غير صالح");
+
+  const membership = await GroupMembership.findOneAndDelete({
+    student: studentId,
+    group:   groupId,
+    isActive: true,
+  });
+  if (!membership) throw ApiError.notFound("الطالب غير موجود في هذه المجموعة");
+
+  // Clean up scores + attendance (same as teacher flow)
+  const { MonthlyScore } = await import("../../models/MonthlyScore");
+  const { Attendance }   = await import("../../models/Attendance");
+
+  await Promise.all([
+    MonthlyScore.deleteMany({ student: studentId, group: groupId }),
+    Attendance.updateMany(
+      { group: groupId },
+      { $pull: { records: { student: studentId } } }
+    ),
+  ]);
+}
+
 export async function getStudentById(id: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) throw ApiError.badRequest("معرّف غير صالح");
   const student = await User.findOne({ _id: id, role: Role.STUDENT });

@@ -3,13 +3,12 @@
 import { clientFetch } from "@/shared/lib/api-client"
 import {
   ApiGroup,
-  ApiGroupMembership,
   ApiPost,
   ApiRankingEntry,
   ApiUser,
   PaginatedResponse,
 } from "@/shared/types/api"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 function toArray<T>(raw: unknown): T[] {
   if (!raw) return []
@@ -42,13 +41,28 @@ export function useAdminGroupStudents(groupId: string) {
   return useQuery({
     queryKey: ["admin", "group", groupId, "students"],
     queryFn:  async () => {
-      const raw = await clientFetch<PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[]>(
-        `/api/admin/students?groupId=${groupId}&limit=200`
+      // Correct endpoint: only members of this specific group
+      const raw = await clientFetch<PaginatedResponse<ApiUser> | ApiUser[]>(
+        `/api/admin/groups/${groupId}/students?limit=200`
       )
-      return toArray<ApiGroupMembership>(raw)
+      return toArray<ApiUser>(raw)
     },
     enabled:   !!groupId,
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,
+  })
+}
+
+export function useRemoveStudentFromGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ groupId, studentId }: { groupId: string; studentId: string }) =>
+      clientFetch<void>(`/api/admin/groups/${groupId}/students/${studentId}`, {
+        method: "DELETE",
+      } as never),
+    onSuccess: (_data, { groupId }) => {
+      qc.invalidateQueries({ queryKey: ["admin", "group", groupId, "students"], refetchType: "active" })
+      qc.invalidateQueries({ queryKey: ["admin", "group", groupId, "ranking"],  exact: false, refetchType: "active" })
+    },
   })
 }
 

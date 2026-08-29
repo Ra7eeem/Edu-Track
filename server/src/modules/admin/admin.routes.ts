@@ -51,8 +51,11 @@ adminRouter.delete(
 );
 
 // ── Students ──────────────────────────────
-adminRouter.get("/students", AdminController.getStudents);
+adminRouter.get("/students",    AdminController.getStudents);
 adminRouter.get("/students/:id", AdminController.getStudentById);
+// ── Group Students (by group) ─────────────
+adminRouter.get("/groups/:id/students",                    AdminController.getGroupStudents);
+adminRouter.delete("/groups/:id/students/:studentId",      AdminController.removeStudentFromGroup);
 
 // ── Attendance (admin view any group) ─────
 import { getAttendanceHistory } from "../attendance/attendance.controller";
