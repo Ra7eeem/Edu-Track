@@ -378,3 +378,45 @@ export async function updateAdminProfile(
   await admin.save();
   return admin;
 }
+
+// ─────────────────────────────────────────
+// Attendance Register (admin view any group)
+// ─────────────────────────────────────────
+
+export async function getAttendanceRegister(groupId: string, month: number, year: number) {
+  const startDate = new Date(Date.UTC(year, month - 1, 1));
+  const endDate   = new Date(Date.UTC(year, month, 1));
+
+  const [sessions, memberships] = await Promise.all([
+    Attendance.find({ group: groupId, date: { $gte: startDate, $lt: endDate } })
+      .sort({ date: 1 })
+      .lean(),
+    GroupMembership.find({ group: groupId, isActive: true })
+      .populate("student", "name")
+      .lean(),
+  ]);
+
+  const dates = sessions.map(s => s.date.toISOString().split("T")[0]);
+
+  const matrix: Record<string, Record<string, string>> = {};
+  for (const session of sessions) {
+    const dateKey = session.date.toISOString().split("T")[0];
+    for (const rec of session.records) {
+      const sid = String(rec.student);
+      if (!matrix[sid]) matrix[sid] = {};
+      matrix[sid][dateKey] = rec.status;
+    }
+  }
+
+  const students = memberships.map(m => {
+    const s   = m.student as unknown as { _id: unknown; name?: string };
+    const sid = String(s._id);
+    return {
+      id:      sid,
+      name:    s.name ?? "—",
+      records: dates.map(d => ({ date: d, status: matrix[sid]?.[d] ?? "ABSENT" })),
+    };
+  });
+
+  return { dates, students, month, year };
+}

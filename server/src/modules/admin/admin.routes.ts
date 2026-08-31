@@ -60,6 +60,7 @@ adminRouter.delete("/groups/:id/students/:studentId",      AdminController.remov
 // ── Attendance (admin view any group) ─────
 import { getAttendanceHistory } from "../attendance/attendance.controller";
 adminRouter.get("/groups/:groupId/attendance", getAttendanceHistory);
+adminRouter.get("/groups/:groupId/attendance/register", AdminController.getAttendanceRegister);
 
 // ── Ranking (admin view any group) ────────
 import { getGroupRanking } from "../ranking/ranking.controller";

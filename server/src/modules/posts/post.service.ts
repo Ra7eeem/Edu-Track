@@ -60,10 +60,15 @@ export async function getPosts(groupId: string, userId: string, role: Role, req:
   const userLikes = await PostLike.find({ post: { $in: postIds }, user: userId }).select("post");
   const likedSet = new Set(userLikes.map((l) => String(l.post)));
 
-  const data = posts.map((p) => ({
-    ...p.toJSON(),
-    isLikedByMe: likedSet.has(String(p._id)),
-  }));
+  const data = posts.map((p) => {
+    const json = p.toJSON() as Record<string, unknown>
+    return {
+      ...json,
+      likeCount:    (p as unknown as { likesCount?: number }).likesCount    ?? 0,
+      commentCount: (p as unknown as { commentsCount?: number }).commentsCount ?? 0,
+      isLiked:      likedSet.has(String(p._id)),
+    }
+  })
 
   return { data, pagination: buildPaginationMeta(total, page, limit) };
 }
@@ -157,12 +162,12 @@ export async function toggleLike(postId: string, userId: string) {
   if (existing) {
     await existing.deleteOne();
     await Post.findByIdAndUpdate(postId, { $inc: { likesCount: -1 } });
-    return { liked: false, likesCount: post.likesCount - 1 };
+    return { liked: false, likeCount: post.likesCount - 1 };
   }
 
   await PostLike.create({ post: postId, user: userId });
   await Post.findByIdAndUpdate(postId, { $inc: { likesCount: 1 } });
-  return { liked: true, likesCount: post.likesCount + 1 };
+  return { liked: true, likeCount: post.likesCount + 1 };
 }
 
 // ─────────────────────────────────────────

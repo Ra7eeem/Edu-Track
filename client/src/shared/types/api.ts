@@ -336,3 +336,29 @@ export interface SessionData {
   grade:      Grade | null
   isLoggedIn: boolean
 }
+
+// ─── StudentNote ──────────────────────────────────────────────────────────────
+export interface ApiStudentNote {
+  _id?:      string
+  id?:       string
+  teacher:   string
+  student:   string
+  group:     string
+  content:   string
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Attendance Register (كشاف) ───────────────────────────────────────────────
+export interface AttendanceRegisterStudent {
+  id:      string
+  name:    string
+  records: { date: string; status: string }[]
+}
+
+export interface AttendanceRegister {
+  dates:    string[]
+  students: AttendanceRegisterStudent[]
+  month:    number
+  year:     number
+}

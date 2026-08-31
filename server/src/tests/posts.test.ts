@@ -187,7 +187,7 @@ describe("Likes", () => {
 
     const result = await PostService.toggleLike(String(post._id), String(student._id));
     expect(result.liked).toBe(true);
-    expect(result.likesCount).toBe(1);
+    expect(result.likeCount).toBe(1);
   });
 
   it("toggle removes like on second call", async () => {
@@ -206,7 +206,7 @@ describe("Likes", () => {
     const result = await PostService.toggleLike(String(post._id), String(student._id));
 
     expect(result.liked).toBe(false);
-    expect(result.likesCount).toBe(0);
+    expect(result.likeCount).toBe(0);
   });
 
   it("database prevents duplicate likes via unique index", async () => {

@@ -23,6 +23,7 @@ import {
 import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/ranking.action"
 import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
+import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import {
   resolveId,
   AttendanceStatus,
@@ -47,6 +48,7 @@ const TABS = [
   { key: "overview",      label: "نظرة عامة",        icon: BarChart3     },
   { key: "students",      label: "الطلاب",             icon: Users         },
   { key: "attendance",    label: "الحضور",             icon: CalendarCheck },
+  { key: "register",      label: "كشاف الغياب",        icon: ClipboardList },
   { key: "posts",         label: "المنشورات",          icon: BookOpen      },
   { key: "ranking",       label: "الترتيب",            icon: Trophy        },
   { key: "join-requests", label: "طلبات الانضمام",     icon: Bell          },
@@ -846,10 +848,10 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
                   <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
                     {avatar}
                   </span>
-                  <div className="min-w-0 flex-1">
+                  <Link href={`/teacher/group/${id}/students/${sid}`} className="min-w-0 flex-1 hover:underline underline-offset-2 decoration-muted-foreground/50">
                     <p className="truncate text-sm font-medium">{name}</p>
                     <p className="truncate text-xs text-muted-foreground">{email}</p>
-                  </div>
+                  </Link>
                   <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">#{i + 1}</span>
                   <button
                     onClick={() => { setRemoveErr(null); setDeleteTarget({ studentId: sid, name }) }}
@@ -872,6 +874,9 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
             <AttendanceTab groupId={id} students={students}/>
           )
         )}
+
+        {/* ── Register (كشاف) ── */}
+        {tab === "register" && <AttendanceRegister groupId={id} role="teacher"/>}
 
         {/* ── Posts ── */}
         {tab === "posts" && <PostsTab groupId={id} authorName={authorName}/>}

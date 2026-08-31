@@ -64,3 +64,56 @@ export const getDashboard = asyncHandler(async (req, res: Response) => {
   const data = await TeacherService.getDashboard(uid(req));
   sendSuccess(res, data);
 });
+
+// ── Student Profile ───────────────────────
+export const getStudentProfile = asyncHandler(async (req, res: Response) => {
+  const data = await TeacherService.getStudentProfile(
+    uid(req), p(req.params.groupId), p(req.params.studentId)
+  );
+  sendSuccess(res, data);
+});
+
+// ── Attendance Register ───────────────────
+export const getAttendanceRegister = asyncHandler(async (req, res: Response) => {
+  const month = Number(req.query.month) || new Date().getMonth() + 1;
+  const year  = Number(req.query.year)  || new Date().getFullYear();
+  const data  = await TeacherService.getAttendanceRegister(
+    uid(req), p(req.params.groupId), month, year
+  );
+  sendSuccess(res, data);
+});
+
+// ── Notes CRUD ────────────────────────────
+export const getNotes = asyncHandler(async (req, res: Response) => {
+  const notes = await TeacherService.getNotes(
+    uid(req), p(req.params.groupId), p(req.params.studentId)
+  );
+  sendSuccess(res, notes);
+});
+
+export const createNote = asyncHandler(async (req, res: Response) => {
+  const { content } = req.body as { content: string };
+  if (!content?.trim()) {
+    const { ApiError } = await import("../../utils/ApiError");
+    throw ApiError.badRequest("محتوى الملاحظة مطلوب");
+  }
+  const note = await TeacherService.createNote(
+    uid(req), p(req.params.groupId), p(req.params.studentId), content.trim()
+  );
+  sendSuccess(res, note, 201, "تمت إضافة الملاحظة");
+});
+
+export const updateNote = asyncHandler(async (req, res: Response) => {
+  const { content } = req.body as { content: string };
+  if (!content?.trim()) {
+    const { ApiError } = await import("../../utils/ApiError");
+    throw ApiError.badRequest("محتوى الملاحظة مطلوب");
+  }
+  const note = await TeacherService.updateNote(uid(req), p(req.params.noteId), content.trim());
+  sendSuccess(res, note, 200, "تم تحديث الملاحظة");
+});
+
+export const deleteNote = asyncHandler(async (req, res: Response) => {
+  await TeacherService.deleteNote(uid(req), p(req.params.noteId));
+  sendSuccess(res, null, 200, "تم حذف الملاحظة");
+});

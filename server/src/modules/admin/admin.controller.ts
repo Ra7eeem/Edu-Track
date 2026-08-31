@@ -130,3 +130,12 @@ export const removeStudentFromGroup = asyncHandler(async (req: Request, res: Res
   await AdminService.removeStudentFromGroup(p(req.params.id), p(req.params.studentId));
   sendSuccess(res, null, 200, "تم حذف الطالب من المجموعة بنجاح");
 });
+
+// ── Attendance Register ────────────────────
+
+export const getAttendanceRegister = asyncHandler(async (req: Request, res: Response) => {
+  const month = Number(req.query.month) || new Date().getMonth() + 1;
+  const year  = Number(req.query.year)  || new Date().getFullYear();
+  const data  = await AdminService.getAttendanceRegister(p(req.params.groupId), month, year);
+  sendSuccess(res, data);
+});

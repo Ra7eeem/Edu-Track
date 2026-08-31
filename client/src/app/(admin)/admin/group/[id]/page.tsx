@@ -2,6 +2,7 @@
 
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
+import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import {
   ListRowSkeleton,
   PostCardSkeleton,
@@ -417,8 +418,8 @@ export default function AdminGroupDetailPage({
 
               {/* ── Attendance ── */}
               {tab === "attendance" && (
-                <div className="rounded-2xl border border-border/60 bg-card p-5 text-center text-sm text-muted-foreground">
-                  سجل الحضور الكامل متاح من صفحة إدارة المجموعة للمدرس
+                <div className="rounded-2xl border border-border/60 bg-card p-5">
+                  <AttendanceRegister groupId={id} role="admin"/>
                 </div>
               )}
 

@@ -296,3 +296,147 @@ export async function getDashboard(teacherId: string) {
 
   return { groups, notifications: recentNotifs, unreadCount };
 }
+
+// ─────────────────────────────────────────
+// Student Profile (teacher view)
+// ─────────────────────────────────────────
+
+export async function getStudentProfile(
+  teacherId: string,
+  groupId:   string,
+  studentId: string
+) {
+  await assertTeacherOwnsGroup(teacherId, groupId);
+
+  const { User }          = await import("../../models/User");
+  const { MonthlyScore }  = await import("../../models/MonthlyScore");
+  const { Attendance }    = await import("../../models/Attendance");
+  const { StudentNote }   = await import("../../models/StudentNote");
+
+  const [student, scores, notes] = await Promise.all([
+    User.findById(studentId).select("-passwordHash").lean(),
+    MonthlyScore.find({ student: studentId, group: groupId })
+      .sort({ year: -1, month: -1 })
+      .lean(),
+    StudentNote.find({ teacher: teacherId, student: studentId, group: groupId })
+      .sort({ createdAt: -1 })
+      .lean(),
+  ]);
+
+  if (!student) throw ApiError.notFound("الطالب غير موجود");
+
+  // Attendance for the last 3 months
+  const now      = new Date();
+  const fromDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+  const sessions = await Attendance.find({
+    group:  groupId,
+    date:   { $gte: fromDate },
+  }).sort({ date: 1 }).lean();
+
+  const attendanceRecords = sessions
+    .map(s => {
+      const rec = s.records.find(r => String(r.student) === studentId);
+      return rec ? { date: s.date, status: rec.status } : null;
+    })
+    .filter(Boolean);
+
+  return { student, scores, notes, attendanceRecords };
+}
+
+// ─────────────────────────────────────────
+// Attendance Register (كشاف) — all students × all days
+// ─────────────────────────────────────────
+
+export async function getAttendanceRegister(
+  teacherId: string,
+  groupId:   string,
+  month:     number,
+  year:      number
+) {
+  await assertTeacherOwnsGroup(teacherId, groupId);
+
+  const { Attendance }     = await import("../../models/Attendance");
+  const { GroupMembership } = await import("../../models/GroupMembership");
+
+  const startDate = new Date(Date.UTC(year, month - 1, 1));
+  const endDate   = new Date(Date.UTC(year, month, 1));
+
+  const [sessions, memberships] = await Promise.all([
+    Attendance.find({ group: groupId, date: { $gte: startDate, $lt: endDate } })
+      .sort({ date: 1 })
+      .lean(),
+    GroupMembership.find({ group: groupId, isActive: true })
+      .populate("student", "name")
+      .lean(),
+  ]);
+
+  // All unique dates in this month that have sessions
+  const dates = sessions.map(s => s.date.toISOString().split("T")[0]);
+
+  // Build matrix: studentId → { date → status }
+  const matrix: Record<string, Record<string, string>> = {};
+  for (const session of sessions) {
+    const dateKey = session.date.toISOString().split("T")[0];
+    for (const rec of session.records) {
+      const sid = String(rec.student);
+      if (!matrix[sid]) matrix[sid] = {};
+      matrix[sid][dateKey] = rec.status;
+    }
+  }
+
+  const students = memberships.map(m => {
+    const s   = m.student as unknown as { _id: unknown; name?: string };
+    const sid = String(s._id);
+    return {
+      id:      sid,
+      name:    s.name ?? "—",
+      records: dates.map(d => ({ date: d, status: matrix[sid]?.[d] ?? "ABSENT" })),
+    };
+  });
+
+  return { dates, students, month, year };
+}
+
+// ─────────────────────────────────────────
+// Student Notes CRUD
+// ─────────────────────────────────────────
+
+export async function getNotes(teacherId: string, groupId: string, studentId: string) {
+  await assertTeacherOwnsGroup(teacherId, groupId);
+  const { StudentNote } = await import("../../models/StudentNote");
+  return StudentNote.find({ teacher: teacherId, student: studentId, group: groupId })
+    .sort({ createdAt: -1 })
+    .lean();
+}
+
+export async function createNote(
+  teacherId: string,
+  groupId:   string,
+  studentId: string,
+  content:   string
+) {
+  await assertTeacherOwnsGroup(teacherId, groupId);
+  const { StudentNote } = await import("../../models/StudentNote");
+  return StudentNote.create({ teacher: teacherId, student: studentId, group: groupId, content });
+}
+
+export async function updateNote(
+  teacherId: string,
+  noteId:    string,
+  content:   string
+) {
+  const { StudentNote } = await import("../../models/StudentNote");
+  const note = await StudentNote.findOneAndUpdate(
+    { _id: noteId, teacher: teacherId },
+    { content },
+    { new: true, runValidators: true }
+  );
+  if (!note) throw ApiError.notFound("الملاحظة غير موجودة");
+  return note;
+}
+
+export async function deleteNote(teacherId: string, noteId: string) {
+  const { StudentNote } = await import("../../models/StudentNote");
+  const note = await StudentNote.findOneAndDelete({ _id: noteId, teacher: teacherId });
+  if (!note) throw ApiError.notFound("الملاحظة غير موجودة");
+}

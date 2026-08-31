@@ -9,6 +9,7 @@ export { Post } from "./Post";
 export { Comment } from "./Comment";
 export { PostLike } from "./PostLike";
 export { Notification } from "./Notification";
+export { StudentNote } from "./StudentNote";
 
 export type { IUser } from "./User";
 export type { IGroup } from "./Group";
