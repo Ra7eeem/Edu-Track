@@ -35,3 +35,19 @@ export async function studentCreateCommentAction(
     return { error: (e as { message?: string })?.message ?? "حدث خطأ" }
   }
 }
+
+export async function studentDeleteCommentAction(
+  groupId:   string,
+  postId:    string,
+  commentId: string
+): Promise<StudentPostActionState> {
+  try {
+    await serverFetch(
+      `/api/groups/${groupId}/posts/${postId}/comments/${commentId}`,
+      { method: "DELETE" }
+    )
+    return { success: true }
+  } catch (e: unknown) {
+    return { error: (e as { message?: string })?.message ?? "حدث خطأ" }
+  }
+}

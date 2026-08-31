@@ -23,6 +23,7 @@ import {
 import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/ranking.action"
 import { clientFetch } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
+import { PostCommentsSection } from "@/features/teacher/components/post-comments-section"
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import {
   resolveId,
@@ -314,12 +315,12 @@ function PostsTab({ groupId, authorName }: { groupId: string; authorName: string
               </button>
             </div>
             <p className="px-4 pt-3 pb-4 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
-            <div className="flex items-center gap-4 border-t border-border/40 px-4 py-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 border-b border-border/40 px-4 py-3 text-xs text-muted-foreground">
               <button onClick={() => handleLike(pid)} className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Heart className={cn("size-3.5", p.isLiked && "fill-primary text-primary")}/>{p.likeCount ?? 0} إعجاب
               </button>
-              <span className="flex items-center gap-1.5"><MessageCircle className="size-3.5"/>{p.commentCount ?? 0} تعليق</span>
             </div>
+            <PostCommentsSection groupId={groupId} post={p} />
           </article>
         )
       })}
@@ -811,6 +812,30 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
                   <p className="text-sm text-muted-foreground">{group.description}</p>
                 </div>
               )}
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "تسجيل الحضور",   href: `/teacher/group/${id}/attendance`, color: "from-emerald-600 to-emerald-500", icon: CalendarCheck },
+                  { label: "كشف الغياب",     href: `/teacher/group/${id}/register`,   color: "from-violet-600 to-violet-500",  icon: ClipboardList  },
+                  { label: "الطلاب",          tab: "students",   color: "from-cyan-600 to-cyan-500",    icon: Users           },
+                  { label: "الترتيب",         tab: "ranking",    color: "from-amber-600 to-amber-500",  icon: Trophy          },
+                ].map(a => (
+                  a.href ? (
+                    <Link key={a.label} href={a.href}
+                      className={`flex items-center gap-2.5 rounded-2xl bg-gradient-to-r ${a.color} p-4 text-white shadow-sm hover:opacity-90 transition-opacity`}>
+                      <a.icon className="size-4 shrink-0"/>
+                      <span className="text-sm font-semibold">{a.label}</span>
+                    </Link>
+                  ) : (
+                    <button key={a.label} onClick={() => setTab(a.tab!)}
+                      className={`flex items-center gap-2.5 rounded-2xl bg-gradient-to-r ${a.color} p-4 text-white shadow-sm hover:opacity-90 transition-opacity`}>
+                      <a.icon className="size-4 shrink-0"/>
+                      <span className="text-sm font-semibold">{a.label}</span>
+                    </button>
+                  )
+                ))}
+              </div>
             </div>
           )
         )}
@@ -876,7 +901,18 @@ export default function GroupManagePage({ params }: { params: Promise<{ id: stri
         )}
 
         {/* ── Register (كشاف) ── */}
-        {tab === "register" && <AttendanceRegister groupId={id} role="teacher"/>}
+        {tab === "register" && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">سجل الحضور الشهري لجميع الطلاب</p>
+              <Link href={`/teacher/group/${id}/register`}
+                className="text-xs text-primary hover:underline">
+                فتح في صفحة كاملة ↗
+              </Link>
+            </div>
+            <AttendanceRegister groupId={id} role="teacher"/>
+          </div>
+        )}
 
         {/* ── Posts ── */}
         {tab === "posts" && <PostsTab groupId={id} authorName={authorName}/>}

@@ -3,9 +3,9 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
-import { useStudentGroups } from "@/features/student/hooks/use-student"
+import { useStudentGroups, useStudentMe } from "@/features/student/hooks/use-student"
 import { usePostComments } from "@/features/student/hooks/use-post-comments"
-import { studentToggleLikeAction, studentCreateCommentAction } from "@/features/student/actions/post.action"
+import { studentToggleLikeAction, studentCreateCommentAction, studentDeleteCommentAction } from "@/features/student/actions/post.action"
 import { useNotifications } from "@/features/groups/hooks/use-notifications"
 import { Button } from "@/shared/components/ui/button"
 import { cn } from "@/shared/lib/tailwind-cn"
@@ -14,7 +14,7 @@ import {
   resolveId, GRADE_LABELS, Grade,
   type ApiPost, type ApiRankingEntry, type ApiComment,
 } from "@/shared/types/api"
-import { Heart, MessageCircle, Send, ChevronDown, ChevronUp } from "lucide-react"
+import { Heart, MessageCircle, Send, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
 import { useState, useTransition } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
@@ -27,7 +27,7 @@ const TABS = [
 const MEDALS = ["🥇", "🥈", "🥉"]
 
 // ─── Comment Section for a single post ────────────────────────────────────────
-function CommentsSection({ groupId, post }: { groupId: string; post: ApiPost }) {
+function CommentsSection({ groupId, post, currentUserId }: { groupId: string; post: ApiPost; currentUserId: string }) {
   const pid          = resolveId(post)
   const [open,       setOpen]       = useState(false)
   const [text,       setText]       = useState("")
@@ -155,7 +155,9 @@ function CommentsSection({ groupId, post }: { groupId: string; post: ApiPost }) 
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {comments.map(c => {
                 const cid    = resolveId(c as { _id?: string; id?: string })
-                const author = c.author as { name?: string } | undefined
+                const author = c.author as { name?: string; _id?: string; id?: string } | undefined
+                const authorId = author?._id ?? author?.id ?? ""
+                const isOwn  = !!currentUserId && authorId === currentUserId
                 return (
                   <div key={cid} className="flex gap-2.5">
                     <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 mt-0.5">
@@ -165,6 +167,42 @@ function CommentsSection({ groupId, post }: { groupId: string; post: ApiPost }) 
                       <p className="text-xs font-semibold">{author?.name ?? "مستخدم"}</p>
                       <p className="text-sm leading-relaxed">{c.content}</p>
                     </div>
+                    {isOwn && (
+                      <button
+                        onClick={() => {
+                          startTransition(async () => {
+                            const pid = resolveId(post)
+                            await studentDeleteCommentAction(groupId, pid, cid)
+                            qc.setQueryData(["groups", groupId, "posts", pid, "comments"], (old: unknown) => {
+                              if (!old) return old
+                              const upd = (arr: ApiComment[]) => arr.filter(x => resolveId(x as { _id?: string; id?: string }) !== cid)
+                              if (Array.isArray(old)) return upd(old as ApiComment[])
+                              if (typeof old === "object" && old !== null && "data" in old) {
+                                const o = old as { data: ApiComment[] }
+                                return { ...o, data: upd(o.data) }
+                              }
+                              return old
+                            })
+                            qc.setQueryData(["groups", groupId, "posts"], (old: unknown) => {
+                              const pId = resolveId(post)
+                              const upd2 = (p: ApiPost) =>
+                                resolveId(p) === pId ? { ...p, commentCount: Math.max(0, (p.commentCount ?? 1) - 1) } : p
+                              if (!old) return old
+                              if (Array.isArray(old)) return (old as ApiPost[]).map(upd2)
+                              if (typeof old === "object" && old !== null && "data" in old) {
+                                const o = old as { data: ApiPost[] }
+                                return { ...o, data: o.data.map(upd2) }
+                              }
+                              return old
+                            })
+                          })
+                        }}
+                        className="mt-1 grid size-6 shrink-0 place-items-center self-start rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-500 transition-colors dark:hover:bg-rose-950/20"
+                        aria-label="حذف تعليقي"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    )}
                   </div>
                 )
               })}
@@ -183,6 +221,9 @@ export default function StudentGroupPage() {
 
   const { data: notifsData } = useNotifications()
   const unread = (notifsData as { data?: { isRead?: boolean }[] } | undefined)?.data?.filter(n => !n.isRead).length ?? 0
+
+  const { data: me } = useStudentMe()
+  const currentUserId = me?._id ?? me?.id ?? ""
 
   const { data: groupsRaw, isLoading: gLoading } = useStudentGroups()
   const groups = (() => {
@@ -304,7 +345,7 @@ export default function StudentGroupPage() {
                     </div>
                   </div>
                   <p className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
-                  <CommentsSection groupId={groupId} post={p} />
+                  <CommentsSection groupId={groupId} post={p} currentUserId={currentUserId} />
                 </article>
               )
             })}

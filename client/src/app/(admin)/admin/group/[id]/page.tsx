@@ -3,6 +3,7 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
+import { PostCommentsSection } from "@/features/teacher/components/post-comments-section"
 import {
   ListRowSkeleton,
   PostCardSkeleton,
@@ -541,10 +542,10 @@ export default function AdminGroupDetailPage({
                             </div>
                           </div>
                           <p className="text-sm leading-relaxed whitespace-pre-line">{p.content}</p>
-                          <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                          <div className="mt-3 border-b border-border/40 pb-1 flex gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1"><Heart className="size-3" />{p.likeCount ?? 0} إعجاب</span>
-                            <span className="flex items-center gap-1"><MessageCircle className="size-3" />{p.commentCount ?? 0} تعليق</span>
                           </div>
+                          <PostCommentsSection groupId={id} post={p} />
                         </div>
                       )
                     })

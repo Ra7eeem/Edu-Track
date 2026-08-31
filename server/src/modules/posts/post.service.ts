@@ -279,7 +279,12 @@ export async function deleteComment(commentId: string, userId: string, role: Rol
   if (!mongoose.Types.ObjectId.isValid(commentId)) throw ApiError.badRequest("معرّف غير صالح");
   const comment = await Comment.findById(commentId);
   if (!comment) throw ApiError.notFound("التعليق غير موجود");
-  if (role !== Role.ADMIN && String(comment.author) !== userId)
+  // Admin and Teacher (group owner) can delete any comment; others can only delete their own
+  if (
+    role !== Role.ADMIN &&
+    role !== Role.TEACHER &&
+    String(comment.author) !== userId
+  )
     throw ApiError.forbidden("لا تملك صلاحية حذف هذا التعليق");
 
   // Decrement post counter

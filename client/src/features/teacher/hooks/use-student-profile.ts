@@ -48,11 +48,39 @@ export function useCreateNote(groupId: string, studentId: string) {
         `/api/teacher/groups/${groupId}/students/${studentId}/notes`,
         { method: "POST", data: { content } } as never
       ),
-    onSuccess: () =>
+    onMutate: async (content: string) => {
+      // Optimistic: add a temporary note immediately
+      const queryKey = ["teacher", "groups", groupId, "student", studentId, "notes"]
+      await qc.cancelQueries({ queryKey })
+      const prev = qc.getQueryData(queryKey)
+      const tempNote: ApiStudentNote = {
+        _id:       `temp-${Date.now()}`,
+        teacher:   "",
+        student:   studentId,
+        group:     groupId,
+        content,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      qc.setQueryData(queryKey, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as ApiStudentNote[]) : []
+        return [tempNote, ...arr]
+      })
+      return { prev, queryKey }
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev !== undefined) qc.setQueryData(ctx.queryKey, ctx.prev)
+    },
+    onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["teacher", "groups", groupId, "student", studentId, "notes"],
         refetchType: "active",
-      }),
+      })
+      qc.invalidateQueries({
+        queryKey: ["teacher", "groups", groupId, "student", studentId, "profile"],
+        refetchType: "active",
+      })
+    },
   })
 }
 
@@ -64,11 +92,16 @@ export function useUpdateNote(groupId: string, studentId: string) {
         `/api/teacher/groups/${groupId}/students/${studentId}/notes/${noteId}`,
         { method: "PATCH", data: { content } } as never
       ),
-    onSuccess: () =>
+    onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["teacher", "groups", groupId, "student", studentId, "notes"],
         refetchType: "active",
-      }),
+      })
+      qc.invalidateQueries({
+        queryKey: ["teacher", "groups", groupId, "student", studentId, "profile"],
+        refetchType: "active",
+      })
+    },
   })
 }
 
@@ -80,11 +113,16 @@ export function useDeleteNote(groupId: string, studentId: string) {
         `/api/teacher/groups/${groupId}/students/${studentId}/notes/${noteId}`,
         { method: "DELETE" } as never
       ),
-    onSuccess: () =>
+    onSuccess: () => {
       qc.invalidateQueries({
         queryKey: ["teacher", "groups", groupId, "student", studentId, "notes"],
         refetchType: "active",
-      }),
+      })
+      qc.invalidateQueries({
+        queryKey: ["teacher", "groups", groupId, "student", studentId, "profile"],
+        refetchType: "active",
+      })
+    },
   })
 }
 

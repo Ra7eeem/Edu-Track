@@ -4,6 +4,7 @@ import { TopBar }     from "@/shared/components/layout/topbar"
 import { Button }     from "@/shared/components/ui/button"
 import {
   useStudentProfileForTeacher,
+  useStudentNotes,
   useCreateNote,
   useUpdateNote,
   useDeleteNote,
@@ -44,6 +45,8 @@ export default function StudentProfilePage({
   const { id: groupId, studentId } = use(params)
 
   const { data, isLoading } = useStudentProfileForTeacher(groupId, studentId)
+  // Use separate notes query so it updates optimistically independent of profile
+  const { data: notesData } = useStudentNotes(groupId, studentId)
 
   const createNote = useCreateNote(groupId, studentId)
   const updateNote = useUpdateNote(groupId, studentId)
@@ -56,7 +59,8 @@ export default function StudentProfilePage({
 
   const student  = data?.student
   const scores   = data?.scores   ?? []
-  const notes    = data?.notes    ?? []
+  // Prefer live notes query; fall back to profile data
+  const notes    = notesData ?? data?.notes ?? []
   const records  = data?.attendanceRecords ?? []
 
   // Group attendance by month
