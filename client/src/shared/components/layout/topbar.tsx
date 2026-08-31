@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { Bell, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
@@ -15,6 +16,7 @@ interface TopBarProps {
   profileHref: string
   online?: boolean
   className?: string
+  actions?: React.ReactNode
 }
 
 export function TopBar({
@@ -28,6 +30,7 @@ export function TopBar({
   profileHref,
   online = true,
   className,
+  actions,
 }: TopBarProps) {
   return (
     <header
@@ -56,6 +59,9 @@ export function TopBar({
           {online ? <Wifi className="size-3" /> : <WifiOff className="size-3" />}
           {online ? "متصل" : "بدون اتصال"}
         </span>
+
+        {/* Custom actions slot */}
+        {actions}
 
         {/* Notifications */}
         <Link

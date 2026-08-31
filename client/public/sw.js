@@ -1,22 +1,13 @@
 // EduTrack Service Worker — caches attendance + register pages for offline use
-const CACHE_NAME  = "edutrack-v1"
-const RUNTIME     = "edutrack-runtime"
+const CACHE_NAME = "edutrack-v2"
+const RUNTIME    = "edutrack-runtime-v2"
 
-// App shell: pages that should always work offline
-const PRECACHE = [
-  "/",
-  "/teacher/groups",
-]
-
-// Install — cache the shell
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE))
-  )
+// ── Install ────────────────────────────────────────────────────────────────────
+self.addEventListener("install", () => {
   self.skipWaiting()
 })
 
-// Activate — clean old caches
+// ── Activate — clean old caches ────────────────────────────────────────────────
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -30,48 +21,83 @@ self.addEventListener("activate", event => {
   self.clients.claim()
 })
 
-// Fetch strategy:
-// - Navigation requests (HTML pages): Network-first, fallback to cache
-// - API requests:                      Network-only (never cache tokens/auth)
-// - Static assets:                     Cache-first
+// ── Fetch strategy ─────────────────────────────────────────────────────────────
 self.addEventListener("fetch", event => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Skip non-GET and cross-origin
+  // Only handle GET from same origin
   if (request.method !== "GET" || url.origin !== self.location.origin) return
 
-  // API calls — always network only (contains auth tokens)
+  // API calls — always network (auth tokens, fresh data)
   if (url.pathname.startsWith("/api/")) return
 
-  // Navigation (HTML) — network first, cache fallback
-  if (request.mode === "navigate") {
+  // Attendance & register pages — Network first, cache fallback
+  const isAttendancePage =
+    url.pathname.includes("/attendance") ||
+    url.pathname.includes("/register")
+
+  if (request.mode === "navigate" && isAttendancePage) {
     event.respondWith(
       fetch(request)
         .then(res => {
-          // Cache attendance + register pages specifically
-          if (
-            url.pathname.includes("/attendance") ||
-            url.pathname.includes("/register")
-          ) {
+          if (res.ok) {
             const clone = res.clone()
             caches.open(RUNTIME).then(c => c.put(request, clone))
           }
           return res
         })
-        .catch(() => caches.match(request).then(r => r ?? caches.match("/")))
+        .catch(() =>
+          caches.match(request).then(cached => {
+            if (cached) return cached
+            // Offline fallback page
+            return new Response(
+              `<!DOCTYPE html>
+              <html lang="ar" dir="rtl">
+              <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width,initial-scale=1"/>
+                <title>EduTrack — بدون اتصال</title>
+                <style>
+                  body{margin:0;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f5;color:#333;text-align:center;padding:1rem}
+                  .icon{font-size:4rem;margin-bottom:1rem}
+                  h1{font-size:1.25rem;margin-bottom:.5rem}
+                  p{color:#666;font-size:.9rem;max-width:280px}
+                  button{margin-top:1.5rem;padding:.75rem 2rem;background:#7c3aed;color:#fff;border:none;border-radius:12px;font-size:1rem;cursor:pointer}
+                </style>
+              </head>
+              <body>
+                <div class="icon">📡</div>
+                <h1>لا يوجد اتصال بالإنترنت</h1>
+                <p>لم يتم تحميل هذه الصفحة بعد. اتصل بالإنترنت وأعد المحاولة.</p>
+                <button onclick="location.reload()">إعادة المحاولة</button>
+              </body>
+              </html>`,
+              { headers: { "Content-Type": "text/html; charset=utf-8" } }
+            )
+          })
+        )
     )
     return
   }
 
-  // Static assets (JS, CSS, fonts, images) — cache first
+  // Other navigations — network only (don't cache teacher dashboard etc.)
+  if (request.mode === "navigate") return
+
+  // Static assets (JS, CSS, fonts, images, icons) — cache first
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached
       return fetch(request).then(res => {
-        if (res.ok) {
+        if (res.ok && (
+          url.pathname.startsWith("/_next/static/") ||
+          url.pathname.startsWith("/icon-") ||
+          url.pathname.endsWith(".svg") ||
+          url.pathname.endsWith(".png") ||
+          url.pathname.endsWith(".woff2")
+        )) {
           const clone = res.clone()
-          caches.open(RUNTIME).then(c => c.put(request, clone))
+          caches.open(CACHE_NAME).then(c => c.put(request, clone))
         }
         return res
       })
