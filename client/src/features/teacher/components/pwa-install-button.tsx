@@ -27,14 +27,6 @@ export function PwaInstallButton({ groupId, groupName }: Props) {
       return
     }
 
-    // Inject the group-specific manifest link
-    const existing = document.getElementById("pwa-manifest")
-    const link     = (existing ?? document.createElement("link")) as HTMLLinkElement
-    link.id   = "pwa-manifest"
-    link.rel  = "manifest"
-    link.href = `/api/pwa/manifest/${groupId}`
-    if (!existing) document.head.appendChild(link)
-
     // Capture the install prompt
     const handler = (e: Event) => {
       e.preventDefault()
@@ -43,8 +35,8 @@ export function PwaInstallButton({ groupId, groupName }: Props) {
     }
     window.addEventListener("beforeinstallprompt", handler)
 
-    // Also show button if prompt never fires (Chrome has already shown it before)
-    const timer = setTimeout(() => setVisible(true), 800)
+    // Show button after short delay (in case prompt fires late)
+    const timer = setTimeout(() => setVisible(true), 600)
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler)

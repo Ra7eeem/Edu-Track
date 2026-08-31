@@ -16,24 +16,26 @@ function toArray<T>(raw: unknown): T[] {
   return []
 }
 
-export function useJoinRequests(status?: JoinRequestStatus) {
+export function useJoinRequests(status?: JoinRequestStatus, opts?: { initialData?: ApiJoinRequest[] }) {
   const qs = status ? `?status=${status}&limit=50` : "?limit=50"
   return useQuery({
-    queryKey: ["teacher", "join-requests", status],
-    queryFn:  async () => {
+    queryKey:    ["teacher", "join-requests", status],
+    queryFn:     async () => {
       const raw = await clientFetch<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]>(
         `/api/teacher/join-requests${qs}`
       )
       return toArray<ApiJoinRequest>(raw)
     },
-    staleTime: 30 * 1000,
+    staleTime:   30 * 1000,
+    initialData: opts?.initialData,
+    retry:       3,
   })
 }
 
-export function useJoinRequestCounts() {
+export function useJoinRequestCounts(opts?: { initialData?: number }) {
   return useQuery({
-    queryKey: ["teacher", "join-requests", JoinRequestStatus.PENDING],
-    queryFn:  async () => {
+    queryKey:        ["teacher", "join-requests", JoinRequestStatus.PENDING],
+    queryFn:         async () => {
       const raw = await clientFetch<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]>(
         "/api/teacher/join-requests?status=PENDING&limit=50"
       )
@@ -41,6 +43,8 @@ export function useJoinRequestCounts() {
     },
     staleTime:       20 * 1000,
     refetchInterval: 30_000,
+    initialData:     opts?.initialData,
+    retry:           3,
   })
 }
 

@@ -1,9 +1,36 @@
+import type { Metadata } from "next"
 import { AttendanceClient } from "@/features/teacher/components/attendance-client"
 import { PwaInstallButton } from "@/features/teacher/components/pwa-install-button"
 import { TopBar }           from "@/shared/components/layout/topbar"
 import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
 import { getSessionData }   from "@/shared/lib/session"
 import { ApiGroup, ApiGroupMembership, ApiNotification, PaginatedResponse } from "@/shared/types/api"
+
+// ─── Dynamic metadata so the browser picks up the group-specific manifest ──────
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Metadata> {
+  const { id }    = await params
+  const session   = await getSessionData()
+
+  let groupName   = "المجموعة"
+  let teacherName = session?.name ?? "المدرس"
+
+  try {
+    const g = await serverFetch<ApiGroup>(`/api/groups/${id}`, { revalidate: 300 })
+    if (g?.name) groupName = g.name
+  } catch { /* use defaults */ }
+
+  return {
+    title:    `حضور — ${groupName}`,
+    manifest: `/api/pwa/manifest/${id}`,
+    appleWebApp: {
+      capable:        true,
+      statusBarStyle: "default",
+      title:          `${groupName} — ${teacherName}`,
+    },
+  }
+}
 
 export default async function AttendancePage({
   params,

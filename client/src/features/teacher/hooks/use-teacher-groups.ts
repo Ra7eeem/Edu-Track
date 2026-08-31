@@ -16,16 +16,18 @@ function extractArray<T>(raw: unknown): T[] {
   return []
 }
 
-export function useTeacherGroups() {
+export function useTeacherGroups(opts?: { initialData?: ApiGroup[] }) {
   return useQuery({
-    queryKey: ["teacher", "groups"],
-    queryFn:  async () => {
+    queryKey:    ["teacher", "groups"],
+    queryFn:     async () => {
       const raw = await clientFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>(
         "/api/teacher/groups?limit=50"
       )
       return extractArray<ApiGroup>(raw)
     },
-    staleTime: 5 * 60 * 1000, // groups rarely change mid-session
+    staleTime:   5 * 60 * 1000,
+    initialData: opts?.initialData,
+    retry:       3,
   })
 }
 
@@ -47,8 +49,10 @@ export function useGroupDetails(groupId: string) {
       }
       return { group: raw as unknown as ApiGroup, teachers: [], studentsCount: 0 }
     },
-    enabled:   !!groupId,
-    staleTime: 2 * 60 * 1000,
+    enabled:              !!groupId,
+    staleTime:            2 * 60 * 1000,
+    retry:                3,
+    refetchOnWindowFocus: true,
   })
 }
 

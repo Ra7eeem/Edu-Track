@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EduTrack — منصة إدارة المجموعات التعليمية",
   description: "نظّم مجموعاتك وتابع حضور طلابك بسهولة",
-  manifest: "/manifest.json",
+  // manifest is injected per-page (attendance/register get dynamic manifests)
   themeColor: "#7c3aed",
   appleWebApp: {
     capable:        true,

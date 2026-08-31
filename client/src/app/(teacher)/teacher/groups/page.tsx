@@ -1,229 +1,41 @@
-"use client"
+import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
+import { getSessionData }  from "@/shared/lib/session"
+import { ApiGroup, ApiJoinRequest, ApiNotification, JoinRequestStatus, PaginatedResponse } from "@/shared/types/api"
+import { GroupsClient }    from "./groups-client"
 
-import { TopBar } from "@/shared/components/layout/topbar"
-import { Button } from "@/shared/components/ui/button"
-import { useTeacherGroups, useTeacherCreateGroup } from "@/features/teacher/hooks/use-teacher-groups"
-import { useJoinRequestCounts } from "@/features/teacher/hooks/use-join-requests"
-import { Grade, GRADE_LABELS, resolveId } from "@/shared/types/api"
-import { cn } from "@/shared/lib/tailwind-cn"
-import { BookOpen, Plus, TrendingUp, Users, X } from "lucide-react"
-import Link from "next/link"
-import { useRef, useState } from "react"
+export default async function TeacherGroupsPage() {
+  const session = await getSessionData()
 
-const COLORS = [
-  "from-violet-500 to-violet-600",
-  "from-cyan-500 to-cyan-600",
-  "from-amber-500 to-amber-600",
-  "from-emerald-500 to-emerald-600",
-  "from-rose-500 to-rose-600",
-]
+  const [groupsRes, pendingRes, notifsRes] = await Promise.allSettled([
+    serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>("/api/teacher/groups?limit=50"),
+    serverFetch<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]>(
+      `/api/teacher/join-requests?status=${JoinRequestStatus.PENDING}&limit=50`
+    ),
+    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
+  ])
 
-// ─── Grades multi-selector ────────────────────────────────────────────────────
-function GradesSelector({ selected, onChange }: { selected: Grade[]; onChange: (g: Grade[]) => void }) {
-  const toggle = (g: Grade) =>
-    onChange(selected.includes(g) ? selected.filter(x => x !== g) : [...selected, g])
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground">
-        الصفوف المستهدفة
-        <span className="ms-1 text-muted-foreground/60">(اتركها فارغة لكل الصفوف)</span>
-      </label>
-      <div className="flex flex-wrap gap-1.5">
-        {Object.entries(GRADE_LABELS).map(([val, label]) => {
-          const g = val as Grade; const sel = selected.includes(g)
-          return (
-            <button key={g} type="button" onClick={() => toggle(g)}
-              className={cn("rounded-xl border px-3 py-1.5 text-xs font-medium transition-all",
-                sel ? "border-primary bg-primary/10 text-primary"
-                    : "border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground")}>
-              {sel && <span className="me-1">✓</span>}{label}
-            </button>
-          )
-        })}
-      </div>
-      {selected.length > 0 && <p className="text-[10px] text-primary">{selected.length} صف مختار</p>}
-    </div>
+  const groups = resolveList(
+    groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>
   )
-}
 
-// ─── Create Group Modal ───────────────────────────────────────────────────────
-function CreateGroupModal({ onClose }: { onClose: () => void }) {
-  const createMut  = useTeacherCreateGroup()
-  const overlayRef = useRef<HTMLDivElement>(null)
-
-  const [name,        setName]        = useState("")
-  const [description, setDescription] = useState("")
-  const [grades,      setGrades]      = useState<Grade[]>([])
-  const [error,       setError]       = useState<string | null>(null)
-
-  const handleSubmit = async () => {
-    if (!name.trim()) { setError("اسم المجموعة مطلوب"); return }
-    setError(null)
-    try {
-      await createMut.mutateAsync({
-        name:        name.trim(),
-        description: description.trim() || undefined,
-        grades:      grades.length > 0 ? grades : undefined,
-      })
-      onClose()
-    } catch (e: unknown) {
-      setError((e as { message?: string })?.message ?? "حدث خطأ")
-    }
-  }
-
-  return (
-    <div ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-      onClick={e => { if (e.target === overlayRef.current) onClose() }}>
-      <div className="w-full max-w-md rounded-3xl bg-background border border-border/60 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col">
-        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4 shrink-0">
-          <h2 className="text-base font-bold">إنشاء مجموعة جديدة</h2>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted transition-colors">
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto p-5 space-y-4">
-          {error && (
-            <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>
-          )}
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">اسم المجموعة *</label>
-            <input value={name} onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              placeholder="مثال: مجموعة الرياضيات — الصف العاشر" autoFocus
-              className="flex h-10 w-full rounded-2xl border border-input bg-card px-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all" />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">الوصف (اختياري)</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)}
-              placeholder="وصف مختصر عن المجموعة..." rows={2}
-              className="flex w-full rounded-2xl border border-input bg-card px-4 py-3 text-sm outline-none resize-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all" />
-          </div>
-
-          <GradesSelector selected={grades} onChange={setGrades} />
-        </div>
-
-        <div className="flex gap-2 border-t border-border/60 px-5 py-4 shrink-0">
-          <Button variant="outline" className="flex-1" onClick={onClose}>إلغاء</Button>
-          <Button className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
-            onClick={handleSubmit} disabled={createMut.isPending}>
-            <Plus className="size-4" />{createMut.isPending ? "جارٍ الإنشاء..." : "إنشاء المجموعة"}
-          </Button>
-        </div>
-      </div>
-    </div>
+  const pendingRequests = resolveList(
+    pendingRes as PromiseSettledResult<
+      PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[] | null
+    >
   )
-}
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default function TeacherGroupsPage() {
-  const [showCreate, setShowCreate] = useState(false)
-
-  const { data: groupsRaw, isLoading } = useTeacherGroups()
-  const { data: pendingCount = 0 }     = useJoinRequestCounts()
-  const groups = groupsRaw ?? []
+  const unread = resolveList(
+    notifsRes as PromiseSettledResult<
+      PaginatedResponse<ApiNotification> | ApiNotification[] | null
+    >
+  ).filter(n => !n.isRead).length
 
   return (
-    <>
-      {showCreate && <CreateGroupModal onClose={() => setShowCreate(false)} />}
-
-      <div className="flex flex-col">
-        <TopBar
-          title="مجموعاتي"
-          notifHref="/teacher/notifications"
-          unreadCount={pendingCount}
-          userName=""
-          userAvatar="م"
-          userAvatarColor="bg-violet-500"
-          profileHref="/teacher/profile"
-        />
-
-        <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
-          {/* Header row */}
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {isLoading ? "جارٍ التحميل..." : `${groups.length} مجموعة`}
-            </p>
-            <Button
-              onClick={() => setShowCreate(true)}
-              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
-            >
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">إنشاء مجموعة</span>
-            </Button>
-          </div>
-
-          {/* Loading */}
-          {isLoading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-36 animate-pulse rounded-2xl border border-border/60 bg-muted" />
-              ))}
-            </div>
-          ) : groups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-20 text-center">
-              <BookOpen className="mb-3 size-10 text-muted-foreground/40" />
-              <p className="font-medium">لا توجد مجموعات بعد</p>
-              <p className="mt-1 text-sm text-muted-foreground">أنشئ مجموعتك الأولى الآن</p>
-              <Button
-                className="mt-4 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
-                onClick={() => setShowCreate(true)}
-              >
-                <Plus className="size-4" />إنشاء مجموعة
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {groups.map((g, i) => (
-                <div
-                  key={resolveId(g)}
-                  className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
-                  <div className="p-5">
-                    <h3 className="text-base font-bold">{g.name}</h3>
-                    {g.description && (
-                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{g.description}</p>
-                    )}
-                    {/* Grades badges */}
-                    {(g.grades ?? []).length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {g.grades.map(gr => (
-                          <span key={gr} className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
-                            {GRADE_LABELS[gr as Grade]}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-3 text-xs text-muted-foreground">
-                      <span>آخر تحديث: {new Date(g.updatedAt).toLocaleDateString("ar-EG")}</span>
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/teacher/group/${resolveId(g)}/attendance`}>
-                          <Users className="size-3.5" />تسجيل الحضور
-                        </Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
-                        asChild
-                      >
-                        <Link href={`/teacher/group/${resolveId(g)}`}>
-                          <TrendingUp className="size-3.5" />إدارة المجموعة
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+    <GroupsClient
+      initialGroups={groups}
+      initialPending={pendingRequests.length}
+      unreadCount={unread}
+      userName={session?.name ?? ""}
+    />
   )
 }
