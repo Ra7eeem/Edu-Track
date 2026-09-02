@@ -1,13 +1,13 @@
 {
-  "name": "EduTrack — إدارة المجموعات التعليمية",
-  "short_name": "EduTrack",
-  "description": "نظّم مجموعاتك وتابع حضور طلابك",
+  "name": "معراج — إدارة المجموعات التعليمية",
+  "short_name": "معراج",
+  "description": "نظّم مجموعاتك وتابع حضور طلابك — منصة معراج التعليمية",
   "start_url": "/teacher/groups",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "background_color": "#faf7f0",
+  "theme_color": "#0d7377",
   "lang": "ar",
   "dir": "rtl",
   "icons": [

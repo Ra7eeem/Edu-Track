@@ -1,12 +1,14 @@
 "use client"
 
-import { Button } from "@/shared/components/ui/button"
+import { Button }              from "@/shared/components/ui/button"
+import { PostCommentsSection } from "@/features/teacher/components/post-comments-section"
 import { createPostAction, deletePostAction, toggleLikeAction } from "@/features/teacher/actions/post.action"
-import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
-import { ApiPost, resolveId } from "@/shared/types/api"
-import { Heart, MessageCircle, PenLine, Plus, Trash2 } from "lucide-react"
+import { useGroupPosts }       from "@/features/teacher/hooks/use-group-posts"
+import { ApiPost, resolveId }  from "@/shared/types/api"
+import { cn }                  from "@/shared/lib/tailwind-cn"
+import { Heart, PenLine, Plus, Trash2 } from "lucide-react"
 import { useTransition, useState } from "react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQueryClient }      from "@tanstack/react-query"
 
 interface Props {
   groupId:      string
@@ -92,7 +94,7 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
             </Button>
             <Button
               size="sm"
-              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+              className="bg-gradient-to-r from-teal-600 to-teal-500 text-white hover:opacity-90"
               onClick={handleCreate}
               disabled={isPending || !content.trim()}
             >
@@ -121,7 +123,7 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
               <article key={pid} className="rounded-2xl border border-border/60 bg-card shadow-sm">
                 <div className="flex items-center justify-between px-4 pt-4">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                    <span className="grid size-9 place-items-center rounded-xl bg-teal-100 text-sm font-bold text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
                       {aAvatar}
                     </span>
                     <div>
@@ -144,19 +146,22 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
                   {p.content}
                 </p>
 
-                <div className="flex items-center gap-4 border-t border-border/40 px-4 py-3 text-xs text-muted-foreground">
+                {/* Like button row — above the comments section */}
+                <div className="flex items-center border-b border-border/40 px-4 py-2.5">
                   <button
                     onClick={() => handleLike(resolveId(p))}
-                    className="flex items-center gap-1.5 hover:text-primary transition-colors"
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs transition-colors",
+                      p.isLiked ? "text-primary" : "text-muted-foreground hover:text-primary"
+                    )}
                   >
-                    <Heart className={`size-3.5 ${p.isLiked ? "fill-primary text-primary" : ""}`} />
-                    {p.likeCount} إعجاب
+                    <Heart className={cn("size-3.5 transition-all", p.isLiked && "fill-primary")} />
+                    {p.likeCount ?? 0} إعجاب
                   </button>
-                  <span className="flex items-center gap-1.5">
-                    <MessageCircle className="size-3.5" />
-                    {p.commentCount} تعليق
-                  </span>
                 </div>
+
+                {/* Comments section (lazy-loads on click) */}
+                <PostCommentsSection groupId={groupId} post={p} />
               </article>
             )
           })}

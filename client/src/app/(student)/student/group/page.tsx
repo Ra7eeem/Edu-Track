@@ -14,7 +14,7 @@ import {
   resolveId, GRADE_LABELS, Grade,
   type ApiPost, type ApiRankingEntry, type ApiComment,
 } from "@/shared/types/api"
-import { Heart, MessageCircle, Send, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
+import { Heart, MessageCircle, Send, ChevronDown, ChevronUp, Trash2, CornerDownRight, ChevronRight } from "lucide-react"
 import { useState, useTransition } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
@@ -34,6 +34,12 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
   const [submitting, startTransition] = useTransition()
   const qc           = useQueryClient()
 
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<{ cid: string; name: string } | null>(null)
+  const [replyText,  setReplyText]  = useState("")
+  const [openReplies, setOpenReplies] = useState<Record<string, boolean>>({})
+  const [localReplies, setLocalReplies] = useState<Record<string, ApiComment[]>>({})
+
   const { data: commentsData, isLoading } = usePostComments(groupId, pid, open)
   const comments: ApiComment[] = (() => {
     const raw = commentsData as unknown
@@ -47,7 +53,6 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
   const likeMut = useMutation({
     mutationFn: () => clientFetch(`/api/groups/${groupId}/posts/${pid}/like`, { method: "POST" } as never),
     onMutate: async () => {
-      // Optimistic update
       await qc.cancelQueries({ queryKey: ["groups", groupId, "posts"] })
       const prev = qc.getQueryData(["groups", groupId, "posts"])
       qc.setQueryData(["groups", groupId, "posts"], (old: unknown) => {
@@ -75,27 +80,70 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
     onSettled: () => qc.invalidateQueries({ queryKey: ["groups", groupId, "posts"] }),
   })
 
+  // helper: increment/decrement post commentCount
+  const patchPostCount = (delta: number) => {
+    qc.setQueryData(["groups", groupId, "posts"], (old: unknown) => {
+      const update = (p: ApiPost) =>
+        resolveId(p) === pid ? { ...p, commentCount: Math.max(0, (p.commentCount ?? 0) + delta) } : p
+      if (!old) return old
+      if (Array.isArray(old)) return (old as ApiPost[]).map(update)
+      if (typeof old === "object" && old !== null && "data" in old) {
+        const o = old as { data: ApiPost[] }
+        return { ...o, data: o.data.map(update) }
+      }
+      return old
+    })
+  }
+
   const handleComment = () => {
     if (!text.trim()) return
     startTransition(async () => {
       const res = await studentCreateCommentAction(groupId, pid, text.trim())
       if (res.success) {
         setText("")
-        // Optimistic: increment commentCount on the post
-        qc.setQueryData(["groups", groupId, "posts"], (old: unknown) => {
-          const update = (p: ApiPost) =>
-            resolveId(p) === pid ? { ...p, commentCount: (p.commentCount ?? 0) + 1 } : p
-          if (!old) return old
-          if (Array.isArray(old)) return (old as ApiPost[]).map(update)
-          if (typeof old === "object" && old !== null && "data" in old) {
-            const o = old as { data: ApiPost[] }
-            return { ...o, data: o.data.map(update) }
-          }
-          return old
-        })
+        patchPostCount(+1)
         qc.invalidateQueries({ queryKey: ["groups", groupId, "posts", pid, "comments"] })
       }
     })
+  }
+
+  const handleReply = (cid: string) => {
+    if (!replyText.trim()) return
+    startTransition(async () => {
+      const res = await studentCreateCommentAction(groupId, pid, replyText.trim(), cid)
+      if (res.success) {
+        setReplyText("")
+        setReplyingTo(null)
+        patchPostCount(+1)
+        // Refresh replies for this comment
+        const replyRes = await clientFetch<{ data: ApiComment[] }>(
+          `/api/groups/${groupId}/posts/${pid}/comments/${cid}/replies?limit=50`
+        ) as { data: ApiComment[] }
+        setLocalReplies(prev => ({
+          ...prev,
+          [cid]: Array.isArray(replyRes) ? replyRes : replyRes.data ?? [],
+        }))
+        setOpenReplies(prev => ({ ...prev, [cid]: true }))
+      }
+    })
+  }
+
+  const handleLoadReplies = async (cid: string) => {
+    const isOpen = openReplies[cid]
+    if (isOpen) {
+      setOpenReplies(prev => ({ ...prev, [cid]: false }))
+      return
+    }
+    if (!localReplies[cid]) {
+      const res = await clientFetch<{ data: ApiComment[] }>(
+        `/api/groups/${groupId}/posts/${pid}/comments/${cid}/replies?limit=50`
+      ) as { data: ApiComment[] }
+      setLocalReplies(prev => ({
+        ...prev,
+        [cid]: Array.isArray(res) ? res : res.data ?? [],
+      }))
+    }
+    setOpenReplies(prev => ({ ...prev, [cid]: true }))
   }
 
   return (
@@ -105,7 +153,10 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
         <button
           onClick={() => likeMut.mutate()}
           disabled={likeMut.isPending}
-          className="flex items-center gap-1.5 hover:text-primary transition-colors"
+          className={cn(
+            "flex items-center gap-1.5 transition-colors",
+            post.isLiked ? "text-primary" : "hover:text-primary"
+          )}
         >
           <Heart className={cn("size-3.5 transition-all", post.isLiked && "fill-primary text-primary")} />
           {post.likeCount ?? 0} إعجاب
@@ -152,56 +203,117 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
           ) : comments.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-2">لا توجد تعليقات بعد — كن أول من يعلق!</p>
           ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <div className="space-y-3 max-h-[360px] overflow-y-auto pe-1">
               {comments.map(c => {
                 const cid    = resolveId(c as { _id?: string; id?: string })
                 const author = c.author as { name?: string; _id?: string; id?: string } | undefined
                 const authorId = author?._id ?? author?.id ?? ""
                 const isOwn  = !!currentUserId && authorId === currentUserId
+                const replyCount = c.replyCount ?? 0
                 return (
-                  <div key={cid} className="flex gap-2.5">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 mt-0.5">
-                      {(author?.name ?? "م")[0]}
-                    </span>
-                    <div className="min-w-0 flex-1 rounded-2xl bg-muted/60 px-3 py-2">
-                      <p className="text-xs font-semibold">{author?.name ?? "مستخدم"}</p>
-                      <p className="text-sm leading-relaxed">{c.content}</p>
+                  <div key={cid} className="space-y-1.5">
+                    {/* Comment row */}
+                    <div className="flex gap-2.5">
+                      <span className="grid size-7 shrink-0 place-items-center rounded-xl bg-teal-100 text-xs font-bold text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 mt-0.5">
+                        {(author?.name ?? "م")[0]}
+                      </span>
+                      <div className="min-w-0 flex-1 rounded-2xl bg-muted/60 px-3 py-2">
+                        <p className="text-xs font-semibold">{author?.name ?? "مستخدم"}</p>
+                        <p className="text-sm leading-relaxed">{c.content}</p>
+                      </div>
+                      {isOwn && (
+                        <button
+                          onClick={() => {
+                            startTransition(async () => {
+                              await studentDeleteCommentAction(groupId, pid, cid)
+                              qc.setQueryData(["groups", groupId, "posts", pid, "comments"], (old: unknown) => {
+                                if (!old) return old
+                                const upd = (arr: ApiComment[]) => arr.filter(x => resolveId(x as { _id?: string; id?: string }) !== cid)
+                                if (Array.isArray(old)) return upd(old as ApiComment[])
+                                if (typeof old === "object" && old !== null && "data" in old) {
+                                  const o = old as { data: ApiComment[] }
+                                  return { ...o, data: upd(o.data) }
+                                }
+                                return old
+                              })
+                              patchPostCount(-1)
+                            })
+                          }}
+                          className="mt-1 grid size-6 shrink-0 place-items-center self-start rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-500 transition-colors dark:hover:bg-rose-950/20"
+                          aria-label="حذف تعليقي"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      )}
                     </div>
-                    {isOwn && (
+
+                    {/* Reply / View replies row */}
+                    <div className="ms-9 flex items-center gap-3">
                       <button
                         onClick={() => {
-                          startTransition(async () => {
-                            const pid = resolveId(post)
-                            await studentDeleteCommentAction(groupId, pid, cid)
-                            qc.setQueryData(["groups", groupId, "posts", pid, "comments"], (old: unknown) => {
-                              if (!old) return old
-                              const upd = (arr: ApiComment[]) => arr.filter(x => resolveId(x as { _id?: string; id?: string }) !== cid)
-                              if (Array.isArray(old)) return upd(old as ApiComment[])
-                              if (typeof old === "object" && old !== null && "data" in old) {
-                                const o = old as { data: ApiComment[] }
-                                return { ...o, data: upd(o.data) }
-                              }
-                              return old
-                            })
-                            qc.setQueryData(["groups", groupId, "posts"], (old: unknown) => {
-                              const pId = resolveId(post)
-                              const upd2 = (p: ApiPost) =>
-                                resolveId(p) === pId ? { ...p, commentCount: Math.max(0, (p.commentCount ?? 1) - 1) } : p
-                              if (!old) return old
-                              if (Array.isArray(old)) return (old as ApiPost[]).map(upd2)
-                              if (typeof old === "object" && old !== null && "data" in old) {
-                                const o = old as { data: ApiPost[] }
-                                return { ...o, data: o.data.map(upd2) }
-                              }
-                              return old
-                            })
-                          })
+                          if (replyingTo?.cid === cid) { setReplyingTo(null); setReplyText("") }
+                          else { setReplyingTo({ cid, name: author?.name ?? "مستخدم" }); setReplyText("") }
                         }}
-                        className="mt-1 grid size-6 shrink-0 place-items-center self-start rounded-lg text-muted-foreground hover:bg-rose-50 hover:text-rose-500 transition-colors dark:hover:bg-rose-950/20"
-                        aria-label="حذف تعليقي"
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
                       >
-                        <Trash2 className="size-3" />
+                        <CornerDownRight className="size-3" />رد
                       </button>
+                      {replyCount > 0 && (
+                        <button
+                          onClick={() => handleLoadReplies(cid)}
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {openReplies[cid]
+                            ? <ChevronDown className="size-3" />
+                            : <ChevronRight className="size-3" />
+                          }
+                          {replyCount} {replyCount === 1 ? "رد" : "ردود"}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Inline reply input */}
+                    {replyingTo?.cid === cid && (
+                      <div className="ms-9 flex items-end gap-2 animate-fade-in">
+                        <textarea
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder={`رد على ${replyingTo.name}...`}
+                          rows={1}
+                          autoFocus
+                          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(cid) } }}
+                          className="flex-1 resize-none rounded-xl border border-input bg-muted/40 px-3 py-2 text-xs outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                        <button
+                          onClick={() => handleReply(cid)}
+                          disabled={submitting || !replyText.trim()}
+                          className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity"
+                        >
+                          <Send className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Replies list */}
+                    {openReplies[cid] && localReplies[cid] && (
+                      <div className="ms-9 space-y-1.5">
+                        {localReplies[cid].map(r => {
+                          const rid     = resolveId(r as { _id?: string; id?: string })
+                          const rAuthor = r.author as { name?: string; _id?: string; id?: string } | undefined
+                          return (
+                            <div key={rid} className="flex items-start gap-2">
+                              <CornerDownRight className="size-3 shrink-0 mt-1.5 text-muted-foreground/40" />
+                              <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-teal-100 text-[9px] font-bold text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
+                                {(rAuthor?.name ?? "م")[0]}
+                              </span>
+                              <div className="flex-1 rounded-xl bg-muted/40 px-3 py-2">
+                                <p className="text-xs font-semibold">{rAuthor?.name ?? "مستخدم"}</p>
+                                <p className="text-xs leading-relaxed">{r.content}</p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
                 )

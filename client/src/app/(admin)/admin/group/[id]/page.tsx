@@ -531,7 +531,7 @@ export default function AdminGroupDetailPage({
                       return (
                         <div key={pid} className="rounded-2xl border border-border/60 bg-card shadow-sm p-4">
                           <div className="flex items-center gap-2.5 mb-3">
-                            <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                            <span className="grid size-8 place-items-center rounded-xl bg-teal-100 text-xs font-bold text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
                               {author?.name?.[0] ?? "م"}
                             </span>
                             <div>
@@ -563,7 +563,7 @@ export default function AdminGroupDetailPage({
                     </p>
                     <Button
                       size="sm"
-                      className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                      className="bg-gradient-to-r from-teal-600 to-teal-500 text-white hover:opacity-90"
                       onClick={() => setShowAddTeacher(true)}
                     >
                       <UserPlus className="size-3.5" />
@@ -583,7 +583,7 @@ export default function AdminGroupDetailPage({
                       <p className="text-sm text-muted-foreground">لا يوجد مدرسون مسجّلون</p>
                       <Button
                         size="sm"
-                        className="mt-3 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                        className="mt-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white hover:opacity-90"
                         onClick={() => setShowAddTeacher(true)}
                       >
                         <Plus className="size-3.5" />إضافة مدرس

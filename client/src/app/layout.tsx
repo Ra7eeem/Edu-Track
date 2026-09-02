@@ -1,38 +1,54 @@
-import type { Metadata } from "next";
-import { IBM_Plex_Sans_Arabic, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/shared/lib/tailwind-cn";
-import { QueryProvider } from "@/shared/providers/query-provider";
-import { PwaRegister } from "@/shared/components/pwa-register";
+import type { Metadata } from "next"
+import { IBM_Plex_Sans_Arabic, Geist_Mono, Cairo } from "next/font/google"
+import "./globals.css"
+import { cn }             from "@/shared/lib/tailwind-cn"
+import { QueryProvider }  from "@/shared/providers/query-provider"
+import { ThemeProvider }  from "@/shared/providers/theme-provider"
+import { PwaRegister }    from "@/shared/components/pwa-register"
+import { SplashScreen }   from "@/shared/components/splash-screen"
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
+  subsets:  ["arabic"],
+  weight:   ["300", "400", "500", "600", "700"],
+  variable: "--font-ibm",
+  display:  "swap",
+})
+
+// Cairo — primary UI + display font for Mi'raj
+const cairo = Cairo({
+  subsets:  ["arabic", "latin"],
+  weight:   ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-cairo",
+  display:  "swap",
+})
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+  subsets:  ["latin"],
+})
 
 export const metadata: Metadata = {
-  title: "EduTrack — منصة إدارة المجموعات التعليمية",
-  description: "نظّم مجموعاتك وتابع حضور طلابك بسهولة",
-  // manifest is injected per-page (attendance/register get dynamic manifests)
-  themeColor: "#7c3aed",
+  title: {
+    default:  "معراج | Mi'Raj Educational Platform",
+    template: "%s | معراج",
+  },
+  description: "منصة معراج التعليمية — نظّم مجموعاتك وتابع حضور طلابك",
+  themeColor:  [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)",  color: "#1B2A4A" },
+  ],
   appleWebApp: {
     capable:        true,
     statusBarStyle: "default",
-    title:          "EduTrack",
+    title:          "معراج",
   },
   icons: {
     icon:  [
-      { url: "/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
-      { url: "/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
+      // Use main logo as favicon (SVG works in modern browsers)
+      { url: "/main-logo.svg", type: "image/svg+xml" },
+      { url: "/icon-192.svg",  sizes: "192x192", type: "image/svg+xml" },
     ],
-    apple: [{ url: "/icon-192.svg", sizes: "192x192", type: "image/svg+xml" }],
+    apple: [{ url: "/main-logo.svg", type: "image/svg+xml" }],
   },
   viewport: {
     width:        "device-width",
@@ -41,19 +57,30 @@ export const metadata: Metadata = {
     userScalable: false,
     viewportFit:  "cover",
   },
-};
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ar"
       dir="rtl"
-      className={cn("h-full antialiased", ibmPlexArabic.variable, geistMono.variable)}
+      suppressHydrationWarning
+      className={cn("h-full antialiased", ibmPlexArabic.variable, cairo.variable, geistMono.variable)}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <PwaRegister />
-        <QueryProvider>{children}</QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          storageKey="mearaj-theme"
+          disableTransitionOnChange
+        >
+          <SplashScreen />
+          <PwaRegister />
+          
+          <QueryProvider>{children}</QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

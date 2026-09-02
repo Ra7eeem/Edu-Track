@@ -273,6 +273,29 @@ export interface ApiSuccess<T> {
   message?: string
 }
 
+// ─── Exam Submission ──────────────────────────────────────────────────────────
+export interface ApiExamAnswer {
+  questionId:     string
+  chosen:         string
+  questionText?:  string
+  correctAnswer?: string
+  points?:        number
+  isCorrect?:     boolean
+}
+
+export interface ApiExamSubmission {
+  _id?:               string
+  id?:                string
+  assignment:         string
+  student:            Pick<ApiUser, "id" | "_id" | "name" | "email"> & { grade?: string }
+  score:              number
+  total:              number
+  answers:            ApiExamAnswer[]
+  answersWithDetails?:ApiExamAnswer[]
+  submittedAt:        string
+  createdAt:          string
+}
+
 export interface ApiErrorResponse {
   success: false
   message: string

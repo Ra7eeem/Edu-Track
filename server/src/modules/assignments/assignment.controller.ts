@@ -40,3 +40,31 @@ export const deleteAssignment = asyncHandler(async (req: Request, res: Response)
   );
   sendSuccess(res, null, 200, "تم حذف الواجب");
 });
+
+export const submitExam = asyncHandler(async (req: Request, res: Response) => {
+  const { assignmentId } = req.params
+  const { answers } = req.body as { answers: { questionId: string; chosen: string }[] }
+  const result = await AssignmentService.submitExam(
+    req.user!.userId,
+    p(assignmentId),
+    answers ?? []
+  );
+  sendSuccess(res, result, 201, "تم إرسال إجاباتك بنجاح");
+});
+
+export const getMySubmission = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AssignmentService.getMySubmission(
+    req.user!.userId,
+    p(req.params.assignmentId)
+  );
+  sendSuccess(res, result);
+});
+
+export const getExamSubmissions = asyncHandler(async (req: Request, res: Response) => {
+  const { data, pagination } = await AssignmentService.getExamSubmissions(
+    req.user!.userId,
+    p(req.params.assignmentId),
+    req
+  );
+  sendPaginated(res, data, pagination);
+});

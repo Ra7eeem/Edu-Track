@@ -302,7 +302,7 @@ function PostsTab({ groupId, authorName }: { groupId: string; authorName: string
           <article key={pid} className="rounded-2xl border border-border/60 bg-card shadow-sm">
             <div className="flex items-center justify-between px-4 pt-4">
               <div className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                <span className="grid size-9 place-items-center rounded-xl bg-teal-100 text-sm font-bold text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
                   {(author?.name ?? authorName)[0]}
                 </span>
                 <div>

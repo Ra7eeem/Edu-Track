@@ -1,13 +1,14 @@
 "use client"
 
 import { logoutAction } from "@/features/auth/actions/logout.action"
+import { MearajLogo }   from "@/shared/components/mearaj-logo"
+import { ThemeToggle }  from "@/shared/components/theme-toggle"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   BarChart3,
   Bell,
   BookOpen,
   ClipboardList,
-  GraduationCap,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -60,7 +61,7 @@ const navMap: Record<SidebarVariant, NavItem[]> = {
 }
 
 const avatarColors: Record<SidebarVariant, string> = {
-  teacher: "bg-violet-500",
+  teacher: "bg-teal-600",
   student: "bg-cyan-500",
   admin:   "bg-rose-500",
 }
@@ -89,13 +90,11 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
   return (
     <aside className="flex h-full w-64 flex-col border-e border-border bg-card">
       {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-        <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-sm">
-          <GraduationCap className="size-5" />
-        </span>
-        <span className="text-base font-bold">
-          <span className="text-primary">Edu</span>Track
-        </span>
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3.5">
+        <Link href="/" className="flex items-center gap-2.5 min-w-0 flex-1">
+          <MearajLogo size="sm" />
+        </Link>
+        <ThemeToggle />
       </div>
 
       {/* Nav */}

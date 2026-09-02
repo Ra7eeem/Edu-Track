@@ -4,13 +4,13 @@ import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { clientFetch } from "@/shared/lib/api-client"
 import {
-  ApiAssignment, ApiChoice, ApiQuestion,
+  ApiAssignment, ApiChoice, ApiExamSubmission, ApiQuestion,
   AssignmentType, ASSIGNMENT_TYPE_LABELS,
   PaginatedResponse, resolveId,
 } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ChevronDown, ChevronUp, Clock, ExternalLink, Plus, Trash2, X } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Plus, Trash2, Users, X, XCircle } from "lucide-react"
 import { use, useRef, useState } from "react"
 
 function toArray<T>(raw: unknown): T[] {
@@ -377,6 +377,161 @@ function CreateAssignmentModal({ groupId, onClose }: { groupId: string; onClose:
   )
 }
 
+// ─── Submissions Modal ────────────────────────────────────────────────────────
+function SubmissionsModal({
+  assignmentId,
+  title,
+  onClose,
+}: {
+  assignmentId: string
+  title:        string
+  onClose:      () => void
+}) {
+  const [selected, setSelected] = useState<string | null>(null)
+
+  const { data: raw, isLoading } = useQuery({
+    queryKey: ["exam-submissions", assignmentId],
+    queryFn:  () =>
+      clientFetch<{ data: ApiExamSubmission[] }>(
+        `/api/assignments/${assignmentId}/submissions?limit=100`
+      ),
+    enabled: !!assignmentId,
+  })
+
+  const submissions: ApiExamSubmission[] = (() => {
+    if (!raw) return []
+    if (Array.isArray(raw)) return raw as ApiExamSubmission[]
+    if (typeof raw === "object" && "data" in raw) return (raw as { data: ApiExamSubmission[] }).data ?? []
+    return []
+  })()
+
+  const selectedSub = selected ? submissions.find(s =>
+    (resolveId(s as { _id?: string; id?: string })) === selected
+  ) : null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4 sm:items-center"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4 shrink-0">
+          <div>
+            <h2 className="text-base font-bold">إجابات الطلاب</h2>
+            <p className="text-xs text-muted-foreground">{title}</p>
+          </div>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted">
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left: student list */}
+          <div className="w-56 shrink-0 border-e border-border/40 overflow-y-auto">
+            {isLoading ? (
+              <div className="p-4 space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-10 animate-pulse rounded-xl bg-muted" />
+                ))}
+              </div>
+            ) : submissions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center">
+                <Users className="size-8 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">لا توجد إجابات بعد</p>
+              </div>
+            ) : (
+              <div className="p-2 space-y-1">
+                {submissions.map(sub => {
+                  const sid  = resolveId(sub as { _id?: string; id?: string })
+                  const pct  = sub.total ? Math.round((sub.score / sub.total) * 100) : 0
+                  const st   = sub.student as { name?: string } | undefined
+                  return (
+                    <button
+                      key={sid}
+                      onClick={() => setSelected(prev => prev === sid ? null : sid)}
+                      className={cn(
+                        "w-full rounded-xl px-3 py-2.5 text-start transition-all",
+                        selected === sid
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      <p className="text-xs font-semibold truncate">{st?.name ?? "طالب"}</p>
+                      <p className={cn("text-[10px] mt-0.5", selected === sid ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        {sub.score}/{sub.total} ({pct}٪)
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right: submission detail */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {!selectedSub ? (
+              <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
+                <p className="text-3xl mb-2">👆</p>
+                <p className="text-sm">اختر طالباً من القائمة لعرض إجاباته</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Score summary */}
+                <div className={cn(
+                  "rounded-2xl border p-4",
+                  selectedSub.total && (selectedSub.score / selectedSub.total) >= 0.5
+                    ? "border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/20"
+                    : "border-rose-200/60 bg-rose-50/50 dark:border-rose-800/30 dark:bg-rose-950/20"
+                )}>
+                  <p className="text-lg font-extrabold">
+                    {selectedSub.score} / {selectedSub.total}{" "}
+                    <span className="text-sm font-medium text-muted-foreground">
+                      ({selectedSub.total ? Math.round((selectedSub.score / selectedSub.total) * 100) : 0}٪)
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    تاريخ التسليم: {new Date(selectedSub.submittedAt).toLocaleDateString("ar-EG", {
+                      year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+
+                {/* Answers */}
+                {(selectedSub.answersWithDetails ?? selectedSub.answers ?? []).map((ans, i) => (
+                  <div key={ans.questionId} className="rounded-xl border border-border/50 bg-card p-3 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-muted text-[10px] font-bold">{i + 1}</span>
+                      <p className="flex-1 text-xs font-medium">{ans.questionText ?? `سؤال ${i + 1}`}</p>
+                      {ans.isCorrect === true  && <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />}
+                      {ans.isCorrect === false && <XCircle      className="size-4 text-rose-500 shrink-0" />}
+                    </div>
+                    <div className="flex gap-2 ps-8 text-[11px]">
+                      <span className={cn(
+                        "rounded-lg border px-2 py-1",
+                        ans.isCorrect
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400"
+                          : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-400"
+                      )}>
+                        إجابة الطالب: <strong>{ans.chosen}</strong>
+                      </span>
+                      {!ans.isCorrect && ans.correctAnswer && (
+                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
+                          الصحيحة: <strong>{ans.correctAnswer}</strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function TeacherAssignmentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: groupId } = use(params)
@@ -384,6 +539,7 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
   const [showCreate, setShowCreate]   = useState(false)
   const [deleteId,   setDeleteId]     = useState<string | null>(null)
   const [expandedId, setExpandedId]   = useState<string | null>(null)
+  const [viewSubs,   setViewSubs]     = useState<{ id: string; title: string } | null>(null)
 
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["assignments", groupId],
@@ -400,6 +556,14 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
   return (
     <>
       {showCreate && <CreateAssignmentModal groupId={groupId} onClose={() => setShowCreate(false)} />}
+
+      {viewSubs && (
+        <SubmissionsModal
+          assignmentId={viewSubs.id}
+          title={viewSubs.title}
+          onClose={() => setViewSubs(null)}
+        />
+      )}
 
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -484,6 +648,16 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
                           <button onClick={() => setExpandedId(isOpen ? null : aid)}
                             className="grid size-8 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-muted transition-colors">
                             {isOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                          </button>
+                        )}
+                        {/* View submissions — exams only */}
+                        {isExam && (
+                          <button
+                            onClick={() => setViewSubs({ id: aid, title: a.title })}
+                            className="grid size-8 place-items-center rounded-xl border border-teal-200 text-teal-600 hover:bg-teal-50 transition-colors dark:border-teal-800 dark:hover:bg-teal-950/20"
+                            title="عرض إجابات الطلاب"
+                          >
+                            <Users className="size-3.5" />
                           </button>
                         )}
                         <button onClick={() => setDeleteId(aid)}

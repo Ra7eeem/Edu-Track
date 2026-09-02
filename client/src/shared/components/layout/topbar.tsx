@@ -2,6 +2,7 @@
 
 import React from "react"
 import { cn } from "@/shared/lib/tailwind-cn"
+import { ThemeToggle } from "@/shared/components/theme-toggle"
 import { Bell, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
 
@@ -50,10 +51,10 @@ export function TopBar({
         {/* Online indicator */}
         <span
           className={cn(
-            "hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium sm:flex",
+            "hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium sm:flex",
             online
-              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-              : "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+              : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300"
           )}
         >
           {online ? <Wifi className="size-3" /> : <WifiOff className="size-3" />}
@@ -63,10 +64,13 @@ export function TopBar({
         {/* Custom actions slot */}
         {actions}
 
+        {/* Theme toggle */}
+        <ThemeToggle className="hidden sm:grid" />
+
         {/* Notifications */}
         <Link
           href={notifHref}
-          className="relative grid size-9 place-items-center rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="relative grid size-9 place-items-center rounded-xl border border-border/50 text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border transition-all"
           aria-label="الإشعارات"
         >
           <Bell className="size-4" />

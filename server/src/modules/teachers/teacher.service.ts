@@ -279,9 +279,14 @@ export async function updateProfile(teacherId: string, dto: UpdateProfileDto) {
 
 export async function getDashboard(teacherId: string) {
   const { Notification } = await import("../../models/Notification");
+  const { Attendance }   = await import("../../models/Attendance");
+
+  // Today date (UTC midnight)
+  const now   = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   // All data fetched in parallel
-  const [groupLinks, recentNotifs, unreadCount] = await Promise.all([
+  const [groupLinks, recentNotifs, unreadCount, todayAttendanceSessions] = await Promise.all([
     GroupTeacher.find({ teacher: teacherId })
       .populate({ path: "group", match: { isActive: true } })
       .limit(10),
@@ -290,11 +295,33 @@ export async function getDashboard(teacherId: string) {
       .limit(5)
       .lean(),
     Notification.countDocuments({ recipient: teacherId, isRead: false }),
+    Attendance.find({
+      date: today,
+      group: {
+        $in: (await GroupTeacher.find({ teacher: teacherId }).select("group")).map(l => l.group),
+      },
+    }).lean(),
   ]);
 
   const groups = groupLinks.map((l) => l.group).filter(Boolean);
 
-  return { groups, notifications: recentNotifs, unreadCount };
+  // Aggregate today's attendance across all teacher's groups
+  let todayPresent = 0;
+  let todayAbsent  = 0;
+  for (const session of todayAttendanceSessions) {
+    for (const rec of session.records) {
+      if (rec.status === "PRESENT" || rec.status === "LATE") todayPresent++;
+      else if (rec.status === "ABSENT") todayAbsent++;
+    }
+  }
+
+  return {
+    groups,
+    notifications: recentNotifs,
+    unreadCount,
+    todayPresent,
+    todayAbsent,
+  };
 }
 
 // ─────────────────────────────────────────

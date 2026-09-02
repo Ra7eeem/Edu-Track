@@ -10,11 +10,13 @@ interface TeacherDashboardData {
   groups:        ApiGroup[]
   notifications: (ApiNotification & { isRead: boolean })[]
   unreadCount:   number
+  todayPresent:  number
+  todayAbsent:   number
 }
 
 const COLORS = [
-  "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
-  "from-amber-500 to-amber-600",   "from-emerald-500 to-emerald-600",
+  "from-teal-500 to-teal-600",   "from-amber-400 to-amber-500",
+  "from-emerald-500 to-emerald-600", "from-cyan-500 to-cyan-600",
   "from-rose-500 to-rose-600",
 ]
 
@@ -36,9 +38,12 @@ export default async function TeacherDashboard() {
   const notifs   = data?.notifications ?? []
   const unread   = data?.unreadCount   ?? 0
 
-  const totalStudents = groups.reduce(
+  const totalStudents  = groups.reduce(
     (s, g) => s + ((g as unknown as { studentsCount?: number }).studentsCount ?? 0), 0
   )
+  const todayPresent = data?.todayPresent ?? 0
+  const todayAbsent  = data?.todayAbsent  ?? 0
+  const hasToday     = data !== null && (todayPresent + todayAbsent) > 0
 
   return (
     <div className="flex flex-col">
@@ -49,7 +54,7 @@ export default async function TeacherDashboard() {
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-teal-600"
         profileHref="/teacher/profile"
       />
 
@@ -57,10 +62,10 @@ export default async function TeacherDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "المجموعات",     value: groups.length, icon: BookOpen,      color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-900/20"  },
-            { label: "إجمالي الطلاب", value: totalStudents, icon: Users,         color: "text-cyan-600",   bg: "bg-cyan-50 dark:bg-cyan-900/20"       },
-            { label: "حضور اليوم",    value: "—",           icon: CalendarCheck, color: "text-emerald-600",bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-            { label: "غياب اليوم",    value: "—",           icon: XCircle,       color: "text-rose-600",   bg: "bg-rose-50 dark:bg-rose-900/20"       },
+            { label: "المجموعات",     value: groups.length,                 icon: BookOpen,      color: "text-teal-600",    bg: "bg-teal-50 dark:bg-teal-900/20"       },
+            { label: "إجمالي الطلاب", value: totalStudents,                 icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20"       },
+            { label: "حضور اليوم",    value: hasToday ? todayPresent : "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+            { label: "غياب اليوم",    value: hasToday ? todayAbsent  : "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20"       },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
               <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>

@@ -19,15 +19,16 @@ export async function studentToggleLikeAction(
 }
 
 export async function studentCreateCommentAction(
-  groupId: string,
-  postId:  string,
-  content: string
+  groupId:         string,
+  postId:          string,
+  content:         string,
+  parentCommentId?: string
 ): Promise<StudentPostActionState> {
   if (!content.trim()) return { error: "التعليق لا يمكن أن يكون فارغاً" }
   try {
     await serverFetch(`/api/groups/${groupId}/posts/${postId}/comments`, {
       method: "POST",
-      body:   { content: content.trim() },
+      body:   { content: content.trim(), ...(parentCommentId ? { parentCommentId } : {}) },
     })
     revalidatePath(`/student/group`)
     return { success: true }

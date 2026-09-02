@@ -1,30 +1,70 @@
 import { RegisterStudentForm } from "@/features/auth/components/register-student-form"
-import { GraduationCap } from "lucide-react"
-import Link from "next/link"
+import Image                   from "next/image"
+import Link                    from "next/link"
+import { Sparkles }            from "lucide-react"
 
-// No SSR group fetching — the form fetches groups live after grade is selected
+const NAVY = "oklch(0.19 0.05 261)"
+
 export default function RegisterPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-32 -start-32 size-[450px] rounded-full bg-violet-500/12 blur-[100px] animate-pulse-slow" />
-        <div className="absolute -bottom-20 -end-20 size-[350px] rounded-full bg-cyan-500/10 blur-[80px] animate-pulse-slow" style={{ animationDelay: "2s" }} />
-      </div>
+    <div
+      className="relative min-h-screen font-sans text-foreground"
+      style={{ background: "var(--background)" }}
+    >
+      {/* Subtle gold glow top */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-72"
+        style={{
+          background: "radial-gradient(60% 100% at 50% 0%, var(--gold) 0%, transparent 70%)",
+          opacity: 0.06,
+        }}
+      />
 
-      <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md animate-slide-up">
-          <div className="mb-7 flex flex-col items-center">
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-md shadow-violet-500/30">
-                <GraduationCap className="size-5" />
-              </span>
-              <span className="text-lg font-bold"><span className="text-gradient">Edu</span>Track</span>
-            </Link>
+
+          {/* Logo — always on navy pill so it reads on both light and dark */}
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <div
+              className="overflow-hidden rounded-2xl shadow-deep"
+              style={{ background: NAVY, padding: "12px 24px" }}
+            >
+              <Image src="/main-logo.svg" alt="معراج" width={200} height={113} className="object-contain" />
+            </div>
+
+            {/* Bismillah */}
+            <p
+              className="font-quran text-base"
+              style={{ color: "color-mix(in srgb, var(--gold-soft) 80%, transparent)" }}
+            >
+              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+            </p>
           </div>
 
-          <div className="rounded-3xl border border-border/60 bg-card p-7 shadow-lg">
-            <h1 className="text-xl font-extrabold tracking-tight">إنشاء حساب طالب</h1>
-            <p className="mt-1 text-sm text-muted-foreground">انضم لمجموعتك وابدأ رحلتك التعليمية</p>
+          {/* Form card */}
+          <div
+            className="rounded-3xl p-7 shadow-deep"
+            style={{
+              background: "var(--card)",
+              border:     "1px solid color-mix(in srgb, var(--gold) 22%, transparent)",
+            }}
+          >
+            {/* Top shimmer line */}
+            <span
+              aria-hidden
+              className="absolute inset-x-10 top-0 h-px"
+              style={{
+                background: "linear-gradient(90deg, transparent, var(--gold) 45%, var(--gold) 55%, transparent)",
+                opacity: 0.45,
+              }}
+            />
+
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="size-4" style={{ color: "var(--gold)" }} />
+              <h1 className="font-display text-xl font-bold">إنشاء حساب طالب</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">انضم لمجموعتك وابدأ رحلتك التعليمية</p>
 
             <div className="mt-5">
               <RegisterStudentForm />
@@ -33,7 +73,9 @@ export default function RegisterPage() {
 
           <p className="mt-5 text-center text-sm text-muted-foreground">
             لديك حساب؟{" "}
-            <Link href="/login" className="font-semibold text-primary hover:underline">سجّل الدخول</Link>
+            <Link href="/login" className="font-semibold hover:underline" style={{ color: "var(--gold)" }}>
+              سجّل الدخول
+            </Link>
           </p>
         </div>
       </div>

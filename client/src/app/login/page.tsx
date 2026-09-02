@@ -1,72 +1,150 @@
 import { LoginForm } from "@/features/auth/components/login-form"
-import { GraduationCap } from "lucide-react"
-import Link from "next/link"
+import Image          from "next/image"
+import Link           from "next/link"
+import { Sparkles, Star } from "lucide-react"
+
+/* ─── fixed navy palette (same in light + dark) ─────────────────────────── */
+const NAVY      = "oklch(0.19 0.05 261)"
+const NAVY_DARK = "oklch(0.14 0.04 260)"
+const GOLD_VAR  = "var(--gold)"
+const GOLD_SOFT = "var(--gold-soft)"
 
 export default function LoginPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* bg blobs */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-40 -start-20 size-[500px] rounded-full bg-violet-500/15 blur-[100px] animate-pulse-slow" />
-        <div className="absolute top-1/2 -end-20 size-[350px] rounded-full bg-cyan-500/10 blur-[80px] animate-pulse-slow" style={{ animationDelay: "2s" }} />
-      </div>
+    <div className="relative min-h-screen font-sans text-foreground" style={{ background: "var(--background)" }}>
 
       <div className="flex min-h-screen">
-        {/* Left panel — desktop only */}
-        <aside className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-violet-700 to-indigo-900" />
-          <div aria-hidden className="absolute inset-0 overflow-hidden">
-            <div className="absolute -top-20 -start-20 size-96 rounded-full bg-white/10 blur-3xl" />
-            <div className="absolute -bottom-20 -end-20 size-96 rounded-full bg-cyan-400/20 blur-3xl" />
+
+        {/* ══ Left panel — always navy regardless of light/dark ══════════ */}
+        <aside
+          className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-14"
+          style={{ background: `linear-gradient(160deg, ${NAVY} 0%, ${NAVY_DARK} 100%)` }}
+        >
+          {/* Islamic pattern overlay */}
+          <Image
+            src="/islamic-pattern.jpg"
+            alt="" aria-hidden fill
+            className="pointer-events-none object-cover"
+            style={{ opacity: 0.15 }}
+          />
+
+          {/* Gold radial glow — top start */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-32 -start-32 size-[500px] rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${GOLD_VAR}, transparent 65%)`,
+              opacity: 0.12,
+            }}
+          />
+
+          {/* Bottom-end glow */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 -end-24 size-72 rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${GOLD_VAR}, transparent 65%)`,
+              opacity: 0.08,
+            }}
+          />
+
+          {/* ── Logo ── */}
+          <div className="relative z-10 flex items-center gap-2.5">
+            <Sparkles className="size-5" style={{ color: GOLD_VAR }} />
+            <span className="font-display text-2xl font-bold text-gold-gradient">معراج</span>
           </div>
-          <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-white/20 backdrop-blur-sm ring-1 ring-white/30">
-                <GraduationCap className="size-6 text-white" />
-              </span>
-              <span className="text-xl font-bold text-white">EduTrack</span>
-            </Link>
-          </div>
+
+          {/* ── Quote + heading ── */}
           <div className="relative z-10 max-w-sm">
-            <h2 className="text-4xl font-extrabold leading-tight text-white">
+            {/* Ornament rule */}
+            <div className="mb-7 flex items-center gap-3">
+              <span
+                className="h-px w-14"
+                style={{ background: `linear-gradient(to left, transparent, ${GOLD_VAR})`, opacity: 0.6 }}
+              />
+              <Star className="size-3.5 animate-shimmer-star" style={{ color: GOLD_VAR }} />
+              <span
+                className="h-px w-14"
+                style={{ background: `linear-gradient(to right, transparent, ${GOLD_VAR})`, opacity: 0.6 }}
+              />
+            </div>
+
+            <p
+              className="mb-5 font-quran text-lg"
+              style={{ color: `color-mix(in srgb, ${GOLD_SOFT} 70%, transparent)` }}
+            >
+              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+            </p>
+
+            <h2 className="font-display text-4xl font-bold leading-tight" style={{ color: "#fff" }}>
               مرحباً بعودتك
-              <br />أستاذنا الكريم
+              <br />
+              <span style={{ color: GOLD_VAR }}>أستاذنا الكريم</span>
             </h2>
-            <p className="mt-4 text-lg text-violet-200 leading-relaxed">
+
+            <p className="mt-4 text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>
               سجّل الدخول للوصول إلى مجموعاتك وطلابك ومتابعة تقدمهم.
             </p>
           </div>
-          <p className="relative z-10 text-xs text-violet-300">© ٢٠٢٦ EduTrack</p>
+
+          <p className="relative z-10 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+            © ١٤٤٦ هـ | معراج
+          </p>
         </aside>
 
-        {/* Right: form */}
-        <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:max-w-[480px] lg:px-12">
+        {/* ══ Right panel — form ════════════════════════════════════════ */}
+        <main
+          className="flex flex-1 items-center justify-center px-5 py-12 sm:px-8 lg:max-w-[480px] lg:px-14"
+          style={{ background: "var(--background)" }}
+        >
           <div className="w-full max-w-sm animate-slide-up">
-            {/* Mobile logo */}
-            <div className="mb-8 flex flex-col items-center lg:hidden">
-              <Link href="/" className="flex items-center gap-2.5">
-                <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-md">
-                  <GraduationCap className="size-5" />
-                </span>
-                <span className="text-lg font-bold"><span className="text-gradient">Edu</span>Track</span>
-              </Link>
+
+            {/* Mobile logo (shown below lg) */}
+            <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
+              {/* Logo card to make it readable on light bg */}
+              <div
+                className="overflow-hidden rounded-2xl shadow-deep"
+                style={{ background: NAVY, padding: "12px 20px" }}
+              >
+                <Image
+                  src="/main-logo.svg"
+                  alt="معراج"
+                  width={180} height={101}
+                  className="object-contain"
+                />
+              </div>
             </div>
 
-            <div className="text-center lg:text-start">
-              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">تسجيل الدخول</h1>
+            {/* Form heading */}
+            <div className="mb-6">
+              <h1 className="font-display text-2xl font-bold sm:text-3xl">تسجيل الدخول</h1>
               <p className="mt-1.5 text-sm text-muted-foreground">أهلاً بك! أدخل بياناتك للمتابعة.</p>
             </div>
 
-            <LoginForm />
+            {/* Form card */}
+            <div
+              className="rounded-3xl p-7 shadow-deep"
+              style={{
+                background:   "var(--card)",
+                border:       `1px solid color-mix(in srgb, ${GOLD_VAR} 22%, transparent)`,
+              }}
+            >
+              <LoginForm />
+            </div>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-5 text-center text-sm text-muted-foreground">
               ليس لديك حساب؟{" "}
-              <Link href="/register" className="font-semibold text-primary hover:underline">
+              <Link
+                href="/register"
+                className="font-semibold hover:underline"
+                style={{ color: "var(--gold)" }}
+              >
                 أنشئ حساباً مجاناً
               </Link>
             </p>
           </div>
         </main>
+
       </div>
     </div>
   )
