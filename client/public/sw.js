@@ -1,6 +1,6 @@
-// EduTrack Service Worker — caches attendance + register pages for offline use
-const CACHE_NAME = "edutrack-v2"
-const RUNTIME    = "edutrack-runtime-v2"
+// Mi'raj Service Worker — caches attendance + register pages for offline use
+const CACHE_NAME = "mearaj-v1"
+const RUNTIME    = "mearaj-runtime-v1"
 
 // ── Install ────────────────────────────────────────────────────────────────────
 self.addEventListener("install", () => {

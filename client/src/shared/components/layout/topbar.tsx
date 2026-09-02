@@ -64,8 +64,8 @@ export function TopBar({
         {/* Custom actions slot */}
         {actions}
 
-        {/* Theme toggle */}
-        <ThemeToggle className="hidden sm:grid" />
+        {/* Theme toggle — visible on all screen sizes */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <Link

@@ -70,14 +70,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           storageKey="mearaj-theme"
           disableTransitionOnChange
         >
           <SplashScreen />
           <PwaRegister />
-          
+
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
       </body>
