@@ -8,7 +8,7 @@ import { updateAdminProfileAction, AdminProfileActionState } from "@/features/ad
 import { ApiUser }     from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle2, KeyRound, LogOut, Pencil, User } from "lucide-react"
-import { useActionState, useTransition, useState } from "react"
+import { useActionState, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { cn } from "@/shared/lib/tailwind-cn"

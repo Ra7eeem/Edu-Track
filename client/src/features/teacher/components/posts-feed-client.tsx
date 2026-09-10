@@ -25,7 +25,7 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
 
   const qc = useQueryClient()
 
-  const { data, refetch } = useGroupPosts(groupId)
+  const { data } = useGroupPosts(groupId)
   const posts = (data as { data?: ApiPost[] } | undefined)?.data
     ?? (Array.isArray(data) ? data as ApiPost[] : initialPosts)
 

@@ -1,8 +1,7 @@
 "use client"
 
 import { ApiGroup, GRADE_LABELS, resolveId } from "@/shared/types/api"
-import { cn } from "@/shared/lib/tailwind-cn"
-import { Plus, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { DeleteGroupModal } from "./delete-group-modal"

@@ -7,9 +7,7 @@ import { cn } from "@/shared/lib/tailwind-cn"
 import {
   Bell,
   BookOpen,
-  CalendarCheck,
   MessageCircle,
-  Trophy,
   UserPlus,
 } from "lucide-react"
 

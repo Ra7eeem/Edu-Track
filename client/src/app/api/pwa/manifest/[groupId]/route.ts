@@ -11,7 +11,7 @@ export async function GET(
   const session     = await getSessionData()
 
   let groupName   = "المجموعة"
-  let teacherName = session?.name ?? "المدرس"
+  const teacherName = session?.name ?? "المدرس"
 
   try {
     const group = await serverFetch<ApiGroup>(`/api/groups/${groupId}`, { revalidate: 300 })

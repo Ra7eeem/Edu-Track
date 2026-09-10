@@ -5,7 +5,6 @@ import { MearajLogo }   from "@/shared/components/mearaj-logo"
 import { ThemeToggle }  from "@/shared/components/theme-toggle"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
-  BarChart3,
   Bell,
   BookOpen,
   ClipboardList,

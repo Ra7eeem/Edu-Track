@@ -1,7 +1,7 @@
 "use client"
 
 import { clientFetch } from "@/shared/lib/api-client"
-import { ApiUser, ApiGroup, PaginatedResponse, ApiRankingEntry } from "@/shared/types/api"
+import { ApiUser, ApiGroup, PaginatedResponse } from "@/shared/types/api"
 import { useQuery } from "@tanstack/react-query"
 
 export function useStudentMe(opts?: { initialData?: ApiUser }) {

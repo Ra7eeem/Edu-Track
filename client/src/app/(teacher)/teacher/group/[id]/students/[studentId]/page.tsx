@@ -12,8 +12,8 @@ import {
 import { AttendanceStatus, resolveId } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
-  ArrowLeft, CalendarCheck, CheckCircle2, Clock,
-  Pencil, Plus, StickyNote, Trash2, X, XCircle,
+  ArrowLeft, CalendarCheck, CheckCircle2,
+  Pencil, Plus, StickyNote, Trash2,
 } from "lucide-react"
 import Link from "next/link"
 import { use, useState } from "react"

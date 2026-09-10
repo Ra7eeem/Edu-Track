@@ -5,8 +5,7 @@ import { Download, CheckCircle2 } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 
 interface Props {
-  groupId:   string
-  groupName: string
+  groupId: string
 }
 
 // BeforeInstallPromptEvent is not in standard TS types
@@ -15,7 +14,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>
 }
 
-export function PwaInstallButton({ groupId, groupName }: Props) {
+export function PwaInstallButton({ groupId }: Props) {
   const [prompt,    setPrompt]    = useState<BeforeInstallPromptEvent | null>(null)
   const [installed, setInstalled] = useState(false)
   const [visible,   setVisible]   = useState(false)
@@ -23,8 +22,8 @@ export function PwaInstallButton({ groupId, groupName }: Props) {
   useEffect(() => {
     // Already running as standalone PWA
     if (window.matchMedia("(display-mode: standalone)").matches) {
-      setInstalled(true)
-      return
+      const t = setTimeout(() => setInstalled(true), 0)
+      return () => clearTimeout(t)
     }
 
     // Capture the install prompt

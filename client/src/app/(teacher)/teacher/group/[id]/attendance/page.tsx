@@ -14,7 +14,7 @@ export async function generateMetadata(
   const session   = await getSessionData()
 
   let groupName   = "المجموعة"
-  let teacherName = session?.name ?? "المدرس"
+  const teacherName = session?.name ?? "المدرس"
 
   try {
     const g = await serverFetch<ApiGroup>(`/api/groups/${id}`, { revalidate: 300 })
@@ -85,7 +85,7 @@ export default async function AttendancePage({
         userAvatarColor="bg-violet-500"
         profileHref="/teacher/profile"
         actions={
-          <PwaInstallButton groupId={id} groupName={groupName} />
+          <PwaInstallButton groupId={id} />
         }
       />
       <AttendanceClient groupId={id} students={students} />

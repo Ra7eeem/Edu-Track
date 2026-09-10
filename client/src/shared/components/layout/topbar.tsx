@@ -9,6 +9,8 @@ interface TopBarProps {
   subtitle?: string
   notifHref: string
   unreadCount?: number
+  // userName is part of the shared layout API (passed by every page) but the
+  // bar only renders the avatar — keep it so call sites stay uniform.
   userName: string
   userAvatar: string
   userAvatarColor: string
@@ -23,7 +25,6 @@ export function TopBar({
   subtitle,
   notifHref,
   unreadCount = 0,
-  userName,
   userAvatar,
   userAvatarColor,
   profileHref,

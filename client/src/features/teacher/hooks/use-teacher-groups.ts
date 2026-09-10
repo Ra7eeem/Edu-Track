@@ -1,6 +1,7 @@
 "use client"
 
 import { clientFetch } from "@/shared/lib/api-client"
+import { updateGroupAction, type UpdateGroupInput } from "@/features/teacher/actions/group.action"
 import { ApiGroup, PaginatedResponse } from "@/shared/types/api"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
@@ -70,5 +71,21 @@ export function useTeacherCreateGroup() {
         data:   body,
       } as never),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["teacher", "groups"] }),
+  })
+}
+
+export function useUpdateGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (variables: UpdateGroupInput & { groupId: string }) => {
+      const { groupId, ...input } = variables
+      const result = await updateGroupAction(groupId, input)
+      if (!result.success) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["teacher", "groups"] })
+      qc.invalidateQueries({ queryKey: ["groups", variables.groupId] })
+    },
   })
 }

@@ -34,23 +34,6 @@ export function useOfflineAttendance() {
   const [syncing,   setSyncing]   = useState(false)
   const [lastSync,  setLastSync]  = useState<Date | null>(null)
 
-  // Sync on mount + listen
-  useEffect(() => {
-    setIsOnline(navigator.onLine)
-    setPending(getQueue())
-
-    const onOnline  = () => { setIsOnline(true);  syncQueue() }
-    const onOffline = () => { setIsOnline(false) }
-
-    window.addEventListener("online",  onOnline)
-    window.addEventListener("offline", onOffline)
-    return () => {
-      window.removeEventListener("online",  onOnline)
-      window.removeEventListener("offline", onOffline)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const syncQueue = useCallback(async () => {
     const queue = getQueue()
     if (!queue.length || !navigator.onLine) return
@@ -75,6 +58,31 @@ export function useOfflineAttendance() {
     setLastSync(new Date())
   }, [])
 
+  // Sync on mount + listen
+  useEffect(() => {
+    let cancelled = false
+
+    const init = () => {
+      if (cancelled) return
+      setIsOnline(navigator.onLine)
+      setPending(getQueue())
+    }
+
+    const onOnline  = () => { setIsOnline(true); void syncQueue() }
+    const onOffline = () => { setIsOnline(false) }
+
+    window.addEventListener("online",  onOnline)
+    window.addEventListener("offline", onOffline)
+    const timer = setTimeout(init, 0)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+      window.removeEventListener("online",  onOnline)
+      window.removeEventListener("offline", onOffline)
+    }
+  }, [syncQueue])
+
   /** Queue a record for offline saving (or send immediately if online) */
   const saveAttendance = useCallback(async (
     groupId: string,
@@ -90,7 +98,7 @@ export function useOfflineAttendance() {
           return { success: true, offline: false }
         }
         return { success: false, offline: false, error: res.error }
-      } catch (e) {
+      } catch {
         // Fallthrough to offline queue
       }
     }

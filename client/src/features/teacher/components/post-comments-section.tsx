@@ -4,7 +4,7 @@ import { clientFetch }  from "@/shared/lib/api-client"
 import { ApiComment, ApiPost, resolveId } from "@/shared/types/api"
 import { cn }            from "@/shared/lib/tailwind-cn"
 import { ChevronDown, ChevronRight, CornerDownRight, MessageCircle, Send, Trash2 } from "lucide-react"
-import { useState, useTransition, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 /* ── types ─────────────────────────────────────────────────────────────────── */

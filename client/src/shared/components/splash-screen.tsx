@@ -8,7 +8,10 @@ export function SplashScreen() {
   useEffect(() => {
     // Only once per session — prevents double-splash from SW cache
     const shown = sessionStorage.getItem("mearaj-splash")
-    if (shown) { setPhase("gone"); return }
+    if (shown) {
+      const t = setTimeout(() => setPhase("gone"), 0)
+      return () => clearTimeout(t)
+    }
     sessionStorage.setItem("mearaj-splash", "1")
 
     const t1 = setTimeout(() => setPhase("fade"),  1600)
@@ -49,6 +52,7 @@ export function SplashScreen() {
         }}
       >
         {/* Logo — plain <img> bypasses Next.js image optimisation issues */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/main-logo.svg"
           alt="معراج"

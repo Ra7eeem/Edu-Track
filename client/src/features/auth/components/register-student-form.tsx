@@ -1,5 +1,9 @@
 "use client"
 
+// react-hook-form v8 is not React-Compiler compatible — skip compiler analysis
+// for this form instead of opting out of the controller-based RHF pattern.
+/* eslint-disable react-hooks/incompatible-library */
+
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
@@ -38,9 +42,6 @@ export function RegisterStudentForm() {
     setValue("groupId", "")
     setGroupsLoading(true)
     fetchGroupsByGradeAction(selectedGrade).then(data => {
-      console.log(selectedGrade);
-      console.log(data);
-      
       setGroups(data)
       setGroupsLoading(false)
     })

@@ -6,7 +6,6 @@ import {
   ListRowSkeleton,
   PostCardSkeleton,
   RankRowSkeleton,
-  Skeleton,
   StatCardSkeleton,
 } from "@/shared/components/ui/skeleton"
 import { saveAttendanceAction } from "@/features/teacher/actions/attendance.action"
@@ -24,11 +23,11 @@ import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/r
 import { cn } from "@/shared/lib/tailwind-cn"
 import { PostCommentsSection } from "@/features/teacher/components/post-comments-section"
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
+import { EditGroupModal }     from "@/features/teacher/components/edit-group-modal"
 import {
   resolveId,
   AttendanceStatus,
   JoinRequestStatus,
-  type ApiGroup,
   type ApiJoinRequest,
   type ApiPost,
   type ApiRankingEntry,
@@ -36,8 +35,8 @@ import {
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
-  AlertTriangle, CheckCircle2, Clock, ClipboardList, Gift, Heart, MessageCircle, MoreVertical,
-  PenLine, Plus, RefreshCcw, RotateCcw, Save, Search,
+  AlertTriangle, CheckCircle2, Clock, ClipboardList, Gift, Heart,
+  PenLine, Plus, RefreshCcw, RotateCcw, Save, Search, Settings,
   Trash2, Trophy, Users, X, XCircle,
 } from "lucide-react"
 import Link from "next/link"
@@ -654,6 +653,7 @@ export function GroupManageClient({
   const [search,       setSearch]       = useState("")
   const [deleteTarget, setDeleteTarget] = useState<{ studentId: string; name: string } | null>(null)
   const [removeErr,    setRemoveErr]    = useState<string | null>(null)
+  const [editOpen,     setEditOpen]     = useState(false)
   const [isPending,    startTransition] = useTransition()
   const qc = useQueryClient()
 
@@ -745,6 +745,11 @@ export function GroupManageClient({
         </div>
       )}
 
+      {/* Edit Group Modal */}
+      {editOpen && group && (
+        <EditGroupModal group={group} onClose={() => setEditOpen(false)} />
+      )}
+
       <TopBar
         title={gLoading ? "جارٍ التحميل..." : (group?.name ?? "إدارة المجموعة")}
         subtitle={group?.description ?? undefined}
@@ -761,6 +766,9 @@ export function GroupManageClient({
         <div className="mx-auto max-w-5xl flex flex-wrap gap-2">
           <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
             <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-3.5"/>تسجيل حضور منفصل</Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} disabled={!group}>
+            <Settings className="size-3.5"/>إعدادات المجموعة
           </Button>
         </div>
       </div>

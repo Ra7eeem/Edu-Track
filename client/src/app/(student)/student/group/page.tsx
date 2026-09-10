@@ -5,7 +5,7 @@ import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
 import { useStudentGroups, useStudentMe } from "@/features/student/hooks/use-student"
 import { usePostComments } from "@/features/student/hooks/use-post-comments"
-import { studentToggleLikeAction, studentCreateCommentAction, studentDeleteCommentAction } from "@/features/student/actions/post.action"
+import { studentCreateCommentAction, studentDeleteCommentAction } from "@/features/student/actions/post.action"
 import { useNotifications } from "@/features/groups/hooks/use-notifications"
 import { Button } from "@/shared/components/ui/button"
 import { cn } from "@/shared/lib/tailwind-cn"
@@ -328,7 +328,6 @@ function CommentsSection({ groupId, post, currentUserId }: { groupId: string; po
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function StudentGroupPage() {
-  const [tab] = useState("posts")
   const [activeTab, setActiveTab] = useState("posts")
 
   const { data: notifsData } = useNotifications()

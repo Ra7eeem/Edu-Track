@@ -2,10 +2,10 @@
 
 import { TopBar }               from "@/shared/components/layout/topbar"
 import { Button }               from "@/shared/components/ui/button"
+import { GradesSelector }       from "@/features/teacher/components/grades-selector"
 import { useTeacherGroups, useTeacherCreateGroup } from "@/features/teacher/hooks/use-teacher-groups"
 import { useJoinRequestCounts } from "@/features/teacher/hooks/use-join-requests"
 import { ApiGroup, Grade, GRADE_LABELS, resolveId } from "@/shared/types/api"
-import { cn }                   from "@/shared/lib/tailwind-cn"
 import { BookOpen, Plus, TrendingUp, Users, X } from "lucide-react"
 import Link                     from "next/link"
 import { useRef, useState }     from "react"
@@ -17,52 +17,6 @@ const COLORS = [
   "from-emerald-500 to-emerald-600",
   "from-rose-500 to-rose-600",
 ]
-
-// ─── Grades multi-selector ─────────────────────────────────────────────────────
-function GradesSelector({
-  selected,
-  onChange,
-}: {
-  selected: Grade[]
-  onChange: (g: Grade[]) => void
-}) {
-  const toggle = (g: Grade) =>
-    onChange(selected.includes(g) ? selected.filter(x => x !== g) : [...selected, g])
-
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground">
-        الصفوف المستهدفة
-        <span className="ms-1 text-muted-foreground/60">(اتركها فارغة لكل الصفوف)</span>
-      </label>
-      <div className="flex flex-wrap gap-1.5">
-        {Object.entries(GRADE_LABELS).map(([val, label]) => {
-          const g   = val as Grade
-          const sel = selected.includes(g)
-          return (
-            <button
-              key={g}
-              type="button"
-              onClick={() => toggle(g)}
-              className={cn(
-                "rounded-xl border px-3 py-1.5 text-xs font-medium transition-all",
-                sel
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {sel && <span className="me-1">✓</span>}
-              {label}
-            </button>
-          )
-        })}
-      </div>
-      {selected.length > 0 && (
-        <p className="text-[10px] text-primary">{selected.length} صف مختار</p>
-      )}
-    </div>
-  )
-}
 
 // ─── Create Group Modal ────────────────────────────────────────────────────────
 function CreateGroupModal({ onClose }: { onClose: () => void }) {
@@ -158,14 +112,12 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
 interface GroupsClientProps {
   initialGroups:  ApiGroup[]
   initialPending: number
-  unreadCount:    number
   userName:       string
 }
 
 export function GroupsClient({
   initialGroups,
   initialPending,
-  unreadCount,
   userName,
 }: GroupsClientProps) {
   const [showCreate, setShowCreate] = useState(false)

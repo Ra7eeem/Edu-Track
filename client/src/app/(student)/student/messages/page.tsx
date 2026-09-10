@@ -3,7 +3,6 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { clientFetch } from "@/shared/lib/api-client"
-import { serverFetch } from "@/shared/lib/api-server"
 import {
   ApiAnonymousMessage, ApiGroup, ApiUser,
   PaginatedResponse, resolveId,
@@ -30,8 +29,7 @@ function SendModal({ onClose }: { onClose: () => void }) {
     queryKey: ["student", "groups"],
     queryFn:  () => clientFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups?limit=20"),
   })
-  console.log(groupsRaw);
-  
+
   const groups = toArray<ApiGroup>(groupsRaw)
 
   const [groupId,   setGroupId]   = useState("")
