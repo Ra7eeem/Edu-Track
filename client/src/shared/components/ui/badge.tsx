@@ -1,3 +1,5 @@
+"use client"
+
 import { cn } from "@/shared/lib/tailwind-cn"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"

@@ -2,7 +2,7 @@ import { TopBar }     from "@/shared/components/layout/topbar"
 import { serverFetch } from "@/shared/lib/api-server"
 import { getSessionData } from "@/shared/lib/session"
 import { ApiGroup }    from "@/shared/types/api"
-import { AttendanceRegisterClient } from "./register-client"
+import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import { PwaInstallButton } from "@/features/teacher/components/pwa-install-button"
 
 export default async function AttendanceRegisterPage({
@@ -34,7 +34,7 @@ export default async function AttendanceRegisterPage({
         actions={<PwaInstallButton groupId={id} groupName={group?.name ?? ""} />}
       />
       <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
-        <AttendanceRegisterClient groupId={id} />
+        <AttendanceRegister groupId={id} role="teacher" />
       </div>
     </div>
   )

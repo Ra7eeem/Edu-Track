@@ -31,15 +31,19 @@ export function useTeacherGroups(opts?: { initialData?: ApiGroup[] }) {
   })
 }
 
-export function useGroupDetails(groupId: string) {
+export interface GroupDetails {
+  group: ApiGroup
+  teachers: unknown[]
+  studentsCount: number
+}
+
+export function useGroupDetails(groupId: string, opts?: { initialData?: GroupDetails }) {
   return useQuery({
     queryKey: ["groups", groupId],
-    queryFn:  async () => {
+    queryFn:  async (): Promise<GroupDetails> => {
       const raw = await clientFetch<Record<string, unknown>>(`/api/groups/${groupId}`)
       if (raw && typeof raw === "object") {
-        if ("group" in raw) {
-          return raw as unknown as { group: ApiGroup; teachers: unknown[]; studentsCount: number }
-        }
+        if ("group" in raw) return raw as unknown as GroupDetails
         const { teachers, membersCount, ...groupFields } = raw as Record<string, unknown>
         return {
           group:         groupFields as unknown as ApiGroup,
@@ -51,6 +55,7 @@ export function useGroupDetails(groupId: string) {
     },
     enabled:              !!groupId,
     staleTime:            2 * 60 * 1000,
+    initialData:          opts?.initialData,
     retry:                3,
     refetchOnWindowFocus: true,
   })

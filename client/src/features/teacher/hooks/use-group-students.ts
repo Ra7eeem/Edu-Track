@@ -18,7 +18,11 @@ function extractArray<T>(raw: unknown): T[] {
 
 export type GroupStudent = Pick<ApiUser, "_id" | "id" | "name" | "email" | "avatarUrl" | "grade" | "phone">
 
-export function useGroupStudents(groupId: string, search = "") {
+export function useGroupStudents(
+  groupId: string,
+  search = "",
+  opts?: { initialData?: GroupStudent[] }
+) {
   return useQuery({
     queryKey: ["teacher", "groups", groupId, "students", search],
     queryFn:  async () => {
@@ -27,7 +31,8 @@ export function useGroupStudents(groupId: string, search = "") {
       )
       return extractArray<GroupStudent>(raw)
     },
-    enabled:   !!groupId,
-    staleTime: 30 * 1000, // 30s — students should reflect joins quickly
+    enabled:     !!groupId,
+    staleTime:   30 * 1000,
+    initialData: search ? undefined : opts?.initialData,
   })
 }

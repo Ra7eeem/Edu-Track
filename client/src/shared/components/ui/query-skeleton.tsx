@@ -1,9 +1,3 @@
-"use client"
-
-/**
- * Renders skeleton while React Query is loading,
- * error state if failed, or children when ready.
- */
 interface Props {
   isLoading: boolean
   isError?:  boolean

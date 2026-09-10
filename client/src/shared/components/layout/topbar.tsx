@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { ThemeToggle } from "@/shared/components/theme-toggle"

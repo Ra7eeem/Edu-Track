@@ -4,19 +4,23 @@ import { clientFetch } from "@/shared/lib/api-client"
 import { ApiUser, ApiGroup, PaginatedResponse, ApiRankingEntry } from "@/shared/types/api"
 import { useQuery } from "@tanstack/react-query"
 
-export function useStudentMe() {
+export function useStudentMe(opts?: { initialData?: ApiUser }) {
   return useQuery({
-    queryKey: ["student", "me"],
-    queryFn:  () => clientFetch<ApiUser>("/api/students/me"),
-    staleTime: 5 * 60 * 1000, // profile rarely changes
+    queryKey:    ["student", "me"],
+    queryFn:     () => clientFetch<ApiUser>("/api/students/me"),
+    staleTime:   5 * 60 * 1000,
+    initialData: opts?.initialData,
   })
 }
 
-export function useStudentGroups() {
+export function useStudentGroups(
+  opts?: { initialData?: PaginatedResponse<ApiGroup> | ApiGroup[] }
+) {
   return useQuery({
-    queryKey: ["student", "groups"],
-    queryFn:  () => clientFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups"),
-    staleTime: 5 * 60 * 1000,
+    queryKey:    ["student", "groups"],
+    queryFn:     () => clientFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups"),
+    staleTime:   5 * 60 * 1000,
+    initialData: opts?.initialData,
   })
 }
 
