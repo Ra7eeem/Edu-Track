@@ -383,8 +383,10 @@ export async function toggleVisibility(teacherId: string, assignmentId: string) 
   if (!mongoose.Types.ObjectId.isValid(assignmentId))
     throw ApiError.badRequest("معرّف غير صالح");
 
-  const assignment = await Assignment.findOne({ _id: assignmentId, author: teacherId });
-  if (!assignment) throw ApiError.notFound("الواجب غير موجود أو لا تملك صلاحية تعديله");
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) throw ApiError.notFound("الواجب غير موجود");
+
+  await assertTeacherOwnsGroup(teacherId, String(assignment.group));
 
   assignment.isHidden = !assignment.isHidden;
   await assignment.save();
@@ -396,8 +398,10 @@ export async function toggleResults(teacherId: string, assignmentId: string) {
   if (!mongoose.Types.ObjectId.isValid(assignmentId))
     throw ApiError.badRequest("معرّف غير صالح");
 
-  const assignment = await Assignment.findOne({ _id: assignmentId, author: teacherId });
-  if (!assignment) throw ApiError.notFound("الواجب غير موجود أو لا تملك صلاحية تعديله");
+  const assignment = await Assignment.findById(assignmentId);
+  if (!assignment) throw ApiError.notFound("الواجب غير موجود");
+
+  await assertTeacherOwnsGroup(teacherId, String(assignment.group));
 
   assignment.showResults = !assignment.showResults;
   await assignment.save();
