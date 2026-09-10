@@ -261,8 +261,19 @@ export interface ApiAssignment {
   youtubeUrl:      string | null
   dueDate:         string | null
   durationMinutes: number | null
+  availableFrom:   string | null
+  availableTo:     string | null
+  isHidden:        boolean
+  showResults:     boolean
   questions:       ApiQuestion[]
+  questionCount?:  number
   author?:         Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl">
+  mySubmission?:   {
+    submitted:    boolean
+    submittedAt:  string
+    score?:       number
+    total?:       number
+  } | null
   createdAt:       string
   updatedAt:       string
 }
@@ -287,13 +298,14 @@ export interface ApiExamSubmission {
   _id?:               string
   id?:                string
   assignment:         string
-  student:            Pick<ApiUser, "id" | "_id" | "name" | "email"> & { grade?: string }
-  score:              number
-  total:              number
-  answers:            ApiExamAnswer[]
+  student?:           Pick<ApiUser, "id" | "_id" | "name" | "email"> & { grade?: string }
+  score?:             number
+  total?:             number
+  answers?:           ApiExamAnswer[]
   answersWithDetails?:ApiExamAnswer[]
   submittedAt:        string
-  createdAt:          string
+  showResults?:       boolean
+  createdAt?:         string
 }
 
 export interface ApiErrorResponse {

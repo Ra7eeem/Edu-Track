@@ -4,13 +4,17 @@ import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { clientFetch } from "@/shared/lib/api-client"
 import {
+  toggleAssignmentResultsAction,
+  toggleAssignmentVisibilityAction,
+} from "@/features/teacher/actions/assignment.action"
+import {
   ApiAssignment, ApiChoice, ApiExamSubmission, ApiQuestion,
   AssignmentType, ASSIGNMENT_TYPE_LABELS,
   PaginatedResponse, resolveId,
 } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Plus, Trash2, Users, X, XCircle } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Eye, EyeOff, BarChart2, Plus, Trash2, Users, X, XCircle } from "lucide-react"
 import { use, useRef, useState } from "react"
 
 function toArray<T>(raw: unknown): T[] {
@@ -193,6 +197,8 @@ function CreateAssignmentModal({ groupId, onClose }: { groupId: string; onClose:
   const [youtubeUrl,      setYoutubeUrl]      = useState("")
   const [dueDate,         setDueDate]         = useState("")
   const [durationMinutes, setDurationMinutes] = useState("")
+  const [availableFrom,   setAvailableFrom]   = useState("")
+  const [availableTo,     setAvailableTo]     = useState("")
   const [questions,       setQuestions]       = useState<(ApiQuestion & { _localId?: number })[]>([])
   const [showQuestions,   setShowQuestions]   = useState(false)
   const [error,           setError]           = useState<string | null>(null)
@@ -227,6 +233,8 @@ function CreateAssignmentModal({ groupId, onClose }: { groupId: string; onClose:
         youtubeUrl:      youtubeUrl.trim()  || undefined,
         dueDate:         dueDate            || undefined,
         durationMinutes: durationMinutes ? Number(durationMinutes) : undefined,
+        availableFrom:   availableFrom   || undefined,
+        availableTo:     availableTo     || undefined,
         questions:       isExam ? questions.map(({ _localId: _, ...q }) => q) : [],
       })
     } catch (e: unknown) {
@@ -313,6 +321,37 @@ function CreateAssignmentModal({ groupId, onClose }: { groupId: string; onClose:
             </div>
           )}
 
+          {/* Exam availability window */}
+          {isExam && (
+            <div className="rounded-2xl border border-amber-200/60 bg-amber-50/40 p-4 space-y-3 dark:border-amber-800/30 dark:bg-amber-950/10">
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                <Clock className="size-3.5" />
+                نافذة توفّر الامتحان (اختياري)
+              </p>
+              <p className="text-[10px] text-muted-foreground">حدد الفترة الزمنية التي يستطيع الطلاب فيها بدء الامتحان.</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">من</label>
+                  <input
+                    type="datetime-local"
+                    value={availableFrom}
+                    onChange={e => setAvailableFrom(e.target.value)}
+                    className="flex h-9 w-full rounded-xl border border-input bg-card px-3 text-xs outline-none focus:border-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">إلى</label>
+                  <input
+                    type="datetime-local"
+                    value={availableTo}
+                    onChange={e => setAvailableTo(e.target.value)}
+                    className="flex h-9 w-full rounded-xl border border-input bg-card px-3 text-xs outline-none focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* YouTube */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">رابط يوتيوب (اختياري)</label>
@@ -381,13 +420,21 @@ function CreateAssignmentModal({ groupId, onClose }: { groupId: string; onClose:
 function SubmissionsModal({
   assignmentId,
   title,
+  assignment,
   onClose,
 }: {
   assignmentId: string
   title:        string
+  assignment:   ApiAssignment
   onClose:      () => void
 }) {
   const [selected, setSelected] = useState<string | null>(null)
+
+  // Build a map of questionId → question for enriching plain answers
+  const questionsMap: Record<string, ApiQuestion> = {}
+  for (const q of assignment.questions ?? []) {
+    if (q._id) questionsMap[q._id] = q
+  }
 
   const { data: raw, isLoading } = useQuery({
     queryKey: ["exam-submissions", assignmentId],
@@ -396,6 +443,7 @@ function SubmissionsModal({
         `/api/assignments/${assignmentId}/submissions?limit=100`
       ),
     enabled: !!assignmentId,
+    refetchInterval: 15_000, // auto-refresh every 15s
   })
 
   const submissions: ApiExamSubmission[] = (() => {
@@ -408,6 +456,24 @@ function SubmissionsModal({
   const selectedSub = selected ? submissions.find(s =>
     (resolveId(s as { _id?: string; id?: string })) === selected
   ) : null
+
+  /** Enrich answers with question details from local assignment object */
+  function enrichAnswers(sub: ApiExamSubmission) {
+    const details = sub.answersWithDetails
+    if (details && details.length > 0 && details[0].questionText) return details
+    // Fallback: build from local questionsMap
+    return (sub.answers ?? []).map(a => {
+      const q = questionsMap[a.questionId]
+      return {
+        questionId:    a.questionId,
+        chosen:        a.chosen,
+        questionText:  q?.text ?? `سؤال (${a.questionId.slice(-4)})`,
+        correctAnswer: q?.correctAnswer ?? "",
+        points:        q?.points ?? 1,
+        isCorrect:     q ? a.chosen === q.correctAnswer : undefined,
+      }
+    })
+  }
 
   return (
     <div
@@ -444,7 +510,9 @@ function SubmissionsModal({
               <div className="p-2 space-y-1">
                 {submissions.map(sub => {
                   const sid  = resolveId(sub as { _id?: string; id?: string })
-                  const pct  = sub.total ? Math.round((sub.score / sub.total) * 100) : 0
+                  const total = sub.total ?? 0
+                  const score = sub.score ?? 0
+                  const pct  = total ? Math.round((score / total) * 100) : 0
                   const st   = sub.student as { name?: string } | undefined
                   return (
                     <button
@@ -480,14 +548,14 @@ function SubmissionsModal({
                 {/* Score summary */}
                 <div className={cn(
                   "rounded-2xl border p-4",
-                  selectedSub.total && (selectedSub.score / selectedSub.total) >= 0.5
+                  selectedSub.total && ((selectedSub.score ?? 0) / selectedSub.total) >= 0.5
                     ? "border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/20"
                     : "border-rose-200/60 bg-rose-50/50 dark:border-rose-800/30 dark:bg-rose-950/20"
                 )}>
                   <p className="text-lg font-extrabold">
-                    {selectedSub.score} / {selectedSub.total}{" "}
+                    {selectedSub.score ?? 0} / {selectedSub.total ?? 0}{" "}
                     <span className="text-sm font-medium text-muted-foreground">
-                      ({selectedSub.total ? Math.round((selectedSub.score / selectedSub.total) * 100) : 0}٪)
+                      ({selectedSub.total ? Math.round(((selectedSub.score ?? 0) / selectedSub.total) * 100) : 0}٪)
                     </span>
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -497,26 +565,32 @@ function SubmissionsModal({
                   </p>
                 </div>
 
-                {/* Answers */}
-                {(selectedSub.answersWithDetails ?? selectedSub.answers ?? []).map((ans, i) => (
-                  <div key={ans.questionId} className="rounded-xl border border-border/50 bg-card p-3 space-y-2">
+                {/* Answers — enriched with question text */}
+                {enrichAnswers(selectedSub).map((ans, i) => (
+                  <div key={ans.questionId + i} className="rounded-xl border border-border/50 bg-card p-3 space-y-2">
                     <div className="flex items-start gap-2">
-                      <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-muted text-[10px] font-bold">{i + 1}</span>
-                      <p className="flex-1 text-xs font-medium">{ans.questionText ?? `سؤال ${i + 1}`}</p>
+                      <span className={cn(
+                        "grid size-6 shrink-0 place-items-center rounded-lg text-[10px] font-bold",
+                        ans.isCorrect === true  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                        ans.isCorrect === false ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
+                        "bg-muted text-muted-foreground"
+                      )}>{i + 1}</span>
+                      <p className="flex-1 text-xs font-medium leading-snug">{ans.questionText ?? `سؤال ${i + 1}`}</p>
+                      <span className="shrink-0 text-[10px] text-amber-600 font-bold">{ans.points}ن</span>
                       {ans.isCorrect === true  && <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />}
                       {ans.isCorrect === false && <XCircle      className="size-4 text-rose-500 shrink-0" />}
                     </div>
-                    <div className="flex gap-2 ps-8 text-[11px]">
+                    <div className="flex flex-wrap gap-2 ps-8 text-[11px]">
                       <span className={cn(
-                        "rounded-lg border px-2 py-1",
-                        ans.isCorrect
+                        "rounded-lg border px-2 py-1 font-medium",
+                        ans.isCorrect === true
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400"
                           : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-400"
                       )}>
-                        إجابة الطالب: <strong>{ans.chosen}</strong>
+                        اختار: <strong>{ans.chosen}</strong>
                       </span>
-                      {!ans.isCorrect && ans.correctAnswer && (
-                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
+                      {ans.isCorrect === false && ans.correctAnswer && (
+                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
                           الصحيحة: <strong>{ans.correctAnswer}</strong>
                         </span>
                       )}
@@ -553,6 +627,24 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
     onSuccess:  () => { qc.invalidateQueries({ queryKey: ["assignments", groupId] }); setDeleteId(null) },
   })
 
+  const toggleMut = useMutation({
+    mutationFn: async (id: string) => {
+      const result = await toggleAssignmentVisibilityAction(id, groupId)
+      if ("error" in result) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assignments", groupId] }),
+  })
+
+  const toggleResultsMut = useMutation({
+    mutationFn: async (id: string) => {
+      const result = await toggleAssignmentResultsAction(id, groupId)
+      if ("error" in result) throw new Error(result.error)
+      return result.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assignments", groupId] }),
+  })
+
   return (
     <>
       {showCreate && <CreateAssignmentModal groupId={groupId} onClose={() => setShowCreate(false)} />}
@@ -561,6 +653,7 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
         <SubmissionsModal
           assignmentId={viewSubs.id}
           title={viewSubs.title}
+          assignment={assignments.find(a => resolveId(a as { _id?: string; id?: string }) === viewSubs.id) ?? { questions: [] } as unknown as ApiAssignment}
           onClose={() => setViewSubs(null)}
         />
       )}
@@ -639,6 +732,16 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
                                 {a.questions.length} سؤال · {totalPoints} نقطة
                               </span>
                             )}
+                            {a.isHidden && (
+                              <span className="flex items-center gap-1 text-[10px] rounded-full px-2 py-0.5 bg-amber-100 text-amber-700 font-bold dark:bg-amber-900/30 dark:text-amber-400">
+                                <EyeOff className="size-2.5" />مخفي
+                              </span>
+                            )}
+                            {isExam && !a.showResults && (
+                              <span className="flex items-center gap-1 text-[10px] rounded-full px-2 py-0.5 bg-slate-100 text-slate-600 font-bold dark:bg-slate-800/30 dark:text-slate-400">
+                                <BarChart2 className="size-2.5" />النتائج مخفية
+                              </span>
+                            )}
                           </div>
                           <p className="font-bold text-sm truncate">{a.title}</p>
                         </div>
@@ -650,14 +753,47 @@ export default function TeacherAssignmentsPage({ params }: { params: Promise<{ i
                             {isOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                           </button>
                         )}
+                        {/* Toggle visibility */}
+                        <button
+                          onClick={() => toggleMut.mutate(aid)}
+                          disabled={toggleMut.isPending}
+                          className={cn(
+                            "grid size-8 place-items-center rounded-xl border transition-colors",
+                            a.isHidden
+                              ? "border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/20"
+                              : "border-border/60 text-muted-foreground hover:bg-muted"
+                          )}
+                          title={a.isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب"}
+                        >
+                          {a.isHidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        </button>
                         {/* View submissions — exams only */}
                         {isExam && (
                           <button
                             onClick={() => setViewSubs({ id: aid, title: a.title })}
-                            className="grid size-8 place-items-center rounded-xl border border-teal-200 text-teal-600 hover:bg-teal-50 transition-colors dark:border-teal-800 dark:hover:bg-teal-950/20"
-                            title="عرض إجابات الطلاب"
+                            className="flex h-8 items-center gap-1 rounded-xl border border-teal-200 px-2 text-teal-600 hover:bg-teal-50 transition-colors dark:border-teal-800 dark:hover:bg-teal-950/20"
+                            title="عرض نتائج وإجابات الطلاب"
                           >
                             <Users className="size-3.5" />
+                            <span className="hidden sm:inline text-[10px] font-bold">نتائج الطلاب</span>
+                          </button>
+                        )}
+                        {isExam && (
+                          <button
+                            onClick={() => toggleResultsMut.mutate(aid)}
+                            disabled={toggleResultsMut.isPending}
+                            className={cn(
+                              "flex h-8 items-center gap-1 rounded-xl border px-2 transition-colors",
+                              a.showResults
+                                ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/20"
+                                : "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/20"
+                            )}
+                            title={a.showResults ? "النتائج ظاهرة للطلاب — اضغط لإخفائها" : "النتائج مخفية — اضغط لإظهارها"}
+                          >
+                            <BarChart2 className="size-3.5" />
+                            <span className="hidden sm:inline text-[10px] font-bold">
+                              {a.showResults ? "إخفاء النتيجة" : "إظهار النتيجة"}
+                            </span>
                           </button>
                         )}
                         <button onClick={() => setDeleteId(aid)}
