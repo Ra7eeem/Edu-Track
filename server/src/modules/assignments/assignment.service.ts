@@ -7,6 +7,7 @@ import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { Request } from "express";
 import { assertTeacherOwnsGroup } from "../teachers/teacher.service";
 import { CreateAssignmentDto, UpdateAssignmentDto } from "./assignment.schemas";
+import { PaginatedResult } from "../../types";
 
 function resultsAreVisible(showResults: boolean | undefined): boolean {
   // Missing field on older documents should keep the previous default (visible).
@@ -73,7 +74,7 @@ export async function getGroupAssignments(
   req:      Request,
   viewerId: string,
   role:     string
-) {
+): Promise<PaginatedResult<Record<string, unknown>>> {
   if (!mongoose.Types.ObjectId.isValid(groupId))
     throw ApiError.badRequest("معرّف غير صالح");
 
@@ -284,7 +285,7 @@ export async function submitExam(
 }
 
 // ─── Get student's own submission ────────────────────────────────────────────
-export async function getMySubmission(studentId: string, assignmentId: string) {
+export async function getMySubmission(studentId: string, assignmentId: string): Promise<Record<string, unknown> | null> {
   if (!mongoose.Types.ObjectId.isValid(assignmentId))
     throw ApiError.badRequest("معرّف غير صالح");
 
@@ -337,7 +338,7 @@ export async function getExamSubmissions(
   teacherId:    string,
   assignmentId: string,
   req:          Request
-) {
+): Promise<PaginatedResult<Record<string, unknown>>> {
   if (!mongoose.Types.ObjectId.isValid(assignmentId))
     throw ApiError.badRequest("معرّف غير صالح");
 

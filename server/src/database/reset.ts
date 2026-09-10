@@ -34,7 +34,7 @@ async function main() {
   console.log("✅ All collections cleared.")
 
   // ── Re-insert the admin user ───────────────────────────────────────────────
-  const { _id, ...adminData } = admin as { _id: unknown; [key: string]: unknown }
+  const { _id, ...adminData } = admin as { _id: mongoose.Types.ObjectId; [key: string]: unknown }
   await db.collection("users").insertOne({ _id, ...adminData })
   console.log(`\n✅ Admin re-inserted: ${admin.email}`)
 
