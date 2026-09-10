@@ -24,6 +24,15 @@ export const getGroupAssignments = asyncHandler(async (req: Request, res: Respon
   sendPaginated(res, data, pagination);
 });
 
+export const getAssignment = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AssignmentService.getAssignment(
+    p(req.params.assignmentId),
+    req.user!.userId,
+    req.user!.role
+  );
+  sendSuccess(res, result);
+});
+
 export const updateAssignment = asyncHandler(async (req: Request, res: Response) => {
   const result = await AssignmentService.updateAssignment(
     req.user!.userId,
@@ -41,12 +50,27 @@ export const deleteAssignment = asyncHandler(async (req: Request, res: Response)
   sendSuccess(res, null, 200, "تم حذف الواجب");
 });
 
+export const toggleVisibility = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AssignmentService.toggleVisibility(
+    req.user!.userId,
+    p(req.params.assignmentId)
+  );
+  sendSuccess(res, result, 200, result.isHidden ? "تم إخفاء الامتحان" : "تم إظهار الامتحان");
+});
+
+export const toggleResults = asyncHandler(async (req: Request, res: Response) => {
+  const result = await AssignmentService.toggleResults(
+    req.user!.userId,
+    p(req.params.assignmentId)
+  );
+  sendSuccess(res, result, 200, result.showResults ? "ستظهر النتائج للطلاب" : "لن تظهر النتائج للطلاب");
+});
+
 export const submitExam = asyncHandler(async (req: Request, res: Response) => {
-  const { assignmentId } = req.params
-  const { answers } = req.body as { answers: { questionId: string; chosen: string }[] }
+  const { answers } = req.body as { answers: { questionId: string; chosen: string }[] };
   const result = await AssignmentService.submitExam(
     req.user!.userId,
-    p(assignmentId),
+    p(req.params.assignmentId),
     answers ?? []
   );
   sendSuccess(res, result, 201, "تم إرسال إجاباتك بنجاح");

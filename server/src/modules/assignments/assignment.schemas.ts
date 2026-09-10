@@ -23,6 +23,14 @@ export const createAssignmentBaseSchema = z.object({
   youtubeUrl:      z.string().regex(youtubeRegex, "رابط يوتيوب غير صالح").optional().or(z.literal("")),
   dueDate:         z.string().datetime({ offset: true }).optional(),
   durationMinutes: z.number().int().min(1).max(600).optional().nullable(),
+  availableFrom:   z.union([
+                     z.string().datetime({ offset: true }),
+                     z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "تاريخ غير صالح"),
+                   ]).optional().nullable(),
+  availableTo:     z.union([
+                     z.string().datetime({ offset: true }),
+                     z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "تاريخ غير صالح"),
+                   ]).optional().nullable(),
   questions:       z.array(questionSchema).optional().default([]),
 });
 

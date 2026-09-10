@@ -29,8 +29,12 @@ export interface IAssignment extends Document {
   description:     string | null;
   youtubeUrl:      string | null;
   dueDate:         Date | null;
-  durationMinutes: number | null;   // exam duration in minutes
-  questions:       IQuestion[];     // MCQ questions (exam only)
+  durationMinutes: number | null;
+  availableFrom:   Date | null;
+  availableTo:     Date | null;
+  isHidden:        boolean;     // teacher can hide/show the assignment
+  showResults:     boolean;     // teacher can choose to show/hide results after submission
+  questions:       IQuestion[];
   createdAt:       Date;
   updatedAt:       Date;
 }
@@ -90,6 +94,10 @@ const assignmentSchema = new Schema<IAssignment>(
     youtubeUrl:      { type: String, default: null, trim: true },
     dueDate:         { type: Date,   default: null },
     durationMinutes: { type: Number, default: null, min: 1, max: 600 },
+    availableFrom:   { type: Date,    default: null },
+    availableTo:     { type: Date,    default: null },
+    isHidden:        { type: Boolean, default: false },
+    showResults:     { type: Boolean, default: true  },  // default: show results to student
     questions:       { type: [questionSchema], default: [] },
   },
   { timestamps: true }

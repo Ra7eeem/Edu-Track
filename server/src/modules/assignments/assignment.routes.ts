@@ -44,6 +44,26 @@ assignmentRouter.get(
   AssignmentController.getExamSubmissions
 );
 
+// GET   /api/assignments/:assignmentId             — teacher or student reads one
+assignmentRouter.get(
+  "/:assignmentId",
+  AssignmentController.getAssignment
+);
+
+// PATCH /api/assignments/:assignmentId/toggle-visibility  — teacher shows/hides
+assignmentRouter.patch(
+  "/:assignmentId/toggle-visibility",
+  authorize(Role.TEACHER, Role.ADMIN),
+  AssignmentController.toggleVisibility
+);
+
+// PATCH /api/assignments/:assignmentId/toggle-results  — teacher shows/hides results
+assignmentRouter.patch(
+  "/:assignmentId/toggle-results",
+  authorize(Role.TEACHER, Role.ADMIN),
+  AssignmentController.toggleResults
+);
+
 // PATCH /api/assignments/:assignmentId           — teacher updates own
 assignmentRouter.patch(
   "/:assignmentId",
