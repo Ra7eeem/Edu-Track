@@ -24,7 +24,7 @@ export default async function StudentsPage({ params }: { params: Promise<{ id: s
   const [groupRes, studentsRes, notifsRes] = await Promise.allSettled([
     serverFetch<ApiGroup>(`/api/groups/${id}`),
     serverFetch<PaginatedResponse<GroupStudent> | GroupStudent[]>(
-      `/api/teacher/groups/${id}/students?limit=200`
+      `/api/teacher/groups/${id}/students?limit=100`
     ),
     serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
   ])

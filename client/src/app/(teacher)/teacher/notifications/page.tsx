@@ -6,15 +6,15 @@ import { ApiNotification, PaginatedResponse } from "@/shared/types/api"
 
 export default async function TeacherNotificationsPage() {
   const session = await getSessionData()
-  let notifs: ApiNotification[] = []
+  let notifsData: PaginatedResponse<ApiNotification> | null = null
   let unread = 0
 
   try {
     const res = await serverFetch<PaginatedResponse<ApiNotification>>(
       "/api/notifications?limit=50"
     )
-    notifs = res.data
-    unread = notifs.filter((n) => !n.isRead).length
+    notifsData = res
+    unread = res.data.filter((n) => !n.isRead).length
   } catch {}
 
   return (
@@ -28,7 +28,7 @@ export default async function TeacherNotificationsPage() {
         userAvatarColor="bg-violet-500"
         profileHref="/teacher/profile"
       />
-      <NotificationsClient initialNotifs={notifs} />
+      <NotificationsClient initialData={notifsData ?? undefined} />
     </div>
   )
 }

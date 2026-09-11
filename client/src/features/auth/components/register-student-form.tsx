@@ -9,6 +9,7 @@ import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { registerStudentAction } from "@/features/auth/actions/register.action"
 import { fetchGroupsByGradeAction, PublicGroup } from "@/features/auth/actions/groups.action"
+import { clearTokenCache } from "@/shared/lib/api-client"
 import { registerStudentSchema, RegisterStudentFormValues } from "@/features/auth/schemas/register.schema"
 import { GRADE_LABELS } from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -48,6 +49,8 @@ export function RegisterStudentForm() {
   }, [selectedGrade, setValue])
 
   const onSubmit = (values: RegisterStudentFormValues) => {
+    // Bust any previous session's cached token so the new session cookie applies
+    clearTokenCache()
     const fd = new FormData()
     Object.entries(values).forEach(([k, v]) => fd.set(k, v as string))
     startTransition(() => formAction(fd))

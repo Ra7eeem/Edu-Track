@@ -286,22 +286,28 @@ export async function getDashboard(teacherId: string) {
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   // All data fetched in parallel
-  const [groupLinks, recentNotifs, unreadCount, todayAttendanceSessions] = await Promise.all([
+  // Group ids computed once (distinct) — reused by both the populated display list
+  // and the attendance $in query, removing a duplicate GroupTeacher query.
+  // Note: Notification field is `user` (not `recipient`) — wrong key made them empty.
+  const [groupLinks, groupIds, recentNotifs, unreadCount] = await Promise.all([
     GroupTeacher.find({ teacher: teacherId })
       .populate({ path: "group", match: { isActive: true } })
       .limit(10),
-    Notification.find({ recipient: teacherId })
+    GroupTeacher.distinct("group", { teacher: teacherId }),
+    Notification.find({ user: teacherId })
       .sort({ createdAt: -1 })
       .limit(5)
       .lean(),
-    Notification.countDocuments({ recipient: teacherId, isRead: false }),
-    Attendance.find({
-      date: today,
-      group: {
-        $in: (await GroupTeacher.find({ teacher: teacherId }).select("group")).map(l => l.group),
-      },
-    }).lean(),
+    Notification.countDocuments({ user: teacherId, isRead: false }),
   ]);
+
+  // Only `records` are needed for the aggregate → lighter transfer
+  const todayAttendanceSessions = await Attendance.find({
+    date: today,
+    group: { $in: groupIds },
+  })
+    .select("records")
+    .lean();
 
   const groups = groupLinks.map((l) => l.group).filter(Boolean);
 

@@ -3,6 +3,7 @@ import { AttendanceClient } from "@/features/teacher/components/attendance-clien
 import { PwaInstallButton } from "@/features/teacher/components/pwa-install-button"
 import { TopBar }           from "@/shared/components/layout/topbar"
 import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
+import { getGroup }         from "@/shared/lib/get-group"
 import { getSessionData }   from "@/shared/lib/session"
 import { ApiGroup, ApiGroupMembership, ApiNotification, PaginatedResponse } from "@/shared/types/api"
 
@@ -17,7 +18,8 @@ export async function generateMetadata(
   const teacherName = session?.name ?? "المدرس"
 
   try {
-    const g = await serverFetch<ApiGroup>(`/api/groups/${id}`, { revalidate: 300 })
+    // getGroup() is request-cache deduped — shared with the page body fetch below
+    const g = await getGroup(id)
     if (g?.name) groupName = g.name
   } catch { /* use defaults */ }
 
@@ -41,9 +43,9 @@ export default async function AttendancePage({
   const session = await getSessionData()
 
   const [groupRes, studentsRes, notifsRes] = await Promise.allSettled([
-    serverFetch<ApiGroup>(`/api/groups/${id}`),
+    getGroup(id),
     serverFetch<PaginatedResponse<ApiGroupMembership>>(
-      `/api/teacher/groups/${id}/students?limit=200`
+      `/api/teacher/groups/${id}/students?limit=100`
     ),
     serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
   ])

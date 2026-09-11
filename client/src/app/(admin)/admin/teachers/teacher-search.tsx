@@ -2,20 +2,29 @@
 
 import { Search } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export function TeacherSearch({ initial }: { initial: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [value, setValue] = useState(initial)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // URL-driven search hits the API per navigation, so debounce keystrokes
   const onChange = (term: string) => {
     setValue(term)
-    const params = new URLSearchParams(searchParams.toString())
-    if (term.trim()) params.set("q", term.trim())
-    else params.delete("q")
-    router.replace(`/admin/teachers?${params.toString()}`)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (term.trim()) params.set("q", term.trim())
+      else params.delete("q")
+      router.replace(`/admin/teachers?${params.toString()}`)
+    }, 350)
   }
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   return (
     <div className="relative flex-1 min-w-48">

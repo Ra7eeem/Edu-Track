@@ -4,12 +4,11 @@ import { ApiUser } from "@/shared/types/api"
 import { AdminProfileClient } from "./admin-profile-client"
 
 export default async function AdminProfilePage() {
+  // User-specific endpoint (one URL for the admin) — must stay out of the Data
+  // Cache or a cached profile could be served to a different admin.
   let profile: ApiUser | null = null
   try {
-    profile = await serverFetch<ApiUser>("/api/admin/profile", {
-      revalidate: 5,
-      tags: ["admin-profile"],
-    })
+    profile = await serverFetch<ApiUser>("/api/admin/profile")
   } catch {
     // graceful fallback — client shows a default state
   }

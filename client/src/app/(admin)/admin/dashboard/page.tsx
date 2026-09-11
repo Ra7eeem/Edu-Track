@@ -18,13 +18,12 @@ const COLORS = [
 ]
 
 export default async function AdminDashboard() {
-  // Single request — all dashboard data in one roundtrip
+  // Single request — all dashboard data in one roundtrip.
+  // This endpoint is auth-scoped (same URL for every admin) so it must NOT go
+  // into the Next Data Cache: a cached admin dashboard could leak to another admin.
   let data: DashboardFull | null = null
   try {
-    data = await serverFetch<DashboardFull>("/api/admin/dashboard-full", {
-      revalidate: 120,
-      tags: ["admin-dashboard"],
-    })
+    data = await serverFetch<DashboardFull>("/api/admin/dashboard-full")
   } catch {
     // graceful degradation — show empty state
   }

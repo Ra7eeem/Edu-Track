@@ -18,7 +18,7 @@ export default async function StudentExamsPage({
 
   return (
     <div className="flex flex-col">
-      <RefreshOnInterval seconds={5} />
+      <RefreshOnInterval seconds={30} />
       <TopBar
         title="الامتحانات"
         notifHref="/student/notifications"

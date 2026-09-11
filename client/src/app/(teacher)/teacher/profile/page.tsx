@@ -12,7 +12,7 @@ import { useActionState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useQuery } from "@tanstack/react-query"
-import { clientFetch } from "@/shared/lib/api-client"
+import { clientFetch, clearTokenCache } from "@/shared/lib/api-client"
 import { ApiUser } from "@/shared/types/api"
 
 const schema = z.object({
@@ -105,7 +105,7 @@ export default function TeacherProfilePage() {
           )}
         </div>
 
-        <form action={logoutAction} className="mt-4">
+        <form action={logoutAction} onSubmit={() => clearTokenCache()} className="mt-4">
           <Button
             type="submit"
             variant="outline"

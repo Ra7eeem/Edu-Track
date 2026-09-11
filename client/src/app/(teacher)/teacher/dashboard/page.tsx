@@ -23,13 +23,11 @@ const COLORS = [
 export default async function TeacherDashboard() {
   const session = await getSessionData()
 
-  // Single request — all dashboard data
+  // Single request — all dashboard data. Endpoint is user-scoped (one URL for
+  // every teacher) → never cache it server-side or it can leak across teachers.
   let data: TeacherDashboardData | null = null
   try {
-    data = await serverFetch<TeacherDashboardData>("/api/teacher/dashboard", {
-      revalidate: 60,
-      tags: ["teacher-dashboard"],
-    })
+    data = await serverFetch<TeacherDashboardData>("/api/teacher/dashboard")
   } catch {
     // graceful fallback
   }

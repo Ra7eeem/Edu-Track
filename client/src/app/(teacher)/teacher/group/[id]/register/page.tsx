@@ -1,7 +1,7 @@
 import { TopBar }     from "@/shared/components/layout/topbar"
-import { serverFetch } from "@/shared/lib/api-server"
+import { getGroup }   from "@/shared/lib/get-group"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup }    from "@/shared/types/api"
+import { ApiGroup }   from "@/shared/types/api"
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import { PwaInstallButton } from "@/features/teacher/components/pwa-install-button"
 
@@ -13,9 +13,10 @@ export default async function AttendanceRegisterPage({
   const { id }  = await params
   const session = await getSessionData()
 
+  // getGroup() is auth-scoped → single fetch, no Data Cache (no revalidate)
   let group: ApiGroup | null = null
   try {
-    group = await serverFetch<ApiGroup>(`/api/groups/${id}`, { revalidate: 120 })
+    group = await getGroup(id)
   } catch {
     // graceful
   }

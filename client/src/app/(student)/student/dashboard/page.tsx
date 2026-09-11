@@ -25,13 +25,11 @@ interface StudentDashboardData {
 export default async function StudentDashboard() {
   const session = await getSessionData()
 
-  // Single request — all dashboard data
+  // Single request — all dashboard data. Endpoint is user-scoped (one URL for
+  // every student) → never cache it server-side or it can leak across students.
   let data: StudentDashboardData | null = null
   try {
-    data = await serverFetch<StudentDashboardData>("/api/students/me/dashboard", {
-      revalidate: 60,
-      tags: ["student-dashboard"],
-    })
+    data = await serverFetch<StudentDashboardData>("/api/students/me/dashboard")
   } catch {
     // graceful fallback — show session data
   }

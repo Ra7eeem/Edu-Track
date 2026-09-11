@@ -3,6 +3,7 @@
 import { logoutAction } from "@/features/auth/actions/logout.action"
 import { MearajLogo }   from "@/shared/components/mearaj-logo"
 import { ThemeToggle }  from "@/shared/components/theme-toggle"
+import { clearTokenCache } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   Bell,
@@ -135,8 +136,8 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
             <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
           </div>
 
-          {/* Logout — form triggers Server Action */}
-          <form action={logoutAction}>
+          {/* Logout — form triggers Server Action; bust client token cache first */}
+          <form action={logoutAction} onSubmit={() => clearTokenCache()}>
             <button
               type="submit"
               aria-label="تسجيل الخروج"

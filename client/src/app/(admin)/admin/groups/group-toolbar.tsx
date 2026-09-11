@@ -2,7 +2,7 @@
 
 import { Plus, Search } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CreateGroupModal } from "./create-group-modal"
 
 export function GroupToolbar({
@@ -16,14 +16,23 @@ export function GroupToolbar({
   const searchParams = useSearchParams()
   const [value, setValue] = useState(initial)
   const [showCreate, setShowCreate] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // URL-driven search hits the API per navigation, so debounce keystrokes
   const onChange = (term: string) => {
     setValue(term)
-    const params = new URLSearchParams(searchParams.toString())
-    if (term.trim()) params.set("q", term.trim())
-    else params.delete("q")
-    router.replace(`/admin/groups?${params.toString()}`)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (term.trim()) params.set("q", term.trim())
+      else params.delete("q")
+      router.replace(`/admin/groups?${params.toString()}`)
+    }, 350)
   }
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   return (
     <>

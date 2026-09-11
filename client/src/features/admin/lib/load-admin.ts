@@ -63,7 +63,7 @@ export async function loadGroupDetail(id: string): Promise<{
 }> {
   const [detailRes, studentsRes, postsRes, rankingRes] = await Promise.allSettled([
     serverFetch<AdminGroupDetail>(`/api/admin/groups/${id}`),
-    serverFetch<PaginatedResponse<ApiUser> | ApiUser[]>(`/api/admin/groups/${id}/students?limit=200`),
+    serverFetch<PaginatedResponse<ApiUser> | ApiUser[]>(`/api/admin/groups/${id}/students?limit=100`),
     serverFetch<PaginatedResponse<ApiPost> | ApiPost[]>(`/api/groups/${id}/posts?limit=50`),
     serverFetch<AdminGroupRanking>(`/api/groups/${id}/ranking`),
   ])

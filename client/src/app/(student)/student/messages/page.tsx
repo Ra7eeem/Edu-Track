@@ -25,8 +25,10 @@ function SendModal({ onClose }: { onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
   // Load student's groups to pick teacher
+  // Scoped key — distinct from useStudentGroups' ["student", "groups"], whose
+  // queryFn uses different params for the same URL
   const { data: groupsRaw } = useQuery({
-    queryKey: ["student", "groups"],
+    queryKey: ["student", "groups", "send"],
     queryFn:  () => clientFetch<PaginatedResponse<ApiGroup>>("/api/students/me/groups?limit=20"),
   })
 

@@ -33,7 +33,7 @@ export default async function ExamResultsPage({
 
   return (
     <div className="mx-auto w-full max-w-2xl p-4 sm:p-6 space-y-5">
-      <RefreshOnInterval seconds={5} />
+      <RefreshOnInterval seconds={30} />
 
       <div className={cn(
         "rounded-3xl border p-8 text-center shadow-sm",

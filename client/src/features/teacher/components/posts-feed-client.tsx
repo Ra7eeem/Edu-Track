@@ -25,7 +25,8 @@ export function PostsFeedClient({ groupId, initialPosts, authorName, authorAvata
 
   const qc = useQueryClient()
 
-  const { data } = useGroupPosts(groupId)
+  // Seed the query with the server-rendered feed so we don't refetch on mount
+  const { data } = useGroupPosts(groupId, { initialData: initialPosts })
   const posts = (data as { data?: ApiPost[] } | undefined)?.data
     ?? (Array.isArray(data) ? data as ApiPost[] : initialPosts)
 

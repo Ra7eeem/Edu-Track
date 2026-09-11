@@ -315,20 +315,19 @@ export async function getDashboardStats() {
     totalGroups,
     totalPosts,
     totalComments,
-    todayAttendance,
   ] = await Promise.all([
     User.countDocuments({ role: Role.TEACHER }),
     User.countDocuments({ role: Role.STUDENT }),
     Group.countDocuments({ isActive: true }),
     Post.countDocuments(),
     Comment.countDocuments(),
-    Attendance.findOne({ date: today }).lean(),
   ]);
 
   let todayPresent = 0;
   let todayAbsent = 0;
-  // If there are multiple groups today we aggregate all sessions
-  const todaySessions = await Attendance.find({ date: today }).lean();
+  // Single Attendance query (previously a duplicate findOne + find); only
+  // records are needed for the aggregate → lighter transfer
+  const todaySessions = await Attendance.find({ date: today }).select("records").lean();
   for (const session of todaySessions) {
     for (const rec of session.records) {
       if (rec.status === "PRESENT") todayPresent++;

@@ -102,7 +102,10 @@ interface Props {
 
 export function RankingClient({ groupId, initialRanking, currentMonth, currentYear, isTeacher = false }: Props) {
   const qc = useQueryClient()
-  const { data } = useGroupRanking(groupId, currentMonth, currentYear)
+  // Seed the query with the server-rendered ranking so we don't refetch on mount
+  const { data } = useGroupRanking(groupId, currentMonth, currentYear, {
+    initialData: { month: currentMonth, year: currentYear, groupId, ranking: initialRanking },
+  })
   const ranking  = data?.ranking ?? initialRanking
 
   const [bonusTarget, setBonusTarget]   = useState<{ id: string; name: string } | null>(null)

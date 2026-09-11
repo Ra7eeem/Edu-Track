@@ -27,6 +27,16 @@ interface Props {
   initialStudents: GroupStudent[]
 }
 
+// Debounce keystrokes so each character doesn't fire a server search request.
+function useDebouncedValue<T>(value: T, delay = 350): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+  return debounced
+}
+
 // ─── Delete Confirmation Modal ────────────────────────────────────────────────
 function DeleteModal({
   student,
@@ -114,7 +124,10 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
   const [removeErr,    setRemoveErr]    = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
 
-  const { data } = useGroupStudents(groupId, search)
+  const debouncedSearch = useDebouncedValue(search, 350)
+
+  // Seed the query with the server-rendered list; searching re-fetches server-side
+  const { data } = useGroupStudents(groupId, debouncedSearch, { initialData: initialStudents })
   const students: GroupStudent[] = data ?? initialStudents
 
   const [state, formAction] = useActionState(addStudentAction, {})

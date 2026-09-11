@@ -103,7 +103,8 @@ export async function getDashboard(studentId: string) {
       .sort({ joinedAt: -1 })
       .limit(3)
       .lean(),
-    Notification.find({ recipient: studentId })
+    // Model field is `user`, NOT `recipient` — wrong key made notifications empty
+    Notification.find({ user: studentId })
       .sort({ createdAt: -1 })
       .limit(5)
       .lean(),
@@ -121,24 +122,23 @@ export async function getDashboard(studentId: string) {
 
   if (groupId) {
     const { MonthlyScore: MS } = await import("../../models/MonthlyScore");
-    const [postsRaw, scores] = await Promise.all([
+    const [postsRaw, allScores] = await Promise.all([
       Post.find({ group: groupId })
         .sort({ createdAt: -1 })
         .limit(3)
         .populate("author", "name avatarUrl")
         .lean(),
-      MS.find({ student: studentId, group: groupId, month, year }).lean(),
+      // Sorted once and reused for BOTH the student's own score and the rank
+      // position — this removed a duplicate per-student MonthlyScore query
+      MS.find({ group: groupId, month, year })
+        .sort({ score: -1 })
+        .lean(),
     ]);
 
     posts = postsRaw;
 
-    // Compute rank among group members for this month
-    const allScores = await MS.find({ group: groupId, month, year })
-      .sort({ score: -1 })
-      .lean();
-
-    const myScore  = scores[0];
-    const rankIdx  = allScores.findIndex(s => String(s.student) === studentId);
+    const rankIdx = allScores.findIndex(s => String(s.student) === studentId);
+    const myScore = rankIdx >= 0 ? allScores[rankIdx] : undefined;
 
     rankData = myScore ? {
       rank:         rankIdx + 1,
@@ -150,7 +150,7 @@ export async function getDashboard(studentId: string) {
   }
 
   const unreadCount = await (await import("../../models/Notification"))
-    .Notification.countDocuments({ recipient: studentId, isRead: false });
+    .Notification.countDocuments({ user: studentId, isRead: false });
 
   return {
     student,

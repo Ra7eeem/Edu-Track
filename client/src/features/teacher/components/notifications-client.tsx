@@ -2,7 +2,7 @@
 
 import { Badge } from "@/shared/components/ui/badge"
 import { useNotifications, useMarkAllRead } from "@/features/groups/hooks/use-notifications"
-import { ApiNotification, NotificationType } from "@/shared/types/api"
+import { ApiNotification, NotificationType, PaginatedResponse } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   Bell,
@@ -20,12 +20,14 @@ const iconMap: Record<NotificationType, { icon: React.ElementType; color: string
   [NotificationType.ADDED_TO_GROUP]:        { icon: BookOpen,      color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30"    },
 }
 
-interface Props { initialNotifs: ApiNotification[] }
+// initialData = the page's server-fetched list, so the client does NOT duplicate
+// the request on mount (query stays fresh via useNotifications refetchInterval).
+interface Props { initialData?: PaginatedResponse<ApiNotification> }
 
-export function NotificationsClient({ initialNotifs }: Props) {
-  const { data }    = useNotifications()
+export function NotificationsClient({ initialData }: Props) {
+  const { data }    = useNotifications({ initialData })
   const markAll     = useMarkAllRead()
-  const notifs      = data?.data ?? initialNotifs
+  const notifs      = data?.data ?? []
   const unread      = notifs.filter((n) => !n.isRead).length
 
   return (
