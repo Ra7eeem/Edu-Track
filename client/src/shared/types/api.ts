@@ -160,7 +160,9 @@ export interface ApiMonthlyScore {
   year:         number
   score:        number
   presentCount: number
+  lateCount:    number
   absentCount:  number
+  bonusPoints:  number
   student?:     Pick<ApiUser, "id" | "_id" | "name" | "avatarUrl" | "grade">
 }
 

@@ -13,6 +13,7 @@ export const GRADE_LABELS: Record<Grade, string> = {
   [Grade.GRADE_10]: "الصف الأول الثانوي",
   [Grade.GRADE_11]: "الصف الثاني الثانوي",
   [Grade.GRADE_12]: "الصف الثالث الثانوي",
+  [Grade.GRADE_13]: "خريجو الطلائع",
 };
 
 export const ATTENDANCE_SCORE = {

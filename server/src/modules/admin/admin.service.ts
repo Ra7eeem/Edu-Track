@@ -166,12 +166,20 @@ export async function getStudents(req: Request) {
   const { page, limit, skip } = parsePagination(req);
   const search = String(req.query.search ?? "");
   const grade = req.query.grade as string | undefined;
+  const acceptedOnly = req.query.acceptedOnly === "true";
+
   const filter: mongoose.FilterQuery<typeof User> = { role: Role.STUDENT };
   if (search) filter.$or = [
     { name: { $regex: search, $options: "i" } },
     { email: { $regex: search, $options: "i" } },
   ];
   if (grade) filter.grade = grade;
+
+  if (acceptedOnly) {
+    const activeStudentIds = await GroupMembership.distinct("student", { isActive: true });
+    filter._id = { $in: activeStudentIds };
+  }
+
   const [data, total] = await Promise.all([
     User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
     User.countDocuments(filter),
@@ -250,11 +258,43 @@ export async function removeStudentFromGroup(groupId: string, studentId: string)
 
 export async function getStudentById(id: string) {
   if (!mongoose.Types.ObjectId.isValid(id)) throw ApiError.badRequest("معرّف غير صالح");
-  const student = await User.findOne({ _id: id, role: Role.STUDENT });
+  const student = await User.findOne({ _id: id, role: Role.STUDENT }).select("-passwordHash").lean();
   if (!student) throw ApiError.notFound("الطالب غير موجود");
-  const memberships = await GroupMembership.find({ student: id, isActive: true })
-    .populate("group", "name imageUrl");
-  return { student, groups: memberships.map((m) => m.group) };
+
+  const { MonthlyScore }   = await import("../../models/MonthlyScore");
+  const { Attendance }     = await import("../../models/Attendance");
+  const { ExamSubmission } = await import("../../models/ExamSubmission");
+
+  const [memberships, scores, sessions, examSubmissions] = await Promise.all([
+    GroupMembership.find({ student: id, isActive: true })
+      .populate("group", "name imageUrl")
+      .lean(),
+    MonthlyScore.find({ student: id })
+      .sort({ year: -1, month: -1 })
+      .lean(),
+    Attendance.find({ "records.student": id })
+      .sort({ date: 1 })
+      .lean(),
+    ExamSubmission.find({ student: id })
+      .populate("assignment", "title type showResults")
+      .sort({ submittedAt: -1 })
+      .lean()
+  ]);
+
+  const attendanceRecords = sessions
+    .map((s) => {
+      const rec = s.records.find((r) => String(r.student) === id);
+      return rec ? { date: s.date, status: rec.status, groupId: s.group } : null;
+    })
+    .filter(Boolean);
+
+  return { 
+    student, 
+    groups: memberships.map((m) => m.group),
+    scores,
+    attendanceRecords,
+    examSubmissions
+  };
 }
 
 // ─────────────────────────────────────────

@@ -4,6 +4,7 @@ import { ApiUser, GRADE_LABELS, Grade, resolveId } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { Skeleton } from "@/shared/components/ui/skeleton"
 import { AlertCircle, GraduationCap } from "lucide-react"
+import Link from "next/link"
 
 // ─── Grade badge color map ────────────────────────────────────────────────────
 const GRADE_BADGE_COLORS: Partial<Record<Grade, string>> = {
@@ -103,7 +104,12 @@ export function StudentsTable({ students, isLoading, isError }: StudentsTablePro
 
             {/* Info */}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium leading-tight">{student.name}</p>
+              <Link 
+                href={`/admin/students/${id || student.email}`} 
+                className="truncate text-sm font-medium leading-tight hover:text-primary hover:underline transition-colors block w-fit"
+              >
+                {student.name}
+              </Link>
               <p className="truncate text-xs text-muted-foreground">{student.email}</p>
             </div>
 

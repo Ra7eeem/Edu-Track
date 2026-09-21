@@ -31,7 +31,7 @@ export async function fetchStudentsByGrades(grades: Grade[]): Promise<ApiUser[]>
 
   const requests = grades.map((grade) =>
     clientFetch<PaginatedResponse<ApiUser> | ApiUser[]>(
-      `/api/admin/students?grade=${grade}&limit=200`
+      `/api/admin/students?grade=${grade}&limit=200&acceptedOnly=true`
     )
   )
 
