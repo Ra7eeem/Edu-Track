@@ -19,6 +19,8 @@ export enum Grade {
   GRADE_10 = "GRADE_10",
   GRADE_11 = "GRADE_11",
   GRADE_12 = "GRADE_12",
+  // خريجو الطلائع: students who have graduated from school and are now university students
+  GRADE_13 = "GRADE_13",
 }
 
 export const GRADE_LABELS: Record<Grade, string> = {
@@ -34,6 +36,7 @@ export const GRADE_LABELS: Record<Grade, string> = {
   [Grade.GRADE_10]: "الصف الأول الثانوي",
   [Grade.GRADE_11]: "الصف الثاني الثانوي",
   [Grade.GRADE_12]: "الصف الثالث الثانوي",
+  [Grade.GRADE_13]: "خريجو الطلائع",
 }
 
 export enum JoinRequestStatus {

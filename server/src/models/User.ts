@@ -59,6 +59,7 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     grade: {
+      // GRADE_13 represents خريجو الطلائع — university students who have graduated from school
       type: String,
       enum: [...Object.values(Grade), null],
       default: null,

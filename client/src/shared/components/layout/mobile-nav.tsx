@@ -5,6 +5,7 @@ import {
   Bell,
   BookOpen,
   ClipboardList,
+  GraduationCap,
   LayoutDashboard,
   MessageCircle,
   Settings,
@@ -33,10 +34,11 @@ const studentItems = [
 ]
 
 const adminItems = [
-  { label: "الرئيسية",  href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "المدرسون", href: "/admin/teachers",   icon: Users           },
-  { label: "المجموعات",href: "/admin/groups",     icon: BookOpen        },
-  { label: "حسابي",    href: "/admin/profile",    icon: Settings        },
+  { label: "الرئيسية",   href: "/admin/dashboard",       icon: LayoutDashboard },
+  { label: "المدرسون",  href: "/admin/teachers",        icon: Users           },
+  { label: "المجموعات", href: "/admin/groups",          icon: BookOpen        },
+  { label: "المراحل",  href: "/admin/academic-stages", icon: GraduationCap   },
+  { label: "حسابي",    href: "/admin/profile",         icon: Settings        },
 ]
 
 const itemsMap = { teacher: teacherItems, student: studentItems, admin: adminItems }

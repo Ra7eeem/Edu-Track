@@ -9,6 +9,7 @@ import {
   Bell,
   BookOpen,
   ClipboardList,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   MessageCircle,
@@ -48,10 +49,11 @@ const studentNav: NavItem[] = [
 ]
 
 const adminNav: NavItem[] = [
-  { label: "الرئيسية",   href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "المدرسون",  href: "/admin/teachers",   icon: Users           },
-  { label: "المجموعات", href: "/admin/groups",     icon: BookOpen        },
-  { label: "الحساب",    href: "/admin/profile",    icon: Settings        },
+  { label: "الرئيسية",          href: "/admin/dashboard",        icon: LayoutDashboard },
+  { label: "المدرسون",         href: "/admin/teachers",         icon: Users           },
+  { label: "المجموعات",        href: "/admin/groups",           icon: BookOpen        },
+  { label: "المراحل الدراسية", href: "/admin/academic-stages",  icon: GraduationCap   },
+  { label: "الحساب",           href: "/admin/profile",          icon: Settings        },
 ]
 
 const navMap: Record<SidebarVariant, NavItem[]> = {

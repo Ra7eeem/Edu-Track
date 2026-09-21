@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { DeleteGroupModal } from "./delete-group-modal"
 import { Button } from "@/shared/components/ui/button"
+import { GroupAttendanceBadges } from "./group-attendance-badges"
 
 const COLORS = [
   "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
@@ -41,6 +42,10 @@ export function GroupGrid({ groups }: { groups: ApiGroup[] }) {
                   ))}
                 </div>
               )}
+
+              {/* Attendance indicators — shown per group */}
+              <GroupAttendanceBadges groupId={resolveId(g)} />
+
               <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
                 <span>{new Date(g.createdAt).toLocaleDateString("ar-EG")}</span>
                 <div className="flex items-center gap-1.5">
