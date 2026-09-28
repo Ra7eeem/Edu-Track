@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../../models/User";
 import { GroupMembership } from "../../models/GroupMembership";
 import { JoinRequest } from "../../models/JoinRequest";
-import { MonthlyScore } from "../../models/MonthlyScore";
+import { StudentScore } from "../../models/StudentScore";
 import { ApiError } from "../../utils/ApiError";
 import { getFileUrl } from "../../middleware/upload";
 import { Request } from "express";
@@ -71,16 +71,11 @@ export async function getMyAttendanceInGroup(
 }
 
 export async function getMyScores(studentId: string, req: Request) {
-  const { month, year } = parseMonthYear(
-    String(req.query.month ?? ""),
-    String(req.query.year ?? "")
-  );
-
-  const scores = await MonthlyScore.find({ student: studentId, month, year })
+  const scores = await StudentScore.find({ student: studentId })
     .populate("group", "name imageUrl")
     .lean();
 
-  return { month, year, scores };
+  return { scores };
 }
 
 // ─────────────────────────────────────────
@@ -88,9 +83,6 @@ export async function getMyScores(studentId: string, req: Request) {
 // ─────────────────────────────────────────
 
 export async function getDashboard(studentId: string) {
-  const now   = new Date();
-  const month = now.getUTCMonth() + 1;
-  const year  = now.getUTCFullYear();
 
   // Step 1: profile + groups + notifications in parallel
   const { Notification } = await import("../../models/Notification");
@@ -121,7 +113,7 @@ export async function getDashboard(studentId: string) {
   let rankData: unknown  = null;
 
   if (groupId) {
-    const { MonthlyScore: MS } = await import("../../models/MonthlyScore");
+    const { StudentScore: MS } = await import("../../models/StudentScore");
     const [postsRaw, allScores] = await Promise.all([
       Post.find({ group: groupId })
         .sort({ createdAt: -1 })
@@ -129,8 +121,8 @@ export async function getDashboard(studentId: string) {
         .populate("author", "name avatarUrl")
         .lean(),
       // Sorted once and reused for BOTH the student's own score and the rank
-      // position — this removed a duplicate per-student MonthlyScore query
-      MS.find({ group: groupId, month, year })
+      // position — this removed a duplicate per-student StudentScore query
+      MS.find({ group: groupId })
         .sort({ score: -1 })
         .lean(),
     ]);

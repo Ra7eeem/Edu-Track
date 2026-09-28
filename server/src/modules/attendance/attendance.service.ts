@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Attendance } from "../../models/Attendance";
-import { MonthlyScore } from "../../models/MonthlyScore";
+import { StudentScore } from "../../models/StudentScore";
 import { GroupMembership } from "../../models/GroupMembership";
 import { ApiError } from "../../utils/ApiError";
 import { AttendanceStatus } from "../../types";
@@ -51,6 +51,9 @@ export async function recordAttendance(
     status: r.status,
   }));
 
+  // Find old session to compute diffs
+  const oldSession = await Attendance.findOne({ group: groupId, date }).lean();
+
   // Upsert session — idempotent: replace records for this date
   const session = await Attendance.findOneAndUpdate(
     { group: groupId, date },
@@ -58,101 +61,40 @@ export async function recordAttendance(
     { upsert: true, new: true }
   );
 
-  // Update monthly scores for each student
+  // Compute diffs and update StudentScore continuously
   const scoreOps = dto.records.map((r) => {
-    const score = ATTENDANCE_SCORE[r.status];
-    const isPresent = r.status === AttendanceStatus.PRESENT;
-    return MonthlyScore.findOneAndUpdate(
-      { student: r.studentId, group: groupId, month, year },
+    const newStatus = r.status;
+    const oldRecord = oldSession?.records.find((old) => String(old.student) === r.studentId);
+    const oldStatus = oldRecord?.status;
+
+    let incScore = ATTENDANCE_SCORE[newStatus] ?? 0;
+    let incPresent = newStatus === AttendanceStatus.PRESENT ? 1 : 0;
+    let incLate = newStatus === AttendanceStatus.LATE ? 1 : 0;
+    let incAbsent = newStatus === AttendanceStatus.ABSENT ? 1 : 0;
+
+    if (oldStatus) {
+      incScore -= ATTENDANCE_SCORE[oldStatus] ?? 0;
+      incPresent -= oldStatus === AttendanceStatus.PRESENT ? 1 : 0;
+      incLate -= oldStatus === AttendanceStatus.LATE ? 1 : 0;
+      incAbsent -= oldStatus === AttendanceStatus.ABSENT ? 1 : 0;
+    }
+
+    return StudentScore.findOneAndUpdate(
+      { student: r.studentId, group: groupId },
       {
-        $setOnInsert: { student: r.studentId, group: groupId, month, year },
+        $setOnInsert: { student: r.studentId, group: groupId, bonusPoints: 0 },
+        $inc: {
+          score: incScore,
+          presentCount: incPresent,
+          lateCount: incLate,
+          absentCount: incAbsent,
+        }
       },
       { upsert: true, new: true }
-    ).then(async (doc) => {
-      // Recalculate from scratch to keep idempotent
-      return doc;
-    });
+    );
   });
 
   await Promise.all(scoreOps);
-
-  // Full recalculation of monthly scores for this group+month+year
-  await recalculateMonthlyScores(groupId, month, year);
-
-  return session;
-}
-
-// ─────────────────────────────────────────
-// Recalculate monthly scores from raw attendance
-// ─────────────────────────────────────────
-
-async function recalculateMonthlyScores(
-  groupId: string,
-  month: number,
-  year: number
-) {
-  // All sessions for this group in this month/year
-  const startDate = new Date(Date.UTC(year, month - 1, 1));
-  const endDate = new Date(Date.UTC(year, month, 1));
-
-  const sessions = await Attendance.find({
-    group: groupId,
-    date: { $gte: startDate, $lt: endDate },
-  }).lean();
-
-  // Aggregate per student
-  const stats = new Map<
-    string,
-    { presentCount: number; lateCount: number; absentCount: number }
-  >();
-
-  for (const session of sessions) {
-    for (const rec of session.records) {
-      const sid = String(rec.student);
-      const existing = stats.get(sid) ?? { presentCount: 0, lateCount: 0, absentCount: 0 };
-      if (rec.status === AttendanceStatus.PRESENT) {
-        existing.presentCount++;
-      } else if (rec.status === AttendanceStatus.LATE) {
-        existing.lateCount++;
-      } else {
-        existing.absentCount++;
-      }
-      stats.set(sid, existing);
-    }
-  }
-
-  // Upsert monthly scores — preserve existing bonusPoints
-  const ops = Array.from(stats.entries()).map(([studentId, s]) => {
-    const attendanceScore =
-      s.presentCount * ATTENDANCE_SCORE.PRESENT +
-      s.lateCount    * ATTENDANCE_SCORE.LATE    +
-      s.absentCount  * ATTENDANCE_SCORE.ABSENT;
-
-    // Two-step: ensure doc exists with bonusPoints=0 if new, then update counts+score
-    return MonthlyScore.findOneAndUpdate(
-      { student: studentId, group: groupId, month, year },
-      {
-        $setOnInsert: { bonusPoints: 0 }, // only on first creation
-      },
-      { upsert: true, new: false }        // return OLD doc (or null if new)
-    ).then(existing => {
-      const bonus = (existing as { bonusPoints?: number } | null)?.bonusPoints ?? 0;
-      return MonthlyScore.findOneAndUpdate(
-        { student: studentId, group: groupId, month, year },
-        {
-          $set: {
-            presentCount: s.presentCount,
-            lateCount:    s.lateCount,
-            absentCount:  s.absentCount,
-            score:        attendanceScore + bonus,
-          },
-        },
-        { new: true }
-      );
-    });
-  });
-
-  await Promise.all(ops);
 }
 
 // ─────────────────────────────────────────

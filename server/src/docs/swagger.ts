@@ -120,7 +120,7 @@ const options: swaggerJsdoc.Options = {
             createdAt: { type: "string", format: "date-time" },
           },
         },
-        MonthlyScore: {
+        StudentScore: {
           type: "object",
           properties: {
             _id: { type: "string" },

@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import { MonthlyScore } from "../../models/MonthlyScore";
+import { StudentScore } from "../../models/StudentScore";
+import { ArchivedScore } from "../../models/ArchivedScore";
 import { GroupMembership } from "../../models/GroupMembership";
 import { ApiError } from "../../utils/ApiError";
-import { parseMonthYear } from "../../utils/date";
 import { Request } from "express";
 import { assertTeacherOwnsGroup } from "../teachers/teacher.service";
 
@@ -14,13 +14,8 @@ export async function getGroupRanking(groupId: string, req: Request) {
   if (!mongoose.Types.ObjectId.isValid(groupId))
     throw ApiError.badRequest("معرّف غير صالح");
 
-  const { month, year } = parseMonthYear(
-    String(req.query.month ?? ""),
-    String(req.query.year ?? "")
-  );
-
-  // Get all scores for this group+month+year, sorted descending
-  const scores = await MonthlyScore.find({ group: groupId, month, year })
+  // Get all continuous scores for this group, sorted descending
+  const scores = await StudentScore.find({ group: groupId })
     .populate("student", "name email avatarUrl grade")
     .sort({ score: -1, presentCount: -1 })
     .lean();
@@ -44,7 +39,7 @@ export async function getGroupRanking(groupId: string, req: Request) {
     };
   });
 
-  return { month, year, groupId, ranking: ranked };
+  return { groupId, ranking: ranked };
 }
 
 // ─────────────────────────────────────────
@@ -71,27 +66,18 @@ export async function getStudentRank(
   if (!membership)
     throw ApiError.notFound("الطالب غير مسجل في هذه المجموعة");
 
-  const { month, year } = parseMonthYear(
-    String(req.query.month ?? ""),
-    String(req.query.year ?? "")
-  );
-
   // Count how many students scored strictly higher
-  const studentScore = await MonthlyScore.findOne({
+  const studentScore = await StudentScore.findOne({
     group: groupId,
     student: studentId,
-    month,
-    year,
   }).lean();
 
   const score = studentScore?.score ?? 0;
   const presentCount = studentScore?.presentCount ?? 0;
   const absentCount = studentScore?.absentCount ?? 0;
 
-  const higherCount = await MonthlyScore.countDocuments({
+  const higherCount = await StudentScore.countDocuments({
     group: groupId,
-    month,
-    year,
     score: { $gt: score },
   });
 
@@ -101,8 +87,6 @@ export async function getStudentRank(
   });
 
   return {
-    month,
-    year,
     studentId,
     rank: higherCount + 1,
     score,
@@ -127,17 +111,34 @@ export async function resetRanking(
 
   await assertTeacherOwnsGroup(teacherId, groupId);
 
-  const { month, year } = parseMonthYear(
-    String(req.query.month ?? ""),
-    String(req.query.year ?? "")
-  );
+  const archiveName = String(req.body.archiveName || `تصفير الرنك بتاريخ ${new Date().toLocaleDateString('ar-EG')}`);
 
-  const result = await MonthlyScore.updateMany(
-    { group: groupId, month, year },
+  // Fetch current scores
+  const currentScores = await StudentScore.find({ group: groupId }).lean();
+
+  if (currentScores.length > 0) {
+    // Create archive records
+    const archiveDocs = currentScores.map(s => ({
+      student: s.student,
+      group: s.group,
+      archiveName,
+      archivedAt: new Date(),
+      score: s.score,
+      presentCount: s.presentCount,
+      lateCount: s.lateCount,
+      absentCount: s.absentCount,
+      bonusPoints: s.bonusPoints,
+    }));
+
+    await ArchivedScore.insertMany(archiveDocs);
+  }
+
+  const result = await StudentScore.updateMany(
+    { group: groupId },
     { $set: { score: 0, presentCount: 0, lateCount: 0, absentCount: 0, bonusPoints: 0 } }
   );
 
-  return { month, year, groupId, updated: result.modifiedCount };
+  return { groupId, archiveName, updated: result.modifiedCount };
 }
 
 // ─────────────────────────────────────────
@@ -159,24 +160,17 @@ export async function addBonusPoints(
 
   await assertTeacherOwnsGroup(teacherId, groupId);
 
-  const { month, year } = parseMonthYear(
-    String(req.query.month ?? ""),
-    String(req.query.year ?? "")
-  );
-
   const bonus = Number(req.body?.bonus);
   if (!Number.isFinite(bonus) || bonus <= 0)
     throw ApiError.badRequest("يجب أن تكون نقاط المكافأة رقماً موجباً");
 
   // Ensure the record exists first (upsert)
-  const doc = await MonthlyScore.findOneAndUpdate(
-    { student: studentId, group: groupId, month, year },
+  const doc = await StudentScore.findOneAndUpdate(
+    { student: studentId, group: groupId },
     {
       $setOnInsert: {
         student: studentId,
         group: groupId,
-        month,
-        year,
         presentCount: 0,
         lateCount: 0,
         absentCount: 0,
@@ -186,7 +180,7 @@ export async function addBonusPoints(
   );
 
   // Increment bonus and score atomically
-  const updated = await MonthlyScore.findByIdAndUpdate(
+  const updated = await StudentScore.findByIdAndUpdate(
     doc._id,
     { $inc: { bonusPoints: bonus, score: bonus } },
     { new: true }

@@ -242,10 +242,10 @@ export async function removeStudentFromGroup(
   if (!membership) throw ApiError.notFound("الطالب غير موجود في هذه المجموعة");
 
   // Clean up the student's scores + attendance records for this group
-  const { MonthlyScore } = await import("../../models/MonthlyScore");
+  const { StudentScore } = await import("../../models/StudentScore");
   const { Attendance }   = await import("../../models/Attendance");
 
-  await MonthlyScore.deleteMany({ student: studentId, group: groupId });
+  await StudentScore.deleteMany({ student: studentId, group: groupId });
 
   // Remove this student's records from all attendance sessions of this group
   await Attendance.updateMany(
@@ -342,13 +342,13 @@ export async function getStudentProfile(
   await assertTeacherOwnsGroup(teacherId, groupId);
 
   const { User }          = await import("../../models/User");
-  const { MonthlyScore }  = await import("../../models/MonthlyScore");
+  const { StudentScore }  = await import("../../models/StudentScore");
   const { Attendance }    = await import("../../models/Attendance");
   const { StudentNote }   = await import("../../models/StudentNote");
 
   const [student, scores, notes] = await Promise.all([
     User.findById(studentId).select("-passwordHash").lean(),
-    MonthlyScore.find({ student: studentId, group: groupId })
+    StudentScore.find({ student: studentId, group: groupId })
       .sort({ year: -1, month: -1 })
       .lean(),
     StudentNote.find({ teacher: teacherId, student: studentId, group: groupId })

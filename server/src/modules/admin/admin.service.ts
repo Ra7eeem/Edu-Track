@@ -244,11 +244,11 @@ export async function removeStudentFromGroup(groupId: string, studentId: string)
   if (!membership) throw ApiError.notFound("الطالب غير موجود في هذه المجموعة");
 
   // Clean up scores + attendance (same as teacher flow)
-  const { MonthlyScore } = await import("../../models/MonthlyScore");
+  const { StudentScore } = await import("../../models/StudentScore");
   const { Attendance }   = await import("../../models/Attendance");
 
   await Promise.all([
-    MonthlyScore.deleteMany({ student: studentId, group: groupId }),
+    StudentScore.deleteMany({ student: studentId, group: groupId }),
     Attendance.updateMany(
       { group: groupId },
       { $pull: { records: { student: studentId } } }
@@ -261,7 +261,7 @@ export async function getStudentById(id: string) {
   const student = await User.findOne({ _id: id, role: Role.STUDENT }).select("-passwordHash").lean();
   if (!student) throw ApiError.notFound("الطالب غير موجود");
 
-  const { MonthlyScore }   = await import("../../models/MonthlyScore");
+  const { StudentScore }   = await import("../../models/StudentScore");
   const { Attendance }     = await import("../../models/Attendance");
   const { ExamSubmission } = await import("../../models/ExamSubmission");
 
@@ -269,7 +269,7 @@ export async function getStudentById(id: string) {
     GroupMembership.find({ student: id, isActive: true })
       .populate("group", "name imageUrl")
       .lean(),
-    MonthlyScore.find({ student: id })
+    StudentScore.find({ student: id })
       .sort({ year: -1, month: -1 })
       .lean(),
     Attendance.find({ "records.student": id })

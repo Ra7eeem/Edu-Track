@@ -30,7 +30,7 @@ import { GroupTeacher } from "../models/GroupTeacher";
 import { GroupMembership } from "../models/GroupMembership";
 import { JoinRequest } from "../models/JoinRequest";
 import { Attendance } from "../models/Attendance";
-import { MonthlyScore } from "../models/MonthlyScore";
+import { StudentScore } from "../models/StudentScore";
 import { Post } from "../models/Post";
 import { Comment } from "../models/Comment";
 import { PostLike } from "../models/PostLike";
@@ -152,7 +152,7 @@ async function seed() {
     GroupMembership.deleteMany({}),
     JoinRequest.deleteMany({}),
     Attendance.deleteMany({}),
-    MonthlyScore.deleteMany({}),
+    StudentScore.deleteMany({}),
     Post.deleteMany({}),
     Comment.deleteMany({}),
     PostLike.deleteMany({}),
@@ -300,7 +300,7 @@ async function seed() {
       // Update monthly scores
       for (const rec of records) {
         const score = rec.status === AttendanceStatus.PRESENT ? ATTENDANCE_SCORE.PRESENT : 0;
-        await MonthlyScore.findOneAndUpdate(
+        await StudentScore.findOneAndUpdate(
           { student: rec.student, group: groups[groupIdx]._id, month, year },
           {
             $inc: {

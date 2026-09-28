@@ -7,7 +7,7 @@ import { GroupTeacher } from "../../models/GroupTeacher";
 import { GroupMembership } from "../../models/GroupMembership";
 import { JoinRequest } from "../../models/JoinRequest";
 import { Attendance } from "../../models/Attendance";
-import { MonthlyScore } from "../../models/MonthlyScore";
+import { StudentScore } from "../../models/StudentScore";
 import { Post } from "../../models/Post";
 import { Comment } from "../../models/Comment";
 import { PostLike } from "../../models/PostLike";
@@ -37,7 +37,7 @@ export async function clearCollections(): Promise<void> {
     GroupMembership.deleteMany({}),
     JoinRequest.deleteMany({}),
     Attendance.deleteMany({}),
-    MonthlyScore.deleteMany({}),
+    StudentScore.deleteMany({}),
     Post.deleteMany({}),
     Comment.deleteMany({}),
     PostLike.deleteMany({}),
