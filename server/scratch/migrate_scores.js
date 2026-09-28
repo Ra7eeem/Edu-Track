@@ -2,7 +2,7 @@ require("dotenv").config({ path: "./.env" });
 const mongoose = require("mongoose");
 
 async function migrate() {
-  await mongoose.connect(process.env.DATABASE_URL || "mongodb://127.0.0.1:27017/edu-track");
+  await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/edu-track");
   const db = mongoose.connection.db;
 
   const monthlyScores = await db.collection("monthlyscores").find({}).toArray();
@@ -40,7 +40,22 @@ async function migrate() {
   const newDocs = Object.values(totals);
   
   if (newDocs.length > 0) {
-    await db.collection("studentscores").insertMany(newDocs);
+    const ops = newDocs.map(d => ({
+      updateOne: {
+        filter: { student: d.student, group: d.group },
+        update: {
+          $inc: {
+            score: d.score,
+            presentCount: d.presentCount,
+            lateCount: d.lateCount,
+            absentCount: d.absentCount,
+            bonusPoints: d.bonusPoints
+          }
+        },
+        upsert: true
+      }
+    }));
+    await db.collection("studentscores").bulkWrite(ops);
     console.log(`Migrated ${newDocs.length} aggregated scores to studentscores.`);
   }
 
