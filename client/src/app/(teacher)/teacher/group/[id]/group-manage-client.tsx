@@ -28,6 +28,8 @@ import {
   resolveId,
   AttendanceStatus,
   JoinRequestStatus,
+  GRADE_LABELS,
+  type Grade,
   type ApiJoinRequest,
   type ApiPost,
   type ApiRankingEntry,
@@ -816,6 +818,39 @@ export function GroupManageClient({
                   </div>
                 ))}
               </div>
+              
+              {/* Grade Stats */}
+              {students.length > 0 && (() => {
+                const gradeCounts = students.reduce((acc, s) => {
+                  const grade = s.grade ?? "UNKNOWN"
+                  acc[grade] = (acc[grade] || 0) + 1
+                  return acc
+                }, {} as Record<string, number>)
+
+                return (
+                  <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
+                    <h3 className="mb-3 text-sm font-bold">توزيع الطلاب حسب السن / الصف</h3>
+                    <div className="space-y-3">
+                      {Object.entries(gradeCounts).sort((a, b) => b[1] - a[1]).map(([grade, count]) => {
+                        const percent = Math.round((count / students.length) * 100)
+                        const label = grade === "UNKNOWN" ? "غير محدد" : GRADE_LABELS[grade as Grade] ?? grade
+                        return (
+                          <div key={grade}>
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>{label}</span>
+                              <span className="font-bold text-muted-foreground">{count} طالب ({percent}%)</span>
+                            </div>
+                            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                              <div className="h-full bg-violet-500 transition-all" style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+
               {group.description && (
                 <div className="rounded-2xl border border-border/60 bg-card p-4">
                   <h3 className="mb-1 text-sm font-bold">عن المجموعة</h3>

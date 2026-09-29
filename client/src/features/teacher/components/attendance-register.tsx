@@ -137,6 +137,40 @@ export function AttendanceRegister({ groupId, role = "teacher" }: Props) {
                   )
                 })}
               </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-border/60 bg-muted/20 shadow-sm">
+                  <td className="sticky right-0 bg-muted/20 px-4 py-3 font-bold whitespace-nowrap z-10 border-e border-border/40 text-[11px] text-muted-foreground">
+                    الإجمالي اليومي
+                    <div className="mt-1 flex flex-col gap-1 font-normal text-[9px]">
+                      <span className="text-emerald-600">✓ حاضر</span>
+                      <span className="text-amber-600">م متأخر</span>
+                      <span className="text-rose-600">✗ غائب</span>
+                    </div>
+                  </td>
+                  {dates.map((_, j) => {
+                    let present = 0;
+                    let late = 0;
+                    let absent = 0;
+                    students.forEach(s => {
+                      const status = s.records[j]?.status;
+                      if (status === "PRESENT") present++;
+                      if (status === "LATE") late++;
+                      if (status === "ABSENT") absent++;
+                    });
+                    
+                    return (
+                      <td key={j} className="px-1 py-3 text-center border-e border-border/40">
+                        <div className="flex flex-col gap-1 items-center justify-center">
+                          <span className="text-[10px] font-bold text-emerald-600">{present}</span>
+                          <span className="text-[10px] font-bold text-amber-600">{late}</span>
+                          <span className="text-[10px] font-bold text-rose-600">{absent}</span>
+                        </div>
+                      </td>
+                    )
+                  })}
+                  <td colSpan={3} className="bg-muted/20"></td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

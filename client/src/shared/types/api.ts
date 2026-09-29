@@ -84,6 +84,7 @@ export interface ApiUser {
   grade:     Grade | null
   phone:     string | null
   isActive:  boolean
+  examsCount?: number
   createdAt: string
   updatedAt: string
 }

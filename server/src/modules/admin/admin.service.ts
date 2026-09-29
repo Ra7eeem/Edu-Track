@@ -31,10 +31,24 @@ export async function getTeachers(req: Request) {
     { email: { $regex: search, $options: "i" } },
   ];
   const [data, total] = await Promise.all([
-    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
     User.countDocuments(filter),
   ]);
-  return { data, pagination: buildPaginationMeta(total, page, limit) };
+
+  const { Assignment } = await import("../../models/Assignment");
+  const teacherIds = data.map((t) => t._id);
+  const examCounts = await Assignment.aggregate([
+    { $match: { author: { $in: teacherIds }, type: "EXAM" } },
+    { $group: { _id: "$author", count: { $sum: 1 } } }
+  ]);
+  const examCountMap = new Map(examCounts.map((e) => [String(e._id), e.count]));
+
+  const dataWithStats = data.map((t) => ({
+    ...t,
+    examsCount: examCountMap.get(String(t._id)) || 0,
+  }));
+
+  return { data: dataWithStats, pagination: buildPaginationMeta(total, page, limit) };
 }
 
 export async function getTeacherById(id: string) {

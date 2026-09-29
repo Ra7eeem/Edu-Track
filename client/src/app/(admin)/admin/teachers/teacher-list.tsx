@@ -32,6 +32,11 @@ export function TeacherList({ teachers }: { teachers: ApiUser[] }) {
             }`}>
               {t.isActive ? "نشط" : "غير نشط"}
             </span>
+            {t.examsCount !== undefined && (
+              <span className="hidden sm:inline-flex text-[10px] rounded-full px-2 py-0.5 font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                {t.examsCount} امتحانات
+              </span>
+            )}
             <div className="flex gap-1.5 shrink-0">
               <ToggleTeacherButton id={resolveId(t)} isActive={t.isActive} />
               <button

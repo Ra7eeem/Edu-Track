@@ -47,25 +47,40 @@ function toPublicStudentAssignment(
   };
 }
 
+let isExamUploading = false;
+
 // ─── Teacher creates assignment ───────────────────────────────────────────────
 export async function createAssignment(teacherId: string, dto: CreateAssignmentDto) {
   await assertTeacherOwnsGroup(teacherId, dto.groupId);
 
-  const assignment = await Assignment.create({
-    group:           dto.groupId,
-    author:          teacherId,
-    type:            dto.type,
-    title:           dto.title,
-    description:     dto.description     ?? null,
-    youtubeUrl:      dto.youtubeUrl      || null,
-    dueDate:         dto.dueDate         ? new Date(dto.dueDate) : null,
-    durationMinutes: dto.durationMinutes ?? null,
-    availableFrom:   dto.availableFrom   ? new Date(dto.availableFrom)   : null,
-    availableTo:     dto.availableTo     ? new Date(dto.availableTo)     : null,
-    questions:       dto.questions       ?? [],
-  });
+  if (dto.type === AssignmentType.EXAM) {
+    if (isExamUploading) {
+      throw ApiError.badRequest("يوجد معلم آخر يقوم برفع امتحان حالياً، يرجى المحاولة بعد قليل لتجنب تعليق الموقع");
+    }
+    isExamUploading = true;
+  }
 
-  return assignment.populate("author", "name avatarUrl");
+  try {
+    const assignment = await Assignment.create({
+      group:           dto.groupId,
+      author:          teacherId,
+      type:            dto.type,
+      title:           dto.title,
+      description:     dto.description     ?? null,
+      youtubeUrl:      dto.youtubeUrl      || null,
+      dueDate:         dto.dueDate         ? new Date(dto.dueDate) : null,
+      durationMinutes: dto.durationMinutes ?? null,
+      availableFrom:   dto.availableFrom   ? new Date(dto.availableFrom)   : null,
+      availableTo:     dto.availableTo     ? new Date(dto.availableTo)     : null,
+      questions:       dto.questions       ?? [],
+    });
+
+    return assignment.populate("author", "name avatarUrl");
+  } finally {
+    if (dto.type === AssignmentType.EXAM) {
+      isExamUploading = false;
+    }
+  }
 }
 
 // ─── Teacher lists assignments for their group ────────────────────────────────
