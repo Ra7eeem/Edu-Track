@@ -85,19 +85,30 @@ export default async function StudentDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "حضور هذا الشهر", value: rankData?.presentCount ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-            { label: "أيام الغياب",    value: rankData?.absentCount  ?? "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20"       },
-            { label: "نقاطي",          value: rankData?.score        ?? "—", icon: Trophy,        color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-900/20"     },
-            { label: "ترتيبي",         value: rankData ? `#${rankData.rank}` : "—", icon: Trophy, color: "text-teal-600",   bg: "bg-teal-50 dark:bg-teal-900/20"   },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-              <div className={`mb-2 inline-grid size-8 place-items-center rounded-xl ${s.bg} ${s.color}`}>
-                <s.icon className="size-4" />
+            { label: "حضور هذا الشهر", value: rankData?.presentCount ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/student/group" },
+            { label: "أيام الغياب",    value: rankData?.absentCount  ?? "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20", href: "/student/group" },
+            { label: "نقاطي",          value: rankData?.score        ?? "—", icon: Trophy,        color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-900/20", href: "/student/group" },
+            { label: "ترتيبي",         value: rankData ? `#${rankData.rank}` : "—", icon: Trophy, color: "text-teal-600",   bg: "bg-teal-50 dark:bg-teal-900/20", href: "/student/group" },
+          ].map((s) => {
+            const CardContent = (
+              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md h-full">
+                <div className={`mb-2 inline-grid size-8 place-items-center rounded-xl ${s.bg} ${s.color}`}>
+                  <s.icon className="size-4" />
+                </div>
+                <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
               </div>
-              <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          ))}
+            );
+            return s.href ? (
+              <Link key={s.label} href={s.href} className="block">
+                {CardContent}
+              </Link>
+            ) : (
+              <div key={s.label}>
+                {CardContent}
+              </div>
+            );
+          })}
         </div>
 
         {/* Recent posts — with likes and comments */}

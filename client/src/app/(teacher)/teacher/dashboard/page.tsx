@@ -60,19 +60,30 @@ export default async function TeacherDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "المجموعات",     value: groups.length,                 icon: BookOpen,      color: "text-teal-600",    bg: "bg-teal-50 dark:bg-teal-900/20"       },
-            { label: "إجمالي الطلاب", value: totalStudents,                 icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20"       },
-            { label: "حضور اليوم",    value: hasToday ? todayPresent : "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-            { label: "غياب اليوم",    value: hasToday ? todayAbsent  : "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20"       },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-              <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>
-                <s.icon className="size-4" />
+            { label: "المجموعات",     value: groups.length,                 icon: BookOpen,      color: "text-teal-600",    bg: "bg-teal-50 dark:bg-teal-900/20", href: "/teacher/groups" },
+            { label: "إجمالي الطلاب", value: totalStudents,                 icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20", href: "/teacher/groups" },
+            { label: "حضور اليوم",    value: hasToday ? todayPresent : "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/teacher/groups" },
+            { label: "غياب اليوم",    value: hasToday ? todayAbsent  : "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20", href: "/teacher/groups" },
+          ].map((s) => {
+            const CardContent = (
+              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md h-full">
+                <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>
+                  <s.icon className="size-4" />
+                </div>
+                <p className="text-2xl font-extrabold">{s.value}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
               </div>
-              <p className="text-2xl font-extrabold">{s.value}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
-            </div>
-          ))}
+            );
+            return s.href ? (
+              <Link key={s.label} href={s.href} className="block">
+                {CardContent}
+              </Link>
+            ) : (
+              <div key={s.label}>
+                {CardContent}
+              </div>
+            );
+          })}
         </div>
 
         {/* Groups */}
