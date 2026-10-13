@@ -15,5 +15,11 @@ export const updateProfileSchema = z.object({
   phone: z.string().min(7).max(20).optional(),
 });
 
+export const updateStudentPasswordSchema = z.object({
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل").max(100),
+  groupId:  z.string().optional(),
+});
+
 export type AddStudentDto = z.infer<typeof addStudentSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
+export type UpdateStudentPasswordDto = z.infer<typeof updateStudentPasswordSchema>;

@@ -16,7 +16,7 @@ import {
 } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Eye, EyeOff, BarChart2, Plus, Trash2, Users, X, XCircle, Pencil } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Eye, EyeOff, BarChart2, Plus, Trash2, Users, X, XCircle, Pencil, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -36,6 +36,7 @@ function SubmissionsModal({
 }) {
   const router = useRouter()
   const [selected, setSelected] = useState<string | null>(null)
+  const [search,   setSearch]   = useState("")
 
   const questionsMap: Record<string, ApiQuestion> = {}
   for (const q of assignment.questions ?? []) {
@@ -59,20 +60,28 @@ function SubmissionsModal({
     return []
   })()
 
+  const filteredSubmissions = submissions.filter(sub => {
+    if (!search.trim()) return true
+    const name = (sub.student as { name?: string })?.name?.toLowerCase() ?? ""
+    return name.includes(search.trim().toLowerCase())
+  })
+
   const selectedSub = selected ? submissions.find(s =>
     (resolveId(s as { _id?: string; id?: string })) === selected
   ) : null
 
   function enrichAnswers(sub: ApiExamSubmission) {
-    const details = sub.answersWithDetails
-    if (details && details.length > 0 && details[0].questionText) return details
     return (sub.answers ?? []).map(a => {
       const q = questionsMap[a.questionId]
+      const chosenChoice  = q?.choices?.find(c => c.id === a.chosen)
+      const correctChoice = q?.choices?.find(c => c.id === q.correctAnswer)
       return {
         questionId:    a.questionId,
         chosen:        a.chosen,
+        chosenText:    chosenChoice?.text ?? "",
         questionText:  q?.text ?? `سؤال (${a.questionId.slice(-4)})`,
         correctAnswer: q?.correctAnswer ?? "",
+        correctText:   correctChoice?.text ?? "",
         points:        q?.points ?? 1,
         isCorrect:     q ? a.chosen === q.correctAnswer : undefined,
       }
@@ -81,26 +90,27 @@ function SubmissionsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4 shrink-0">
-          <div>
-            <h2 className="text-base font-bold">إجابات الطلاب</h2>
-            <p className="text-xs text-muted-foreground">{title}</p>
+      <div className="flex h-[92vh] max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3 sm:px-5 sm:py-4 shrink-0 gap-2">
+          <div className="min-w-0">
+            <h2 className="text-sm sm:text-base font-bold truncate">إجابات ونتائج الطلاب</h2>
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{title}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => {
                 onClose()
                 router.push(`/teacher/group/${groupId}/assignments/${assignmentId}/edit`)
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-100 transition-colors dark:border-violet-800 dark:bg-violet-950/20 dark:text-violet-300"
+              className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-100 transition-colors dark:border-violet-800 dark:bg-violet-950/20 dark:text-violet-300"
               title="تعديل الامتحان والأسئلة"
             >
               <Pencil className="size-3.5" />
-              <span>تعديل الامتحان</span>
+              <span className="hidden xs:inline sm:inline">تعديل الامتحان</span>
             </button>
             <button onClick={onClose} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted">
               <X className="size-4" />
@@ -108,42 +118,84 @@ function SubmissionsModal({
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="w-56 shrink-0 border-e border-border/40 overflow-y-auto">
+        {/* Master Detail Body */}
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Students Sidebar */}
+          <div className={cn(
+            "flex flex-col border-e border-border/40 overflow-y-auto bg-muted/10 transition-all",
+            selected ? "hidden sm:flex sm:w-64 sm:shrink-0" : "w-full sm:w-64 sm:shrink-0"
+          )}>
+            {/* Search Header */}
+            <div className="p-3 border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur-sm z-10 space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="font-semibold">الطلاب المسلمون</span>
+                <span>{filteredSubmissions.length} طالب</span>
+              </div>
+              <div className="relative">
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="بحث باسم الطالب..."
+                  className="w-full text-xs rounded-xl border border-input bg-card px-3 py-1.5 outline-none focus:border-primary"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X className="size-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             {isLoading ? (
               <div className="p-4 space-y-2">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-xl bg-muted" />
+                  <div key={i} className="h-12 animate-pulse rounded-2xl bg-muted" />
                 ))}
               </div>
-            ) : submissions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center">
+            ) : filteredSubmissions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 py-12 px-4 text-center">
                 <Users className="size-8 text-muted-foreground/30 mb-2" />
-                <p className="text-xs text-muted-foreground">لا توجد إجابات بعد</p>
+                <p className="text-xs text-muted-foreground">
+                  {search ? "لا توجد نتائج مطابقة" : "لا توجد إجابات بعد"}
+                </p>
               </div>
             ) : (
-              <div className="p-2 space-y-1">
-                {submissions.map(sub => {
-                  const sid  = resolveId(sub as { _id?: string; id?: string })
+              <div className="p-2 space-y-1.5 flex-1">
+                {filteredSubmissions.map(sub => {
+                  const sid   = resolveId(sub as { _id?: string; id?: string })
                   const total = sub.total ?? 0
                   const score = sub.score ?? 0
-                  const pct  = total ? Math.round((score / total) * 100) : 0
-                  const st   = sub.student as { name?: string } | undefined
+                  const pct   = total ? Math.round((score / total) * 100) : 0
+                  const st    = sub.student as { name?: string } | undefined
+                  const isSelected = selected === sid
                   return (
                     <button
                       key={sid}
-                      onClick={() => setSelected(prev => prev === sid ? null : sid)}
+                      onClick={() => setSelected(sid)}
                       className={cn(
-                        "w-full rounded-xl px-3 py-2.5 text-start transition-all",
-                        selected === sid
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
+                        "w-full rounded-2xl p-3 text-start transition-all flex items-center justify-between gap-2 border",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-card border-border/50 hover:bg-muted/70"
                       )}
                     >
-                      <p className="text-xs font-semibold truncate">{st?.name ?? "طالب"}</p>
-                      <p className={cn("text-[10px] mt-0.5", selected === sid ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                        {sub.score}/{sub.total} ({pct}٪)
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold truncate">{st?.name ?? "طالب"}</p>
+                        <p className={cn(
+                          "text-[10px] mt-0.5",
+                          isSelected ? "text-primary-foreground/80" : "text-muted-foreground"
+                        )}>
+                          {sub.score} / {sub.total} ({pct}٪)
+                        </p>
+                      </div>
+                      <span className={cn(
+                        "rounded-lg px-2 py-0.5 text-[10px] font-extrabold shrink-0",
+                        pct >= 50
+                          ? isSelected ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                          : isSelected ? "bg-white/20 text-white" : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                      )}>
+                        {pct}٪
+                      </span>
                     </button>
                   )
                 })}
@@ -151,64 +203,107 @@ function SubmissionsModal({
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          {/* Answers Details Area */}
+          <div className={cn(
+            "flex-1 overflow-y-auto p-4 sm:p-5",
+            !selected ? "hidden sm:flex sm:items-center sm:justify-center" : "block"
+          )}>
             {!selectedSub ? (
-              <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground">
-                <p className="text-3xl mb-2">👆</p>
-                <p className="text-sm">اختر طالباً من القائمة لعرض إجاباته</p>
+              <div className="flex h-full flex-col items-center justify-center text-center text-muted-foreground py-12">
+                <p className="text-4xl mb-2">👈</p>
+                <p className="text-sm font-semibold">اختر طالباً من القائمة لعرض إجاباته بالتفصيل</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-2xl mx-auto">
+                {/* Mobile Back Button */}
+                <button
+                  onClick={() => setSelected(null)}
+                  className="sm:hidden flex items-center gap-1.5 text-xs font-bold text-violet-700 dark:text-violet-300 bg-violet-100/70 dark:bg-violet-950/40 px-3 py-2 rounded-xl mb-1 hover:bg-violet-100 transition-colors w-full"
+                >
+                  <ArrowRight className="size-4" />
+                  <span>العودة لقائمة الطلاب ({submissions.length})</span>
+                </button>
+
+                {/* Score Summary Card */}
                 <div className={cn(
-                  "rounded-2xl border p-4",
+                  "rounded-2xl border p-4 shadow-sm space-y-2",
                   selectedSub.total && ((selectedSub.score ?? 0) / selectedSub.total) >= 0.5
-                    ? "border-emerald-200/60 bg-emerald-50/50 dark:border-emerald-800/30 dark:bg-emerald-950/20"
-                    : "border-rose-200/60 bg-rose-50/50 dark:border-rose-800/30 dark:bg-rose-950/20"
+                    ? "border-emerald-200/80 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20"
+                    : "border-rose-200/80 bg-rose-50/60 dark:border-rose-800/40 dark:bg-rose-950/20"
                 )}>
-                  <p className="text-lg font-extrabold">
-                    {selectedSub.score ?? 0} / {selectedSub.total ?? 0}{" "}
-                    <span className="text-sm font-medium text-muted-foreground">
-                      ({selectedSub.total ? Math.round(((selectedSub.score ?? 0) / selectedSub.total) * 100) : 0}٪)
-                    </span>
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground">اسم الطالب:</p>
+                      <h3 className="text-sm sm:text-base font-bold text-foreground">
+                        {(selectedSub.student as { name?: string })?.name ?? "طالب"}
+                      </h3>
+                    </div>
+                    <div className="text-end">
+                      <p className="text-xl sm:text-2xl font-black">
+                        {selectedSub.score ?? 0} <span className="text-sm font-bold text-muted-foreground">/ {selectedSub.total ?? 0}</span>
+                      </p>
+                      <p className={cn(
+                        "text-xs font-extrabold",
+                        selectedSub.total && ((selectedSub.score ?? 0) / selectedSub.total) >= 0.5
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-rose-700 dark:text-rose-400"
+                      )}>
+                        {selectedSub.total ? Math.round(((selectedSub.score ?? 0) / selectedSub.total) * 100) : 0}٪
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground border-t border-border/40 pt-2">
                     تاريخ التسليم: {new Date(selectedSub.submittedAt).toLocaleDateString("ar-EG", {
                       year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
                     })}
                   </p>
                 </div>
 
-                {enrichAnswers(selectedSub).map((ans, i) => (
-                  <div key={ans.questionId + i} className="rounded-xl border border-border/50 bg-card p-3 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <span className={cn(
-                        "grid size-6 shrink-0 place-items-center rounded-lg text-[10px] font-bold",
-                        ans.isCorrect === true  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                        ans.isCorrect === false ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
-                        "bg-muted text-muted-foreground"
-                      )}>{i + 1}</span>
-                      <p className="flex-1 text-xs font-medium leading-snug">{ans.questionText ?? `سؤال ${i + 1}`}</p>
-                      <span className="shrink-0 text-[10px] text-amber-600 font-bold">{ans.points}ن</span>
-                      {ans.isCorrect === true  && <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />}
-                      {ans.isCorrect === false && <XCircle      className="size-4 text-rose-500 shrink-0" />}
+                {/* Answers Breakdown */}
+                <div className="space-y-3">
+                  <p className="text-xs font-bold text-muted-foreground">تفاصيل الأسئلة والإجابات:</p>
+                  {enrichAnswers(selectedSub).map((ans, i) => (
+                    <div key={ans.questionId + i} className="rounded-2xl border border-border/60 bg-card p-3.5 sm:p-4 space-y-3 shadow-sm">
+                      <div className="flex items-start gap-2.5">
+                        <span className={cn(
+                          "grid size-6 shrink-0 place-items-center rounded-lg text-[10px] font-bold mt-0.5",
+                          ans.isCorrect === true  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                          ans.isCorrect === false ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" :
+                          "bg-muted text-muted-foreground"
+                        )}>{i + 1}</span>
+                        <p className="flex-1 text-xs sm:text-sm font-medium leading-relaxed">{ans.questionText ?? `سؤال ${i + 1}`}</p>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-[10px] text-amber-600 font-bold bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded-md">
+                            {ans.points}ن
+                          </span>
+                          {ans.isCorrect === true  && <CheckCircle2 className="size-4 text-emerald-500" />}
+                          {ans.isCorrect === false && <XCircle      className="size-4 text-rose-500" />}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-border/30">
+                        <div className={cn(
+                          "rounded-xl border p-2.5",
+                          ans.isCorrect === true
+                            ? "border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300"
+                            : "border-rose-200 bg-rose-50/70 text-rose-800 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-300"
+                        )}>
+                          <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">إجابة الطالب:</span>
+                          <span className="font-bold">{ans.chosen}</span>
+                          {ans.chosenText && <span className="ms-1.5 font-normal">({ans.chosenText})</span>}
+                        </div>
+
+                        {ans.isCorrect === false && ans.correctAnswer && (
+                          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-2.5 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+                            <span className="text-[10px] font-medium text-muted-foreground block mb-0.5">الإجابة الصحيحة:</span>
+                            <span className="font-bold">{ans.correctAnswer}</span>
+                            {ans.correctText && <span className="ms-1.5 font-normal">({ans.correctText})</span>}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 ps-8 text-[11px]">
-                      <span className={cn(
-                        "rounded-lg border px-2 py-1 font-medium",
-                        ans.isCorrect === true
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400"
-                          : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-400"
-                      )}>
-                        اختار: <strong>{ans.chosen}</strong>
-                      </span>
-                      {ans.isCorrect === false && ans.correctAnswer && (
-                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
-                          الصحيحة: <strong>{ans.correctAnswer}</strong>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

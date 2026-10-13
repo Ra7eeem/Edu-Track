@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendSuccess, sendPaginated } from "../../utils/response";
 import * as TeacherService from "./teacher.service";
-import { AddStudentDto, UpdateProfileDto } from "./teacher.schemas";
+import { AddStudentDto, UpdateProfileDto, UpdateStudentPasswordDto } from "./teacher.schemas";
 
 const p = (v: string | string[]): string => String(v);
 const uid = (req: Request) => req.user!.userId;
@@ -116,4 +116,15 @@ export const updateNote = asyncHandler(async (req, res: Response) => {
 export const deleteNote = asyncHandler(async (req, res: Response) => {
   await TeacherService.deleteNote(uid(req), p(req.params.noteId));
   sendSuccess(res, null, 200, "تم حذف الملاحظة");
+});
+
+export const updateStudentPassword = asyncHandler(async (req, res: Response) => {
+  const { password, groupId } = req.body as UpdateStudentPasswordDto;
+  const result = await TeacherService.updateStudentPassword(
+    uid(req),
+    p(req.params.studentId),
+    password,
+    groupId
+  );
+  sendSuccess(res, result, 200, "تم تحديث كلمة مرور الطالب بنجاح");
 });

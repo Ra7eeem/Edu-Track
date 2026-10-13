@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { Role } from "../../types";
-import { addStudentSchema, updateProfileSchema } from "./teacher.schemas";
+import { addStudentSchema, updateProfileSchema, updateStudentPasswordSchema } from "./teacher.schemas";
 import * as TeacherController from "./teacher.controller";
 
 export const teacherRouter = Router();
@@ -25,6 +25,11 @@ teacherRouter.post("/join-requests/:requestId/reject", TeacherController.rejectJ
 // Students per group
 teacherRouter.get("/groups/:groupId/students", TeacherController.getStudentsInGroup);
 teacherRouter.post("/students", validate(addStudentSchema), TeacherController.addStudent);
+teacherRouter.patch(
+  "/students/:studentId/password",
+  validate(updateStudentPasswordSchema),
+  TeacherController.updateStudentPassword
+);
 teacherRouter.delete(
   "/groups/:groupId/students/:studentId",
   TeacherController.removeStudentFromGroup

@@ -69,3 +69,35 @@ export async function removeStudentAction(
     return { error: err?.message ?? "حدث خطأ أثناء حذف الطالب" }
   }
 }
+
+const updatePasswordSchema = z.object({
+  studentId: z.string().min(1, "معرّف الطالب مطلوب"),
+  password:  z.string().min(6, "كلمة المرور 6 أحرف على الأقل"),
+  groupId:   z.string().optional(),
+})
+
+export async function updateStudentPasswordAction(
+  studentId: string,
+  password:  string,
+  groupId?:  string
+): Promise<StudentActionState> {
+  const parsed = updatePasswordSchema.safeParse({ studentId, password, groupId })
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? "بيانات غير صالحة" }
+  }
+
+  try {
+    await serverFetch(`/api/teacher/students/${studentId}/password`, {
+      method: "PATCH",
+      body: { password: parsed.data.password, groupId: parsed.data.groupId },
+    })
+    if (groupId) {
+      revalidatePath(`/teacher/group/${groupId}/students`)
+      revalidatePath(`/teacher/group/${groupId}/students/${studentId}`)
+    }
+    return { success: true, message: "تم تحديث كلمة مرور الطالب بنجاح" }
+  } catch (e: unknown) {
+    const err = e as { message?: string }
+    return { error: err?.message ?? "حدث خطأ أثناء تحديث كلمة المرور" }
+  }
+}

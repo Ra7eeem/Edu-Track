@@ -13,10 +13,11 @@ import { AttendanceStatus, resolveId } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   ArrowLeft, CalendarCheck, CheckCircle2,
-  Pencil, Plus, StickyNote, Trash2,
+  KeyRound, Pencil, Plus, StickyNote, Trash2,
 } from "lucide-react"
 import Link from "next/link"
 import { use, useState } from "react"
+import { UpdateStudentPasswordModal } from "@/features/teacher/components/update-student-password-modal"
 
 // ─── Arabic months ────────────────────────────────────────────────────────────
 const AR_MONTHS = [
@@ -52,10 +53,11 @@ export default function StudentProfilePage({
   const updateNote = useUpdateNote(groupId, studentId)
   const deleteNote = useDeleteNote(groupId, studentId)
 
-  const [noteInput,    setNoteInput]    = useState("")
-  const [editingNote,  setEditingNote]  = useState<{ id: string; content: string } | null>(null)
-  const [editContent,  setEditContent]  = useState("")
-  const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null)
+  const [noteInput,          setNoteInput]          = useState("")
+  const [editingNote,        setEditingNote]        = useState<{ id: string; content: string } | null>(null)
+  const [editContent,        setEditContent]        = useState("")
+  const [deleteNoteId,       setDeleteNoteId]       = useState<string | null>(null)
+  const [showPasswordModal,  setShowPasswordModal]  = useState(false)
 
   const student  = data?.student
   const scores   = data?.scores   ?? []
@@ -132,6 +134,15 @@ export default function StudentProfilePage({
         </div>
       )}
 
+      {/* Password Update Modal */}
+      {showPasswordModal && student && (
+        <UpdateStudentPasswordModal
+          student={{ id: studentId, name: student.name }}
+          groupId={groupId}
+          onClose={() => setShowPasswordModal(false)}
+        />
+      )}
+
       <div className="mx-auto w-full max-w-2xl p-4 sm:p-6 space-y-5">
 
         {/* Back button */}
@@ -141,15 +152,27 @@ export default function StudentProfilePage({
         </Link>
 
         {/* Profile card */}
-        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm flex items-center gap-4">
-          <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 text-2xl font-extrabold text-white shadow-md">
-            {(student?.name ?? "؟")[0]}
-          </span>
-          <div className="min-w-0">
-            <p className="text-base font-bold">{student?.name}</p>
-            <p className="text-sm text-muted-foreground">{student?.email}</p>
-            {student?.phone && <p className="text-xs text-muted-foreground">{student.phone}</p>}
+        <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 text-2xl font-extrabold text-white shadow-md">
+              {(student?.name ?? "؟")[0]}
+            </span>
+            <div className="min-w-0">
+              <p className="text-base font-bold">{student?.name}</p>
+              <p className="text-sm text-muted-foreground">{student?.email}</p>
+              {student?.phone && <p className="text-xs text-muted-foreground">{student.phone}</p>}
+            </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPasswordModal(true)}
+            className="rounded-xl border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 shrink-0 font-bold"
+          >
+            <KeyRound className="size-3.5" />
+            <span className="hidden sm:inline">تغيير كلمة المرور</span>
+            <span className="sm:hidden">كلمة المرور</span>
+          </Button>
         </div>
 
         {/* Monthly scores */}

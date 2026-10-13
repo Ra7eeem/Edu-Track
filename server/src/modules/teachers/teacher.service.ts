@@ -473,3 +473,46 @@ export async function deleteNote(teacherId: string, noteId: string) {
   const note = await StudentNote.findOneAndDelete({ _id: noteId, teacher: teacherId });
   if (!note) throw ApiError.notFound("الملاحظة غير موجودة");
 }
+
+export async function updateStudentPassword(
+  teacherId:   string,
+  studentId:   string,
+  newPassword: string,
+  groupId?:    string
+) {
+  if (!mongoose.Types.ObjectId.isValid(studentId)) {
+    throw ApiError.badRequest("معرّف الطالب غير صالح");
+  }
+
+  if (groupId) {
+    if (!mongoose.Types.ObjectId.isValid(groupId)) {
+      throw ApiError.badRequest("معرّف المجموعة غير صالح");
+    }
+    await assertTeacherOwnsGroup(teacherId, groupId);
+    const membership = await GroupMembership.exists({ student: studentId, group: groupId });
+    if (!membership) {
+      throw ApiError.notFound("الطالب غير موجود في هذه المجموعة");
+    }
+  } else {
+    const teacherGroups = await GroupTeacher.find({ teacher: teacherId }).select("group").lean();
+    const groupIds = teacherGroups.map((gt) => gt.group);
+    const membership = await GroupMembership.exists({
+      student: studentId,
+      group: { $in: groupIds },
+    });
+    if (!membership) {
+      throw ApiError.forbidden("لا تملك صلاحية تعديل كلمة مرور هذا الطالب");
+    }
+  }
+
+  const student = await User.findOne({ _id: studentId, role: Role.STUDENT });
+  if (!student) {
+    throw ApiError.notFound("حساب الطالب غير موجود");
+  }
+
+  const passwordHash = await argon2.hash(newPassword);
+  student.passwordHash = passwordHash;
+  await student.save();
+
+  return { success: true };
+}

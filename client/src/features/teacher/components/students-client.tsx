@@ -7,10 +7,12 @@ import { addStudentAction, removeStudentAction } from "@/features/teacher/action
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import { Grade, GRADE_LABELS, resolveId } from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle, CheckCircle2, ChevronDown, Search, Trash2, UserPlus, X } from "lucide-react"
+import { AlertTriangle, CheckCircle2, ChevronDown, KeyRound, Search, Trash2, UserPlus, X } from "lucide-react"
 import { useEffect, useActionState, useState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { useQueryClient } from "@tanstack/react-query"
+import Link from "next/link"
+import { UpdateStudentPasswordModal } from "./update-student-password-modal"
 import { z } from "zod"
 
 const addSchema = z.object({
@@ -120,6 +122,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
   const [search,       setSearch]       = useState("")
   const [showAdd,      setShowAdd]      = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [passwordTarget, setPasswordTarget] = useState<{ id: string; name: string } | null>(null)
   const [removing,     setRemoving]     = useState(false)
   const [removeErr,    setRemoveErr]    = useState<string | null>(null)
   const [isPending,    startTransition] = useTransition()
@@ -184,6 +187,15 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
         />
       )}
 
+      {/* Password Update Modal */}
+      {passwordTarget && (
+        <UpdateStudentPasswordModal
+          student={passwordTarget}
+          groupId={groupId}
+          onClose={() => setPasswordTarget(null)}
+        />
+      )}
+
       {/* Toolbar */}
       <div className="mb-4 flex items-center gap-2">
         <div className="relative flex-1">
@@ -217,21 +229,37 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
               key={sid || i}
               className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm transition-all hover:border-border"
             >
-              <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+              <Link
+                href={`/teacher/group/${groupId}/students/${sid}`}
+                className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0 hover:opacity-80 transition-opacity"
+              >
                 {name[0] ?? "؟"}
-              </span>
-              <div className="min-w-0 flex-1">
+              </Link>
+              <Link
+                href={`/teacher/group/${groupId}/students/${sid}`}
+                className="min-w-0 flex-1 hover:underline cursor-pointer"
+              >
                 <p className="truncate text-sm font-medium">{name}</p>
                 <p className="truncate text-xs text-muted-foreground">{email}</p>
+              </Link>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setPasswordTarget({ id: sid, name })}
+                  className="grid size-8 place-items-center rounded-xl border border-violet-200 text-violet-600 hover:bg-violet-50 hover:border-violet-300 transition-all dark:border-violet-800 dark:hover:bg-violet-950/20"
+                  title="تغيير كلمة المرور"
+                  aria-label="تغيير كلمة المرور"
+                >
+                  <KeyRound className="size-3.5" />
+                </button>
+                <button
+                  onClick={() => setDeleteTarget({ id: sid, name })}
+                  disabled={isPending}
+                  className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 hover:border-rose-300 transition-all disabled:opacity-40 dark:border-rose-800 dark:hover:bg-rose-950/20"
+                  aria-label="حذف الطالب"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
               </div>
-              <button
-                onClick={() => setDeleteTarget({ id: sid, name })}
-                disabled={isPending}
-                className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 hover:border-rose-300 transition-all disabled:opacity-40 dark:border-rose-800 dark:hover:bg-rose-950/20"
-                aria-label="حذف الطالب"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
             </div>
           )
         })}
