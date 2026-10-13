@@ -189,12 +189,17 @@ export async function getAssignment(
 export async function updateAssignment(
   teacherId:    string,
   assignmentId: string,
-  dto:          UpdateAssignmentDto
+  dto:          UpdateAssignmentDto,
+  userRole?:    string
 ) {
   if (!mongoose.Types.ObjectId.isValid(assignmentId))
     throw ApiError.badRequest("معرّف غير صالح");
 
-  const assignment = await Assignment.findOne({ _id: assignmentId, author: teacherId });
+  const query = userRole === "ADMIN"
+    ? { _id: assignmentId }
+    : { _id: assignmentId, author: teacherId };
+
+  const assignment = await Assignment.findOne(query);
   if (!assignment) throw ApiError.notFound("الواجب غير موجود أو لا تملك صلاحية تعديله");
 
   Object.assign(assignment, {
@@ -204,10 +209,70 @@ export async function updateAssignment(
     ...(dto.youtubeUrl      !== undefined && { youtubeUrl:      dto.youtubeUrl || null }),
     ...(dto.dueDate         !== undefined && { dueDate:         dto.dueDate ? new Date(dto.dueDate) : null }),
     ...(dto.durationMinutes !== undefined && { durationMinutes: dto.durationMinutes  }),
-    ...(dto.questions       !== undefined && { questions:       dto.questions        }),
+    ...(dto.availableFrom   !== undefined && { availableFrom:   dto.availableFrom ? new Date(dto.availableFrom) : null }),
+    ...(dto.availableTo     !== undefined && { availableTo:     dto.availableTo ? new Date(dto.availableTo) : null }),
   });
 
+  if (dto.questions !== undefined) {
+    assignment.questions = dto.questions.map((q) => {
+      const qObj: Record<string, unknown> = {
+        text: q.text,
+        choices: q.choices,
+        correctAnswer: q.correctAnswer,
+        points: q.points ?? 1,
+      };
+      if (q._id && mongoose.Types.ObjectId.isValid(q._id)) {
+        qObj._id = new mongoose.Types.ObjectId(q._id);
+      }
+      return qObj;
+    }) as unknown as IQuestion[];
+  }
+
   await assignment.save();
+
+  // If questions were updated, recalculate all existing submissions and scores immediately!
+  if (dto.questions !== undefined) {
+    const submissions = await ExamSubmission.find({ assignment: assignment._id });
+
+    if (submissions.length > 0) {
+      const questionMap = new Map<string, { correctAnswer: string; points: number }>();
+      let examTotal = 0;
+      for (const q of assignment.questions) {
+        const pts = q.points ?? 1;
+        examTotal += pts;
+        questionMap.set(String(q._id), {
+          correctAnswer: q.correctAnswer,
+          points: pts,
+        });
+      }
+
+      const bulkOps = submissions.map((sub) => {
+        let score = 0;
+        for (const ans of sub.answers) {
+          const qInfo = questionMap.get(String(ans.questionId));
+          if (qInfo && ans.chosen === qInfo.correctAnswer) {
+            score += qInfo.points;
+          }
+        }
+        return {
+          updateOne: {
+            filter: { _id: sub._id },
+            update: {
+              $set: {
+                score,
+                total: examTotal,
+              },
+            },
+          },
+        };
+      });
+
+      if (bulkOps.length > 0) {
+        await ExamSubmission.bulkWrite(bulkOps);
+      }
+    }
+  }
+
   return assignment.populate("author", "name avatarUrl");
 }
 

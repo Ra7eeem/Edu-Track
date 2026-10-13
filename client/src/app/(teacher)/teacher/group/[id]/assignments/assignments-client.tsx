@@ -16,22 +16,25 @@ import {
 } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Eye, EyeOff, BarChart2, Plus, Trash2, Users, X, XCircle } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronUp, Clock, ExternalLink, Eye, EyeOff, BarChart2, Plus, Trash2, Users, X, XCircle, Pencil } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
 // ─── Submissions Modal ────────────────────────────────────────────────────────
 function SubmissionsModal({
+  groupId,
   assignmentId,
   title,
   assignment,
   onClose,
 }: {
+  groupId:      string
   assignmentId: string
   title:        string
   assignment:   ApiAssignment
   onClose:      () => void
 }) {
+  const router = useRouter()
   const [selected, setSelected] = useState<string | null>(null)
 
   const questionsMap: Record<string, ApiQuestion> = {}
@@ -87,9 +90,22 @@ function SubmissionsModal({
             <h2 className="text-base font-bold">إجابات الطلاب</h2>
             <p className="text-xs text-muted-foreground">{title}</p>
           </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted">
-            <X className="size-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                onClose()
+                router.push(`/teacher/group/${groupId}/assignments/${assignmentId}/edit`)
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700 hover:bg-violet-100 transition-colors dark:border-violet-800 dark:bg-violet-950/20 dark:text-violet-300"
+              title="تعديل الامتحان والأسئلة"
+            >
+              <Pencil className="size-3.5" />
+              <span>تعديل الامتحان</span>
+            </button>
+            <button onClick={onClose} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted">
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-1 overflow-hidden">
@@ -258,6 +274,7 @@ export default function AssignmentsClient({
     <>
       {viewSubs && (
         <SubmissionsModal
+          groupId={groupId}
           assignmentId={viewSubs.id}
           title={viewSubs.title}
           assignment={assignments.find(a => resolveId(a as { _id?: string; id?: string }) === viewSubs.id) ?? { questions: [] } as unknown as ApiAssignment}
@@ -400,6 +417,13 @@ export default function AssignmentsClient({
                             </span>
                           </button>
                         )}
+                        <button
+                          onClick={() => router.push(`/teacher/group/${groupId}/assignments/${aid}/edit`)}
+                          className="grid size-8 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
+                          title="تعديل"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
                         <button onClick={() => setDeleteId(aid)}
                           className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 transition-colors dark:border-rose-800 dark:hover:bg-rose-950/20">
                           <Trash2 className="size-3.5" />

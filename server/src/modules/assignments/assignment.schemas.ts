@@ -9,6 +9,7 @@ const choiceSchema = z.object({
 });
 
 const questionSchema = z.object({
+  _id: z.string().optional(),
   text: z.string().min(1, "نص السؤال مطلوب").max(2000).trim(),
   choices: z.array(choiceSchema).min(2, "كل سؤال يحتاج خيارين على الأقل").max(6),
   correctAnswer: z.string().min(1, "الإجابة الصحيحة مطلوبة"),
@@ -21,16 +22,19 @@ export const createAssignmentBaseSchema = z.object({
   title:           z.string().min(1, "العنوان مطلوب").max(300).trim(),
   description:     z.string().max(3000).trim().optional(),
   youtubeUrl:      z.string().regex(youtubeRegex, "رابط يوتيوب غير صالح").optional().or(z.literal("")),
-  dueDate:         z.string().datetime({ offset: true }).optional(),
+  dueDate:         z.union([
+                     z.string().datetime({ offset: true }),
+                     z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "تاريخ غير صالح"),
+                   ]).optional().nullable().or(z.literal("")),
   durationMinutes: z.number().int().min(1).max(600).optional().nullable(),
   availableFrom:   z.union([
                      z.string().datetime({ offset: true }),
                      z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "تاريخ غير صالح"),
-                   ]).optional().nullable(),
+                   ]).optional().nullable().or(z.literal("")),
   availableTo:     z.union([
                      z.string().datetime({ offset: true }),
                      z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, "تاريخ غير صالح"),
-                   ]).optional().nullable(),
+                   ]).optional().nullable().or(z.literal("")),
   questions:       z.array(questionSchema).optional().default([]),
 });
 

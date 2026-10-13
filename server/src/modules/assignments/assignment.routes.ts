@@ -67,7 +67,7 @@ assignmentRouter.patch(
 // PATCH /api/assignments/:assignmentId           — teacher updates own
 assignmentRouter.patch(
   "/:assignmentId",
-  authorize(Role.TEACHER),
+  authorize(Role.TEACHER, Role.ADMIN),
   validate(updateAssignmentSchema),
   AssignmentController.updateAssignment
 );

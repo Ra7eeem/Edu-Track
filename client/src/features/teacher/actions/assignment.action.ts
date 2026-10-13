@@ -16,6 +16,7 @@ const choiceSchema = z.object({
 })
 
 const questionSchema = z.object({
+  _id:           z.string().optional(),
   text:          z.string().min(1, "نص السؤال مطلوب").max(2000).trim(),
   choices:       z.array(choiceSchema).min(2, "كل سؤال يحتاج خيارين على الأقل").max(6),
   correctAnswer: z.string().min(1, "الإجابة الصحيحة مطلوبة"),
@@ -35,11 +36,28 @@ const createSchema = z.object({
   questions:       z.array(questionSchema).optional().default([]),
 })
 
+const updateSchema = z.object({
+  groupId:         z.string().min(1, "معرّف المجموعة مطلوب"),
+  type:            z.nativeEnum(AssignmentType).optional(),
+  title:           z.string().min(1, "العنوان مطلوب").max(300).trim().optional(),
+  description:     z.string().max(3000).trim().optional(),
+  youtubeUrl:      z.string().url("رابط يوتيوب غير صالح").optional().or(z.literal("")),
+  dueDate:         z.string().optional().nullable(),
+  durationMinutes: z.number().int().min(1).max(600).optional().nullable(),
+  availableFrom:   z.string().optional().nullable(),
+  availableTo:     z.string().optional().nullable(),
+  questions:       z.array(questionSchema).optional(),
+})
+
 export type AssignmentToggleState =
   | { success: true; data: ApiAssignment }
   | { error: string }
 
 export type AssignmentCreateState =
+  | { success: true; data: ApiAssignment }
+  | { error: string }
+
+export type AssignmentUpdateState =
   | { success: true; data: ApiAssignment }
   | { error: string }
 
@@ -115,6 +133,40 @@ export async function createAssignmentAction(
       body,
     })
     revalidateAssignmentViews(parsed.data.groupId)
+    return { success: true, data }
+  } catch (e: unknown) {
+    return { error: (e as { message?: string }).message ?? "حدث خطأ" }
+  }
+}
+
+export async function updateAssignmentAction(
+  assignmentId: string,
+  input: Record<string, unknown>
+): Promise<AssignmentUpdateState> {
+  const parsed = updateSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.errors[0]?.message ?? "بيانات غير صالحة"
+    return { error: first }
+  }
+
+  const { groupId, ...rest } = parsed.data
+  const body = {
+    ...rest,
+    youtubeUrl:    rest.youtubeUrl    || undefined,
+    dueDate:       rest.dueDate       || undefined,
+    availableFrom: rest.availableFrom || undefined,
+    availableTo:   rest.availableTo   || undefined,
+  }
+
+  try {
+    const data = await serverFetch<ApiAssignment>(`/api/assignments/${assignmentId}`, {
+      method: "PATCH",
+      body,
+    })
+    revalidateAssignmentViews(groupId)
+    revalidatePath(`/teacher/group/${groupId}/assignments/${assignmentId}/edit`)
+    revalidatePath(`/student/exams/${assignmentId}`, "layout")
+    revalidatePath(`/student/exams/${assignmentId}/results`, "layout")
     return { success: true, data }
   } catch (e: unknown) {
     return { error: (e as { message?: string }).message ?? "حدث خطأ" }

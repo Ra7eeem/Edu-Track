@@ -8,7 +8,7 @@ import { Attendance } from "../../models/Attendance";
 import { Post } from "../../models/Post";
 import { Comment } from "../../models/Comment";
 import { ApiError } from "../../utils/ApiError";
-import { Role } from "../../types";
+import { Role, PaginatedResult } from "../../types";
 import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { Request } from "express";
 import {
@@ -22,7 +22,7 @@ import {
 // Teachers
 // ─────────────────────────────────────────
 
-export async function getTeachers(req: Request) {
+export async function getTeachers(req: Request): Promise<PaginatedResult<any>> {
   const { page, limit, skip } = parsePagination(req);
   const search = String(req.query.search ?? "");
   const filter: mongoose.FilterQuery<typeof User> = { role: Role.TEACHER };

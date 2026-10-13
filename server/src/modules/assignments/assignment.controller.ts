@@ -37,9 +37,10 @@ export const updateAssignment = asyncHandler(async (req: Request, res: Response)
   const result = await AssignmentService.updateAssignment(
     req.user!.userId,
     p(req.params.assignmentId),
-    req.body as UpdateAssignmentDto
+    req.body as UpdateAssignmentDto,
+    req.user?.role
   );
-  sendSuccess(res, result, 200, "تم تحديث الواجب");
+  sendSuccess(res, result, 200, "تم تحديث الواجب وتحديث الدرجات بنجاح");
 });
 
 export const deleteAssignment = asyncHandler(async (req: Request, res: Response) => {
