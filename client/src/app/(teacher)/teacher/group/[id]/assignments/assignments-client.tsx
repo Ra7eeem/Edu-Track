@@ -93,7 +93,7 @@ function SubmissionsModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="flex h-[92vh] max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
+      <div className="flex h-[92dvh] max-h-[95dvh] sm:h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/60 px-4 py-3 sm:px-5 sm:py-4 shrink-0 gap-2">
           <div className="min-w-0">
@@ -119,7 +119,7 @@ function SubmissionsModal({
         </div>
 
         {/* Master Detail Body */}
-        <div className="flex flex-1 overflow-hidden relative">
+        <div className="flex flex-1 min-h-0 overflow-hidden relative">
           {/* Students Sidebar */}
           <div className={cn(
             "flex flex-col border-e border-border/40 overflow-y-auto bg-muted/10 transition-all",
@@ -205,7 +205,7 @@ function SubmissionsModal({
 
           {/* Answers Details Area */}
           <div className={cn(
-            "flex-1 overflow-y-auto p-4 sm:p-5",
+            "flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 overscroll-contain",
             !selected ? "hidden sm:flex sm:items-center sm:justify-center" : "block"
           )}>
             {!selectedSub ? (
@@ -214,7 +214,7 @@ function SubmissionsModal({
                 <p className="text-sm font-semibold">اختر طالباً من القائمة لعرض إجاباته بالتفصيل</p>
               </div>
             ) : (
-              <div className="space-y-4 max-w-2xl mx-auto">
+              <div className="space-y-4 max-w-2xl mx-auto pb-28 sm:pb-12">
                 {/* Mobile Back Button */}
                 <button
                   onClick={() => setSelected(null)}
@@ -462,7 +462,7 @@ export default function AssignmentsClient({
                               </span>
                             )}
                           </div>
-                          <h4 className="font-bold text-sm sm:text-base leading-snug text-foreground break-words">{a.title}</h4>
+                          <h4 className="font-bold text-sm sm:text-base text-foreground break-words">{a.title}</h4>
                         </div>
                       </div>
 
@@ -520,7 +520,7 @@ export default function AssignmentsClient({
                       </button>
                       <button
                         onClick={() => router.push(`/teacher/group/${groupId}/assignments/${aid}/edit`)}
-                        className="flex h-8 items-center gap-1 rounded-xl border border-border/60 px-2 text-xs text-muted-foreground hover:bg-muted hover:text-primary transition-colors ms-auto"
+                        className="flex h-8 items-center gap-1 rounded-xl border border-border/60 px-2 text-xs text-muted-foreground hover:bg-muted hover:text-primary transition-colors "
                         title="تعديل"
                       >
                         <Pencil className="size-3.5" />
@@ -554,8 +554,8 @@ export default function AssignmentsClient({
                   </div>
 
                   {isOpen && (a.questions ?? []).length > 0 && (
-                    <div className="border-t border-border/40 bg-muted/20 p-4 space-y-3">
-                      <p className="text-xs font-bold text-muted-foreground mb-2">الأسئلة:</p>
+                    <div className="border-t border-border/40 bg-muted/20 p-4 space-y-3 max-h-[65vh] overflow-y-auto overscroll-contain">
+                      <p className="text-xs font-bold text-muted-foreground mb-2">الأسئلة ({a.questions.length}):</p>
                       {a.questions.map((q, qi) => (
                         <div key={q._id ?? qi} className="rounded-xl border border-border/60 bg-card p-3 space-y-2">
                           <div className="flex items-start gap-2">
