@@ -426,15 +426,16 @@ export default function AssignmentsClient({
               return (
                 <div key={aid} className={cn("rounded-2xl border bg-card shadow-sm overflow-hidden",
                   isExam ? "border-rose-200/60 dark:border-rose-800/30" : "border-border/60")}>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className={cn("grid size-9 place-items-center rounded-xl shrink-0 text-base",
+                  <div className="p-4 space-y-3">
+                    {/* Title and Badges Row */}
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <span className={cn("grid size-9 place-items-center rounded-xl shrink-0 text-base mt-0.5",
                           isExam ? "bg-rose-100 dark:bg-rose-900/30" : "bg-violet-100 dark:bg-violet-900/30")}>
                           {isExam ? "📝" : "📚"}
                         </span>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
                             <span className={cn("text-[10px] rounded-full px-2 py-0.5 font-bold shrink-0",
                               isExam ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                                      : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400")}>
@@ -461,69 +462,75 @@ export default function AssignmentsClient({
                               </span>
                             )}
                           </div>
-                          <p className="font-bold text-sm truncate">{a.title}</p>
+                          <h4 className="font-bold text-sm sm:text-base leading-snug text-foreground break-words">{a.title}</h4>
                         </div>
                       </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        {(a.questions ?? []).length > 0 && (
-                          <button onClick={() => setExpandedId(isOpen ? null : aid)}
-                            className="grid size-8 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-muted transition-colors">
-                            {isOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                          </button>
-                        )}
+
+                      {/* Expand Chevron */}
+                      {(a.questions ?? []).length > 0 && (
+                        <button onClick={() => setExpandedId(isOpen ? null : aid)}
+                          className="grid size-8 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-muted transition-colors shrink-0"
+                          title={isOpen ? "طي الأسئلة" : "عرض الأسئلة"}>
+                          {isOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Action buttons toolbar - responsive and easy to tap on phones */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
+                      {isExam && (
                         <button
-                          onClick={() => toggleMut.mutate(aid)}
-                          disabled={toggleMut.isPending}
+                          onClick={() => setViewSubs({ id: aid, title: a.title })}
+                          className="flex h-8 items-center gap-1 rounded-xl border border-teal-200 bg-teal-50/50 px-2.5 text-teal-700 hover:bg-teal-100 transition-colors dark:border-teal-800 dark:bg-teal-950/20 dark:text-teal-300 text-xs font-semibold"
+                          title="عرض نتائج وإجابات الطلاب"
+                        >
+                          <Users className="size-3.5" />
+                          <span>نتائج الطلاب</span>
+                        </button>
+                      )}
+                      {isExam && (
+                        <button
+                          onClick={() => toggleResultsMut.mutate(aid)}
+                          disabled={toggleResultsMut.isPending}
                           className={cn(
-                            "grid size-8 place-items-center rounded-xl border transition-colors",
-                            a.isHidden
-                              ? "border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/20"
-                              : "border-border/60 text-muted-foreground hover:bg-muted"
+                            "flex h-8 items-center gap-1 rounded-xl border px-2.5 text-xs font-semibold transition-colors",
+                            a.showResults
+                              ? "border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300"
+                              : "border-amber-200 bg-amber-50/50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-300"
                           )}
-                          title={a.isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب"}
+                          title={a.showResults ? "النتائج ظاهرة للطلاب — اضغط لإخفائها" : "النتائج مخفية — اضغط لإظهارها"}
                         >
-                          {a.isHidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                          <BarChart2 className="size-3.5" />
+                          <span>{a.showResults ? "إخفاء النتيجة" : "إظهار النتيجة"}</span>
                         </button>
-                        {isExam && (
-                          <button
-                            onClick={() => setViewSubs({ id: aid, title: a.title })}
-                            className="flex h-8 items-center gap-1 rounded-xl border border-teal-200 px-2 text-teal-600 hover:bg-teal-50 transition-colors dark:border-teal-800 dark:hover:bg-teal-950/20"
-                            title="عرض نتائج وإجابات الطلاب"
-                          >
-                            <Users className="size-3.5" />
-                            <span className="hidden sm:inline text-[10px] font-bold">نتائج الطلاب</span>
-                          </button>
+                      )}
+                      <button
+                        onClick={() => toggleMut.mutate(aid)}
+                        disabled={toggleMut.isPending}
+                        className={cn(
+                          "flex h-8 items-center gap-1 rounded-xl border px-2 text-xs font-medium transition-colors",
+                          a.isHidden
+                            ? "border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/20"
+                            : "border-border/60 text-muted-foreground hover:bg-muted"
                         )}
-                        {isExam && (
-                          <button
-                            onClick={() => toggleResultsMut.mutate(aid)}
-                            disabled={toggleResultsMut.isPending}
-                            className={cn(
-                              "flex h-8 items-center gap-1 rounded-xl border px-2 transition-colors",
-                              a.showResults
-                                ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/20"
-                                : "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/20"
-                            )}
-                            title={a.showResults ? "النتائج ظاهرة للطلاب — اضغط لإخفائها" : "النتائج مخفية — اضغط لإظهارها"}
-                          >
-                            <BarChart2 className="size-3.5" />
-                            <span className="hidden sm:inline text-[10px] font-bold">
-                              {a.showResults ? "إخفاء النتيجة" : "إظهار النتيجة"}
-                            </span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => router.push(`/teacher/group/${groupId}/assignments/${aid}/edit`)}
-                          className="grid size-8 place-items-center rounded-xl border border-border/60 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
-                          title="تعديل"
-                        >
-                          <Pencil className="size-3.5" />
-                        </button>
-                        <button onClick={() => setDeleteId(aid)}
-                          className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 transition-colors dark:border-rose-800 dark:hover:bg-rose-950/20">
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </div>
+                        title={a.isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب"}
+                      >
+                        {a.isHidden ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        <span className="text-[11px]">{a.isHidden ? "مخفي" : "ظاهر"}</span>
+                      </button>
+                      <button
+                        onClick={() => router.push(`/teacher/group/${groupId}/assignments/${aid}/edit`)}
+                        className="flex h-8 items-center gap-1 rounded-xl border border-border/60 px-2 text-xs text-muted-foreground hover:bg-muted hover:text-primary transition-colors ms-auto"
+                        title="تعديل"
+                      >
+                        <Pencil className="size-3.5" />
+                        <span className="text-[11px]">تعديل</span>
+                      </button>
+                      <button onClick={() => setDeleteId(aid)}
+                        className="grid size-8 place-items-center rounded-xl border border-rose-200 text-rose-500 hover:bg-rose-50 transition-colors dark:border-rose-800 dark:hover:bg-rose-950/20"
+                        title="حذف">
+                        <Trash2 className="size-3.5" />
+                      </button>
                     </div>
 
                     {a.description && (

@@ -16,7 +16,13 @@ import { UpdateStudentPasswordModal } from "./update-student-password-modal"
 import { z } from "zod"
 
 const addSchema = z.object({
-  name:     z.string().min(2, "الاسم يجب أن يكون حرفين على الأقل"),
+  name:     z
+    .string()
+    .min(3, "الاسم يجب أن يكون 3 أحرف على الأقل")
+    .refine(
+      val => val.trim().split(/\s+/).filter(Boolean).length >= 3,
+      "يجب إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)"
+    ),
   email:    z.string().email("البريد غير صالح"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   phone:    z.string().min(7, "رقم الهاتف غير صالح"),
@@ -301,9 +307,9 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
                 {state.error && <p className="text-xs text-destructive">{state.error}</p>}
 
                 <div className="space-y-1">
-                  <Label htmlFor="st-name">الاسم الكامل</Label>
+                  <Label htmlFor="st-name">الاسم الكامل (ثلاثي على الأقل)</Label>
                   <Controller name="name" control={control} render={({ field }) => (
-                    <Input {...field} id="st-name" placeholder="محمد أحمد" error={!!fieldErr("name")} />
+                    <Input {...field} id="st-name" placeholder="محمد أحمد علي" error={!!fieldErr("name")} />
                   )} />
                   {fieldErr("name") && <p className="text-xs text-destructive">{fieldErr("name")}</p>}
                 </div>

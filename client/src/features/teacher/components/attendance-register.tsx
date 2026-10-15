@@ -87,7 +87,7 @@ export function AttendanceRegister({ groupId, role = "teacher" }: Props) {
             <table className="min-w-max w-full text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border/40 bg-muted/30">
-                  <th className="sticky right-0 bg-muted/30 px-4 py-2.5 text-right font-semibold whitespace-nowrap min-w-[130px] z-10">
+                  <th className="sticky right-0 bg-muted/30 px-4 py-2.5 text-right font-semibold whitespace-nowrap min-w-[160px] z-10">
                     الطالب
                   </th>
                   {dates.map(d => {

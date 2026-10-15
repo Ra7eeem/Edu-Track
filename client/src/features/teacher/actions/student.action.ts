@@ -6,7 +6,13 @@ import { z } from "zod"
 import { Grade } from "@/shared/types/api"
 
 const addStudentSchema = z.object({
-  name:     z.string().min(2),
+  name:     z
+    .string()
+    .min(3, "الاسم يجب أن يكون 3 أحرف على الأقل")
+    .refine(
+      (val) => val.trim().split(/\s+/).filter(Boolean).length >= 3,
+      "الاسم يجب أن يكون ثلاثياً على الأقل (مثال: أحمد محمد علي)"
+    ),
   email:    z.string().email(),
   password: z.string().min(8),
   phone:    z.string().min(7),

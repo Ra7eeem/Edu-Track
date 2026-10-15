@@ -69,7 +69,7 @@ export function RegisterStudentForm() {
 
       {/* Name */}
       <div className="space-y-1.5">
-        <Label htmlFor="name">الاسم الكامل</Label>
+        <Label htmlFor="name">الاسم الكامل (ثلاثي على الأقل)</Label>
         <Controller name="name" control={control} render={({ field }) => (
           <Input
             {...field}
@@ -86,7 +86,7 @@ export function RegisterStudentForm() {
           />
         )} />
         {fieldErr("name") && <p className="text-xs text-destructive">{fieldErr("name")}</p>}
-        <p className="text-[10px] text-muted-foreground">الاسم بالعربية فقط</p>
+        <p className="text-[10px] text-muted-foreground">الاسم ثلاثي بالعربية فقط (مثال: محمد أحمد علي)</p>
       </div>
 
       {/* Email */}

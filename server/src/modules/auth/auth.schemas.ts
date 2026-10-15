@@ -14,9 +14,13 @@ export const loginSchema = z.object({
 export const registerStudentSchema = z.object({
   name: z
     .string({ required_error: "الاسم مطلوب" })
-    .min(2, "الاسم يجب أن يكون حرفين على الأقل")
+    .min(3, "الاسم يجب أن يكون 3 أحرف على الأقل")
     .max(100, "الاسم لا يتجاوز 100 حرف")
-    .trim(),
+    .trim()
+    .refine(
+      (val) => val.trim().split(/\s+/).filter(Boolean).length >= 3,
+      "يجب إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)"
+    ),
   email: z
     .string({ required_error: "البريد الإلكتروني مطلوب" })
     .email("البريد الإلكتروني غير صالح")

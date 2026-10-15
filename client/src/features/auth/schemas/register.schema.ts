@@ -7,9 +7,13 @@ const arabicOnlyRegex = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\
 export const registerStudentSchema = z.object({
   name: z
     .string()
-    .min(2, "الاسم يجب أن يكون حرفين على الأقل")
+    .min(3, "الاسم يجب أن يكون 3 أحرف على الأقل")
     .max(100)
-    .regex(arabicOnlyRegex, "الاسم يجب أن يُكتب بالعربية فقط"),
+    .regex(arabicOnlyRegex, "الاسم يجب أن يُكتب بالعربية فقط")
+    .refine(
+      (val) => val.trim().split(/\s+/).filter(Boolean).length >= 3,
+      "يجب إدخال الاسم ثلاثياً على الأقل (مثال: أحمد محمد علي)"
+    ),
   email:    z.string().min(1, "البريد الإلكتروني مطلوب").email("البريد غير صالح"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   phone:    z.string().min(7, "رقم الهاتف غير صالح").max(20),

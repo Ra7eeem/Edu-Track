@@ -203,15 +203,19 @@ export function AttendanceClient({ groupId, students }: Props) {
             const rowClass = status !== "none" ? STATUS_CONFIG[status].rowClass : "border-border/60 bg-card"
             return (
               <div key={s.id}
-                className={cn("flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all", rowClass)}>
-                <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                className={cn("flex items-center gap-2.5 sm:gap-3 rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 transition-all", rowClass)}>
+                <span className="grid size-8 sm:size-9 place-items-center rounded-xl bg-violet-100 text-xs sm:text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
                   {s.avatar}
                 </span>
-                <span className="min-w-0 flex-1 text-sm font-medium truncate">{s.name}</span>
-                <div className="flex gap-1.5 shrink-0">
+                <div className="min-w-0 flex-1 py-0.5">
+                  <span className="text-xs sm:text-sm font-medium leading-snug break-words text-foreground block">
+                    {s.name}
+                  </span>
+                </div>
+                <div className="flex gap-1 sm:gap-1.5 shrink-0">
                   {([AttendanceStatus.PRESENT, AttendanceStatus.LATE, AttendanceStatus.ABSENT] as const).map(st => (
                     <button key={st} onClick={() => mark(s.id, st)}
-                      className={cn("rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all",
+                      className={cn("rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all sm:px-3",
                         status === st ? STATUS_CONFIG[st].activeClass : STATUS_CONFIG[st].idleClass)}>
                       {STATUS_CONFIG[st].label}
                     </button>
