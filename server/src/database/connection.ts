@@ -41,10 +41,18 @@ export async function connectDB(): Promise<typeof mongoose> {
   // Start a new connection if none is pending
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
-      bufferCommands: false,   // fail fast instead of queuing when disconnected
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
+      // ── Serverless-safe settings ──────────────────────────────────────
+      bufferCommands: false,        // fail fast — never queue ops while disconnected
+      maxPoolSize: 5,               // serverless: each instance owns its pool, keep it small
+      minPoolSize: 1,               // keep 1 connection alive on a warm lambda
+      maxIdleTimeMS: 10_000,        // close idle connections after 10 s (Vercel idles fast)
+      serverSelectionTimeoutMS: 5_000,  // give up quickly — surfaces real errors faster
+      socketTimeoutMS: 30_000,      // slightly under Vercel's 30 s function timeout
+      connectTimeoutMS: 10_000,     // TCP handshake timeout
+      heartbeatFrequencyMS: 10_000, // detect stale connections sooner (default: 10 s)
+      // ── Atlas-friendly ───────────────────────────────────────────────
+      retryWrites: true,
+      w: "majority",               // write concern: confirmed by majority of replica set
     };
 
     logger.info("Connecting to MongoDB...");

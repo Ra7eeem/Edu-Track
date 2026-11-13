@@ -19,9 +19,13 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default("/tmp/uploads"),
   MAX_FILE_SIZE: z.coerce.number().default(5242880),
 
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
-  RATE_LIMIT_MAX: z.coerce.number().default(100),
-  AUTH_RATE_LIMIT_MAX: z.coerce.number().default(10),
+  // Rate limiting
+  // General: 500 req / 15 min — covers classroom scenarios where many
+  // students share the same Wi-Fi / mobile carrier NAT IP.
+  // Auth: 20 attempts / 15 min (failed requests only via skipSuccessfulRequests).
+  RATE_LIMIT_WINDOW_MS:  z.coerce.number().default(900_000), // 15 min
+  RATE_LIMIT_MAX:        z.coerce.number().default(500),
+  AUTH_RATE_LIMIT_MAX:   z.coerce.number().default(20),
 
   CORS_ORIGIN: z.string().default("*"),
 

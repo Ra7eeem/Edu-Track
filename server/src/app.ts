@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { connectDB } from "./database/connection";
 import { requestLogger } from "./middleware/requestLogger";
 import { generalLimiter } from "./middleware/rateLimiter";
+import { requestTimeout } from "./middleware/timeout";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 import { authRouter } from "./modules/auth/auth.routes";
@@ -23,6 +24,12 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
 
 const app = express();
+
+// ── Trust proxy ───────────────────────────
+// Required on Vercel: all traffic passes through Vercel's load balancer.
+// Without this, every user shares the same proxy IP and rate limiting breaks.
+// "1" means trust the first hop (X-Forwarded-For header from Vercel).
+app.set("trust proxy", 1);
 
 // ── Security ──────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -44,6 +51,10 @@ app.use(compression());
 
 // ── Request logging ───────────────────────
 app.use(requestLogger);
+
+// ── Request timeout ───────────────────────
+// Sends a clean 503 at 25 s — 5 s before Vercel's hard 30 s cutoff.
+app.use(requestTimeout());
 
 // ── Rate limiting ─────────────────────────
 app.use(generalLimiter);
