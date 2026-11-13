@@ -3,6 +3,7 @@ import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { upload } from "../../middleware/upload";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import { createGroupSchema, updateGroupSchema } from "./group.schemas";
 import * as GroupController from "./group.controller";
 
@@ -14,15 +15,16 @@ import { postRouter } from "../posts/post.routes";
 export const groupRouter = Router();
 
 // List & get (any authenticated user)
-groupRouter.get("/", authenticate, GroupController.listGroups);
-groupRouter.get("/:id", authenticate, GroupController.getGroup);
-groupRouter.get("/:id/members", authenticate, GroupController.getGroupMembers);
-groupRouter.get("/:id/teachers", authenticate, GroupController.getGroupTeachers);
+groupRouter.get("/",           authenticate, userLimiter, GroupController.listGroups);
+groupRouter.get("/:id",        authenticate, userLimiter, GroupController.getGroup);
+groupRouter.get("/:id/members",  authenticate, userLimiter, GroupController.getGroupMembers);
+groupRouter.get("/:id/teachers", authenticate, userLimiter, GroupController.getGroupTeachers);
 
 // Create — teacher or admin
 groupRouter.post(
   "/",
   authenticate,
+  userLimiter,
   authorize(Role.TEACHER, Role.ADMIN),
   upload.single("image"),
   validate(createGroupSchema),
@@ -33,6 +35,7 @@ groupRouter.post(
 groupRouter.patch(
   "/:id",
   authenticate,
+  userLimiter,
   authorize(Role.TEACHER, Role.ADMIN),
   upload.single("image"),
   validate(updateGroupSchema),

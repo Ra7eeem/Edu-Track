@@ -3,12 +3,13 @@ import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { upload } from "../../middleware/upload";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import { updateStudentProfileSchema } from "./student.schemas";
 import * as StudentController from "./student.controller";
 
 export const studentRouter = Router();
 
-studentRouter.use(authenticate, authorize(Role.STUDENT));
+studentRouter.use(authenticate, authorize(Role.STUDENT), userLimiter);
 
 studentRouter.get("/me", StudentController.getMyProfile);
 studentRouter.get("/me/dashboard", StudentController.getDashboard);

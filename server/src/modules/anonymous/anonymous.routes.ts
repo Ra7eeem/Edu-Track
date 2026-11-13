@@ -2,11 +2,12 @@ import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import { sendMessageSchema, replyMessageSchema } from "./anonymous.schemas";
 import * as AnonymousController from "./anonymous.controller";
 
 export const anonymousRouter = Router();
-anonymousRouter.use(authenticate);
+anonymousRouter.use(authenticate, userLimiter);
 
 // ── Student ───────────────────────────────────────────────────────────────────
 // POST /api/anonymous           — send a new anonymous message

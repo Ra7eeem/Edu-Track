@@ -3,6 +3,7 @@ import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { upload } from "../../middleware/upload";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import {
   createPostSchema,
   updatePostSchema,
@@ -13,6 +14,7 @@ import * as PostController from "./post.controller";
 
 // Mounted at /api/groups/:groupId/posts
 export const postRouter = Router({ mergeParams: true });
+postRouter.use(authenticate, userLimiter);
 
 postRouter.use(authenticate);
 

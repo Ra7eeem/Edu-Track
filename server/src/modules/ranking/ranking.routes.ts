@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/authenticate";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import * as RankingController from "./ranking.controller";
 
 // Mounted at /api/groups/:groupId/ranking
 export const rankingRouter = Router({ mergeParams: true });
 
-rankingRouter.use(authenticate);
+rankingRouter.use(authenticate, userLimiter);
 
 // GET  /api/groups/:groupId/ranking                              — any auth user
 rankingRouter.get("/", RankingController.getGroupRanking);

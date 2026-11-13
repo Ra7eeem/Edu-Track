@@ -2,12 +2,13 @@ import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import { addStudentSchema, updateProfileSchema, updateStudentPasswordSchema } from "./teacher.schemas";
 import * as TeacherController from "./teacher.controller";
 
 export const teacherRouter = Router();
 
-teacherRouter.use(authenticate, authorize(Role.TEACHER));
+teacherRouter.use(authenticate, authorize(Role.TEACHER), userLimiter);
 
 // Profile
 teacherRouter.get("/profile", TeacherController.getProfile);

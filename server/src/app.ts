@@ -115,6 +115,9 @@ app.use((_req, _res, next) => {
 app.use("/uploads", express.static(path.resolve(env.UPLOAD_DIR)));
 
 // ── API routes ────────────────────────────
+// /api/auth — public, authLimiter is applied inside auth.routes.ts
+// All other routes: authenticate → userLimiter are applied inside each router
+// so req.user.userId is available when userLimiter runs (per-user counting).
 app.use("/api/auth",          authRouter);
 app.use("/api/admin",         adminRouter);
 app.use("/api/teacher",       teacherRouter);

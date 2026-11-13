@@ -20,12 +20,20 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.coerce.number().default(5242880),
 
   // Rate limiting
-  // General: 500 req / 15 min — covers classroom scenarios where many
-  // students share the same Wi-Fi / mobile carrier NAT IP.
-  // Auth: 20 attempts / 15 min (failed requests only via skipSuccessfulRequests).
+  // General (IP-based, bot protection): 5000 req / 15 min — covers classrooms on shared Wi-Fi.
+  // User (user ID-based, fairness):      800  req / 15 min — keyed per authenticated user.
+  // Auth (IP-based, brute-force guard):   20  failed attempts / 15 min.
   RATE_LIMIT_WINDOW_MS:  z.coerce.number().default(900_000), // 15 min
-  RATE_LIMIT_MAX:        z.coerce.number().default(500),
+  RATE_LIMIT_MAX:        z.coerce.number().default(5_000),
+  USER_RATE_LIMIT_MAX:   z.coerce.number().default(800),
   AUTH_RATE_LIMIT_MAX:   z.coerce.number().default(20),
+
+  // Upstash Redis — shared rate-limit store across Vercel serverless instances.
+  // Without this every instance has its own counter (unreliable on serverless).
+  // Get these from https://console.upstash.com → create a Redis DB → REST API.
+  // Leave unset to fall back to in-memory (local dev only).
+  UPSTASH_REDIS_REST_URL:   z.string().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
   CORS_ORIGIN: z.string().default("*"),
 

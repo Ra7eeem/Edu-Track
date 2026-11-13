@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { authenticate } from "../../middleware/authenticate";
-import { authorize } from "../../middleware/authenticate";
+import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import {
   createTeacherSchema,
   updateTeacherSchema,
@@ -16,7 +16,7 @@ import * as AdminController from "./admin.controller";
 export const adminRouter = Router();
 
 // All admin routes require ADMIN role
-adminRouter.use(authenticate, authorize(Role.ADMIN));
+adminRouter.use(authenticate, authorize(Role.ADMIN), userLimiter);
 
 // ── Admin Profile ─────────────────────────
 adminRouter.get( "/profile",  AdminController.getAdminProfile);

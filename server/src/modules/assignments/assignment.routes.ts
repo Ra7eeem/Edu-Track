@@ -2,12 +2,13 @@ import { Router } from "express";
 import { authenticate, authorize } from "../../middleware/authenticate";
 import { validate } from "../../middleware/validate";
 import { Role } from "../../types";
+import { userLimiter } from "../../middleware/rateLimiter";
 import { createAssignmentSchema, updateAssignmentSchema } from "./assignment.schemas";
 import * as AssignmentController from "./assignment.controller";
 
 // Standalone router — mounted at /api/assignments
 export const assignmentRouter = Router();
-assignmentRouter.use(authenticate);
+assignmentRouter.use(authenticate, userLimiter);
 
 // POST  /api/assignments                         — teacher creates
 assignmentRouter.post(
