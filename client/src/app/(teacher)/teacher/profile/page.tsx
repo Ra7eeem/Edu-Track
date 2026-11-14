@@ -4,7 +4,7 @@ import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
-import { logoutAction } from "@/features/auth/actions/logout.action"
+import { LogoutButton } from "@/features/auth/components/logout-button"
 import { updateTeacherProfileAction } from "@/features/teacher/actions/profile.action"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle2, LogOut } from "lucide-react"
@@ -12,7 +12,7 @@ import { useActionState, useTransition } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { useQuery } from "@tanstack/react-query"
-import { clientFetch, clearTokenCache } from "@/shared/lib/api-client"
+import { clientFetch } from "@/shared/lib/api-client"
 import { ApiUser } from "@/shared/types/api"
 
 const schema = z.object({
@@ -105,15 +105,9 @@ export default function TeacherProfilePage() {
           )}
         </div>
 
-        <form action={logoutAction} onSubmit={() => clearTokenCache()} className="mt-4">
-          <Button
-            type="submit"
-            variant="outline"
-            className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20"
-          >
-            <LogOut className="size-4" />تسجيل الخروج
-          </Button>
-        </form>
+        <div className="mt-4">
+          <LogoutButton className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20" />
+        </div>
       </div>
     </div>
   )

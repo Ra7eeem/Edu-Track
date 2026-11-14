@@ -1,6 +1,5 @@
 import { TopBar } from "@/shared/components/layout/topbar"
-import { Button } from "@/shared/components/ui/button"
-import { logoutAction } from "@/features/auth/actions/logout.action"
+import { LogoutButton } from "@/features/auth/components/logout-button"
 import {
   getStudentAttendanceApi,
   getStudentGroupsApi,
@@ -110,16 +109,7 @@ export default async function StudentProfilePage() {
           </p>
         </div>
 
-        <form action={logoutAction}>
-          <Button
-            type="submit"
-            variant="outline"
-            className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20"
-          >
-            <LogOut className="size-4" />
-            تسجيل الخروج
-          </Button>
-        </form>
+        <LogoutButton className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20" />
       </div>
     </div>
   )

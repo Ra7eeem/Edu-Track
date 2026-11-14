@@ -3,44 +3,31 @@
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
-import { loginAction } from "@/features/auth/actions/login.action"
-import { loginSchema, LoginFormValues } from "@/features/auth/schemas/login.schema"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useLogin } from "@/features/auth/hooks/auth-login"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import Link from "next/link"
-import { useActionState, useState, useTransition } from "react"
-import { Controller, useForm } from "react-hook-form"
+import { useState } from "react"
+import { Controller } from "react-hook-form"
 
-export function LoginForm() {
+interface LoginFormProps {
+  callbackUrl?: string
+}
+
+/**
+ * LoginForm component
+ * Uses React Hook Form + zodResolver + NextAuth signIn.
+ * Follows Rose-App architecture.
+ */
+export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [state, formAction] = useActionState(loginAction, {})
-  const [isPending, startTransition] = useTransition()
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-  })
-
-  const onSubmit = (values: LoginFormValues) => {
-    const fd = new FormData()
-    fd.set("email", values.email)
-    fd.set("password", values.password)
-    startTransition(() => formAction(fd))
-  }
-
-  const fieldErr = (field: keyof LoginFormValues) =>
-    errors[field]?.message ?? state.fieldErrors?.[field]?.[0]
+  const { handleSubmit, control, errors, isSubmitting, onSubmit } = useLogin(callbackUrl)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5" noValidate>
-      {/* Global error */}
-      {state.error && (
+      {/* Root/Server Error */}
+      {errors.root && (
         <div className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {state.error}
+          {errors.root.message}
         </div>
       )}
 
@@ -58,12 +45,12 @@ export function LoginForm() {
               placeholder="you@example.com"
               autoComplete="email"
               startIcon={<Mail />}
-              error={!!fieldErr("email")}
+              error={!!errors.email}
             />
           )}
         />
-        {fieldErr("email") && (
-          <p className="text-xs text-destructive">{fieldErr("email")}</p>
+        {errors.email?.message && (
+          <p className="text-xs text-destructive">{errors.email.message}</p>
         )}
       </div>
 
@@ -86,7 +73,7 @@ export function LoginForm() {
               placeholder="••••••••"
               autoComplete="current-password"
               startIcon={<Lock />}
-              error={!!fieldErr("password")}
+              error={!!errors.password}
               endIcon={
                 <button
                   type="button"
@@ -100,18 +87,18 @@ export function LoginForm() {
             />
           )}
         />
-        {fieldErr("password") && (
-          <p className="text-xs text-destructive">{fieldErr("password")}</p>
+        {errors.password?.message && (
+          <p className="text-xs text-destructive">{errors.password.message}</p>
         )}
       </div>
 
       <Button
         type="submit"
         size="lg"
-        disabled={isPending}
+        disabled={isSubmitting}
         className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-500/25 hover:opacity-90 disabled:opacity-50"
       >
-        {isPending ? "جارٍ تسجيل الدخول..." : "تسجيل الدخول"}
+        {isSubmitting ? "جارٍ تسجيل الدخول..." : "تسجيل الدخول"}
       </Button>
     </form>
   )

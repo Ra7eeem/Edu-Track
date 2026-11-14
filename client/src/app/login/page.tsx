@@ -9,7 +9,13 @@ const NAVY_DARK = "oklch(0.14 0.04 260)"
 const GOLD_VAR  = "var(--gold)"
 const GOLD_SOFT = "var(--gold-soft)"
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ from?: string; callbackUrl?: string }>
+}) {
+  const params = await searchParams
+  const callbackUrl = params?.callbackUrl ?? params?.from
   return (
     <div className="relative min-h-screen font-sans text-foreground" style={{ background: "var(--background)" }}>
 
@@ -129,7 +135,7 @@ export default function LoginPage() {
                 border:       `1px solid color-mix(in srgb, ${GOLD_VAR} 22%, transparent)`,
               }}
             >
-              <LoginForm />
+              <LoginForm callbackUrl={callbackUrl} />
             </div>
 
             <p className="mt-5 text-center text-sm text-muted-foreground">

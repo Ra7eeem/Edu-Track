@@ -1,9 +1,8 @@
 "use client"
 
-import { logoutAction } from "@/features/auth/actions/logout.action"
+import { signOut } from "next-auth/react"
 import { MearajLogo }   from "@/shared/components/mearaj-logo"
 import { ThemeToggle }  from "@/shared/components/theme-toggle"
-import { clearTokenCache } from "@/shared/lib/api-client"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   Bell,
@@ -138,16 +137,15 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
             <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
           </div>
 
-          {/* Logout — form triggers Server Action; bust client token cache first */}
-          <form action={logoutAction} onSubmit={() => clearTokenCache()}>
-            <button
-              type="submit"
-              aria-label="تسجيل الخروج"
-              className="grid size-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20"
-            >
-              <LogOut className="size-4" />
-            </button>
-          </form>
+          {/* Logout using NextAuth signOut */}
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            aria-label="تسجيل الخروج"
+            className="grid size-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
       </div>
     </aside>

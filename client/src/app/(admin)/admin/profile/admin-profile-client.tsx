@@ -3,9 +3,8 @@
 import { Button }      from "@/shared/components/ui/button"
 import { Input }       from "@/shared/components/ui/input"
 import { Label }       from "@/shared/components/ui/label"
-import { logoutAction } from "@/features/auth/actions/logout.action"
+import { LogoutButton } from "@/features/auth/components/logout-button"
 import { updateAdminProfileAction, AdminProfileActionState } from "@/features/admin/actions/profile.action"
-import { clearTokenCache } from "@/shared/lib/api-client"
 import { ApiUser }     from "@/shared/types/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CheckCircle2, KeyRound, LogOut, Pencil, User } from "lucide-react"
@@ -186,13 +185,10 @@ export function AdminProfileClient({ profile }: { profile: ApiUser }) {
         </div>
       )}
 
-      {/* Logout — bust the client token cache before the Server Action redirects */}
-      <form action={logoutAction} onSubmit={() => clearTokenCache()}>
-        <Button type="submit" variant="outline"
-          className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20">
-          <LogOut className="size-4"/>تسجيل الخروج
-        </Button>
-      </form>
+      {/* Logout using NextAuth signOut */}
+      <LogoutButton
+        className="w-full text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/20"
+      />
     </div>
   )
 }

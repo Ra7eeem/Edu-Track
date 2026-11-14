@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { IBM_Plex_Sans_Arabic, Geist_Mono, Cairo } from "next/font/google"
 import "./globals.css"
 import { cn }             from "@/shared/lib/tailwind-cn"
+import { NextAuthProvider } from "@/shared/providers/next-auth-provider"
 import { QueryProvider }  from "@/shared/providers/query-provider"
 import { ThemeProvider }  from "@/shared/providers/theme-provider"
 import { PwaRegister }    from "@/shared/components/pwa-register"
@@ -78,7 +79,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SplashScreen />
           <PwaRegister />
 
-          <QueryProvider>{children}</QueryProvider>
+          <NextAuthProvider>
+            <QueryProvider>{children}</QueryProvider>
+          </NextAuthProvider>
         </ThemeProvider>
       </body>
     </html>
