@@ -1,6 +1,7 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -17,11 +18,21 @@ export async function replyAnonymousMessageAction(
   const parsed = replySchema.safeParse({ reply })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/anonymous/${messageId}/reply`, {
+    const res = await fetch(`${BASE_API_URL}/api/anonymous/${messageId}/reply`, {
       method: "POST",
-      body:   parsed.data,
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify(parsed.data),
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ أثناء إرسال الرد" }
+
     revalidatePath("/teacher/messages")
     return { success: true }
   } catch (e: unknown) {

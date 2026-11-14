@@ -1,14 +1,12 @@
 import { TopBar } from "@/shared/components/layout/topbar"
-import { serverFetch } from "@/shared/lib/api-server"
+import { getAdminProfileApi } from "@/features/admin/apis/admin.api"
 import { ApiUser } from "@/shared/types/api"
 import { AdminProfileClient } from "./admin-profile-client"
 
 export default async function AdminProfilePage() {
-  // User-specific endpoint (one URL for the admin) — must stay out of the Data
-  // Cache or a cached profile could be served to a different admin.
   let profile: ApiUser | null = null
   try {
-    profile = await serverFetch<ApiUser>("/api/admin/profile")
+    profile = await getAdminProfileApi()
   } catch {
     // graceful fallback — client shows a default state
   }

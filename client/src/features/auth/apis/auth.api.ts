@@ -1,25 +1,20 @@
 /**
- * Authentication API Service
- * Follows Rose-App architecture: pure native fetch functions, strongly typed.
+ * Auth API service
+ * Native fetch only — no axios.
+ * Follows Rose-App architecture: pure functions, strongly typed.
  */
-import { HEADERS, BASE_API_URL } from "@/shared/constant/api.constant"
-import { ApiResponse } from "@/shared/types/api"
-import type {
-  LoginCredentials,
-  LoginResponse,
-  PublicGroup,
-  RegisterStudentPayload,
-  RegisterStudentResponse,
-} from "../types/auth"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import type { ApiResponse, LoginResponse, RegisterStudentResponse } from "@/shared/types/api"
+import type { LoginCredentials, PublicGroup, RegisterStudentPayload } from "../types/auth"
 
-export async function loginApi(
-  credentials: LoginCredentials
-): Promise<LoginResponse> {
+// ─── Login ────────────────────────────────────────────────────────────────────
+
+export async function loginApi(credentials: LoginCredentials): Promise<LoginResponse> {
   const res = await fetch(`${BASE_API_URL}/api/auth/login`, {
-    method: "POST",
+    method:  "POST",
     headers: HEADERS.JsonBody,
-    body: JSON.stringify(credentials),
-    cache: "no-store",
+    body:    JSON.stringify(credentials),
+    cache:   "no-store",
   })
 
   const json: ApiResponse<LoginResponse> = await res.json()
@@ -31,14 +26,16 @@ export async function loginApi(
   return json.data
 }
 
+// ─── Register student ─────────────────────────────────────────────────────────
+
 export async function registerStudentApi(
   payload: RegisterStudentPayload
 ): Promise<RegisterStudentResponse> {
   const res = await fetch(`${BASE_API_URL}/api/auth/register/student`, {
-    method: "POST",
+    method:  "POST",
     headers: HEADERS.JsonBody,
-    body: JSON.stringify(payload),
-    cache: "no-store",
+    body:    JSON.stringify(payload),
+    cache:   "no-store",
   })
 
   const json: ApiResponse<RegisterStudentResponse> = await res.json()
@@ -50,9 +47,11 @@ export async function registerStudentApi(
   return json.data
 }
 
+// ─── Public groups (for registration grade picker) ────────────────────────────
+
 /**
- * Fetches public groups available for a specific grade.
- * Cached for 5 minutes to reduce unnecessary database requests during registration.
+ * Fetches groups visible to the given grade.
+ * Cached 5 minutes — multiple grade changes during registration won't hammer the API.
  */
 export async function getGroupsByGradeApi(grade: string): Promise<PublicGroup[]> {
   try {
@@ -60,19 +59,18 @@ export async function getGroupsByGradeApi(grade: string): Promise<PublicGroup[]>
       `${BASE_API_URL}/api/auth/groups?grade=${encodeURIComponent(grade)}`,
       {
         headers: HEADERS.JsonBody,
-        next: { revalidate: 300 }, // Cache for 5 minutes
+        next:    { revalidate: 300 },
       }
     )
 
     if (!res.ok) return []
 
     const json = await res.json()
-    if (!json) return []
-    if (Array.isArray(json)) return json
+    if (!json)                               return []
+    if (Array.isArray(json))                 return json
     if (json.data && Array.isArray(json.data)) return json.data
     return []
   } catch {
     return []
   }
 }
-

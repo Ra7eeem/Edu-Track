@@ -1,26 +1,44 @@
+/**
+ * NextAuth type augmentations.
+ * Extends the built-in NextAuth types with our ApiUser and token fields
+ * so the session, JWT, and authorize() return type are all fully typed
+ * without any `as unknown as User` casts.
+ */
 import { ApiUser } from "@/shared/types/api"
 
 declare module "next-auth" {
   /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider`
+   * What `authorize()` must return and what appears in JWT callback's `user`.
+   * id   — required by NextAuth (string)
+   * token — backend JWT
+   * user  — full ApiUser payload
    */
   interface User {
-    id: string
+    id:    string
     token: string
-    user: ApiUser
+    user:  ApiUser
   }
 
+  /**
+   * Shape returned by `useSession()` / `getSession()`.
+   */
   interface Session {
-    token?: string
-    user?: ApiUser
+    /** Backend JWT token */
+    token: string
+    /** Authenticated user (ApiUser replaces the default minimal user shape) */
+    user:  ApiUser
   }
 }
 
 declare module "next-auth/jwt" {
-  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+  /**
+   * Shape of the JWT stored in the cookie.
+   * Returned by the `jwt` callback and by `getToken()`.
+   */
   interface JWT {
-    token?: string
-    user?: ApiUser
+    /** Backend JWT token */
+    token: string
+    /** Full ApiUser payload */
+    user:  ApiUser
   }
 }
-

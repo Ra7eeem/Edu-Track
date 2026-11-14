@@ -1,18 +1,10 @@
-import { TopBar }      from "@/shared/components/layout/topbar"
-import { Button }      from "@/shared/components/ui/button"
-import { serverFetch } from "@/shared/lib/api-server"
+import { TopBar } from "@/shared/components/layout/topbar"
+import { Button } from "@/shared/components/ui/button"
+import { getTeacherDashboardApi } from "@/features/teacher/apis/teacher.api"
+import type { TeacherDashboardData } from "@/features/teacher/types/teacher"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup, ApiNotification } from "@/shared/types/api"
 import { ArrowLeft, BookOpen, CalendarCheck, Users, XCircle } from "lucide-react"
 import Link from "next/link"
-
-interface TeacherDashboardData {
-  groups:        ApiGroup[]
-  notifications: (ApiNotification & { isRead: boolean })[]
-  unreadCount:   number
-  todayPresent:  number
-  todayAbsent:   number
-}
 
 const COLORS = [
   "from-teal-500 to-teal-600",   "from-amber-400 to-amber-500",
@@ -23,11 +15,9 @@ const COLORS = [
 export default async function TeacherDashboard() {
   const session = await getSessionData()
 
-  // Single request — all dashboard data. Endpoint is user-scoped (one URL for
-  // every teacher) → never cache it server-side or it can leak across teachers.
   let data: TeacherDashboardData | null = null
   try {
-    data = await serverFetch<TeacherDashboardData>("/api/teacher/dashboard")
+    data = await getTeacherDashboardApi()
   } catch {
     // graceful fallback
   }

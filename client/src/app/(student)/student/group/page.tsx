@@ -1,20 +1,18 @@
 import {
   getGroupPostsApi,
+  getNotificationsApi,
   getStudentGroupsApi,
   getStudentProfileApi,
 } from "@/features/student/apis/student.api"
 import { StudentGroupClient } from "@/features/student/components/student-group-client"
 import { toPaginatedArray } from "@/shared/lib/api-helpers"
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiGroup, ApiNotification, PaginatedResponse, resolveId } from "@/shared/types/api"
+import { ApiGroup, ApiNotification, resolveId } from "@/shared/types/api"
 
 export default async function StudentGroupPage() {
   const [profile, groupsResponse, notificationsResponse] = await Promise.all([
     getStudentProfileApi().catch(() => null),
     getStudentGroupsApi().catch(() => null),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=50").catch(
-      () => null
-    ),
+    getNotificationsApi(50).catch(() => null),
   ])
 
   const groups = toPaginatedArray<ApiGroup>(groupsResponse)

@@ -1,7 +1,8 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiAssignment, AssignmentType } from "@/shared/types/api"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import { ApiAssignment, ApiResponse, AssignmentType } from "@/shared/types/api"
 import { revalidatePath, updateTag } from "next/cache"
 import { z } from "zod"
 
@@ -79,13 +80,21 @@ export async function toggleAssignmentResultsAction(
   const parsed = idSchema.safeParse({ assignmentId, groupId })
   if (!parsed.success) return { error: "بيانات غير صالحة" }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    const data = await serverFetch<ApiAssignment>(
-      `/api/assignments/${assignmentId}/toggle-results`,
-      { method: "PATCH" }
-    )
+    const res = await fetch(`${BASE_API_URL}/api/assignments/${assignmentId}/toggle-results`, {
+      method: "PATCH",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+    })
+    const json: ApiResponse<ApiAssignment> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
     revalidateAssignmentViews(groupId)
-    return { success: true, data }
+    return { success: true, data: json.data }
   } catch (e: unknown) {
     return { error: (e as { message?: string }).message ?? "حدث خطأ" }
   }
@@ -98,13 +107,21 @@ export async function toggleAssignmentVisibilityAction(
   const parsed = idSchema.safeParse({ assignmentId, groupId })
   if (!parsed.success) return { error: "بيانات غير صالحة" }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    const data = await serverFetch<ApiAssignment>(
-      `/api/assignments/${assignmentId}/toggle-visibility`,
-      { method: "PATCH" }
-    )
+    const res = await fetch(`${BASE_API_URL}/api/assignments/${assignmentId}/toggle-visibility`, {
+      method: "PATCH",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+    })
+    const json: ApiResponse<ApiAssignment> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
     revalidateAssignmentViews(groupId)
-    return { success: true, data }
+    return { success: true, data: json.data }
   } catch (e: unknown) {
     return { error: (e as { message?: string }).message ?? "حدث خطأ" }
   }
@@ -119,6 +136,9 @@ export async function createAssignmentAction(
     return { error: first }
   }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   const body = {
     ...parsed.data,
     youtubeUrl: parsed.data.youtubeUrl || undefined,
@@ -128,12 +148,18 @@ export async function createAssignmentAction(
   }
 
   try {
-    const data = await serverFetch<ApiAssignment>("/api/assignments", {
+    const res = await fetch(`${BASE_API_URL}/api/assignments`, {
       method: "POST",
-      body,
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify(body),
     })
+    const json: ApiResponse<ApiAssignment> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
     revalidateAssignmentViews(parsed.data.groupId)
-    return { success: true, data }
+    return { success: true, data: json.data }
   } catch (e: unknown) {
     return { error: (e as { message?: string }).message ?? "حدث خطأ" }
   }
@@ -149,6 +175,9 @@ export async function updateAssignmentAction(
     return { error: first }
   }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   const { groupId, ...rest } = parsed.data
   const body = {
     ...rest,
@@ -159,15 +188,21 @@ export async function updateAssignmentAction(
   }
 
   try {
-    const data = await serverFetch<ApiAssignment>(`/api/assignments/${assignmentId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/assignments/${assignmentId}`, {
       method: "PATCH",
-      body,
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify(body),
     })
+    const json: ApiResponse<ApiAssignment> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
     revalidateAssignmentViews(groupId)
     revalidatePath(`/teacher/group/${groupId}/assignments/${assignmentId}/edit`)
     revalidatePath(`/student/exams/${assignmentId}`, "layout")
     revalidatePath(`/student/exams/${assignmentId}/results`, "layout")
-    return { success: true, data }
+    return { success: true, data: json.data }
   } catch (e: unknown) {
     return { error: (e as { message?: string }).message ?? "حدث خطأ" }
   }
@@ -180,10 +215,19 @@ export async function deleteAssignmentAction(
   const parsed = idSchema.safeParse({ assignmentId, groupId })
   if (!parsed.success) return { error: "بيانات غير صالحة" }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch<void>(`/api/assignments/${assignmentId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/assignments/${assignmentId}`, {
       method: "DELETE",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ" }
     revalidateAssignmentViews(groupId)
     return { success: true }
   } catch (e: unknown) {

@@ -1,23 +1,30 @@
 import { PostsFeedClient } from "@/features/teacher/components/posts-feed-client"
 import { TopBar } from "@/shared/components/layout/topbar"
-import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
+import {
+  getGroupPostsForTeacherApi,
+  getTeacherGroupByIdApi,
+  getTeacherNotificationsApi,
+} from "@/features/teacher/apis/teacher.api"
+import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup, ApiNotification, ApiPost, PaginatedResponse } from "@/shared/types/api"
+import { ApiGroup, ApiPost } from "@/shared/types/api"
 
 export default async function PostsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }  = await params
   const session = await getSessionData()
 
   const [groupRes, postsRes, notifsRes] = await Promise.allSettled([
-    serverFetch<ApiGroup>(`/api/groups/${id}`),
-    serverFetch<PaginatedResponse<ApiPost>>(`/api/groups/${id}/posts?limit=20`, { tags: [`group-${id}-posts`] }),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
+    getTeacherGroupByIdApi(id),
+    getGroupPostsForTeacherApi(id, 20),
+    getTeacherNotificationsApi(1),
   ])
 
-  const group  = resolveOne(groupRes  as PromiseSettledResult<ApiGroup | null>, null)
-  const posts  = resolveList(postsRes  as PromiseSettledResult<PaginatedResponse<ApiPost>         | ApiPost[]         | null>)
-  const unread = resolveList(notifsRes as PromiseSettledResult<PaginatedResponse<ApiNotification>  | ApiNotification[] | null>)
-    .filter((n) => !n.isRead).length
+  const rawGroup = groupRes.status === "fulfilled" ? groupRes.value : null
+  const group = rawGroup ? ("group" in rawGroup ? rawGroup.group : rawGroup) as ApiGroup : null
+  const posts = postsRes.status === "fulfilled" ? toPaginatedArray(postsRes.value) : []
+  const unread = notifsRes.status === "fulfilled"
+    ? toPaginatedArray(notifsRes.value).filter((n) => !n.isRead).length
+    : 0
 
   return (
     <div className="flex flex-col">

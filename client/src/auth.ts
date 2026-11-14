@@ -1,72 +1,75 @@
-import { NextAuthOptions, Session, User } from "next-auth"
-import { JWT } from "next-auth/jwt"
+/**
+ * NextAuth v4 configuration.
+ *
+ * All types are fully inferred from the augmented interfaces in
+ * src/shared/types/nextauth.d.ts — no `as unknown` casts needed.
+ */
+import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { loginApi } from "./features/auth/apis/auth.api"
-import { sessionMaxAge } from "./shared/constant/auth.constant"
-import { ApiUser, resolveId } from "./shared/types/api"
+import { loginApi } from "@/features/auth/apis/auth.api"
+import { sessionMaxAge } from "@/shared/constant/auth.constant"
+import { resolveId } from "@/shared/types/api"
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email:    { label: "Email",    type: "email"    },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+
+      async authorize(credentials) {
+        const email    = credentials?.email    as string | undefined
+        const password = credentials?.password as string | undefined
+
+        if (!email || !password) return null
+
         try {
-          const loginData = await loginApi({
-            email: credentials.email,
-            password: credentials.password,
-          })
-          if (!loginData?.token || !loginData?.user) {
-            return null
-          }
-          return {
-            id: resolveId(loginData.user),
-            token: loginData.token,
-            user: loginData.user,
-          } as unknown as User
+          const { token, user } = await loginApi({ email, password })
+          // Shape matches the augmented User interface: { id, token, user }
+          return { id: resolveId(user), token, user }
         } catch (err: unknown) {
-          const message = (err as Error)?.message || "بيانات الدخول غير صحيحة"
-          throw new Error(message)
+          // Throwing causes NextAuth to populate signIn()'s `error` response field
+          throw new Error(
+            (err as Error)?.message ?? "بيانات الدخول غير صحيحة"
+          )
         }
       },
     }),
   ],
+
   callbacks: {
-    jwt: async ({ token, user }: { token: JWT; user?: User }) => {
+    // On first sign-in `user` carries { id, token, user } — persist into JWT
+    jwt({ token, user }) {
       if (user) {
-        const u = user as unknown as { token: string; user: ApiUser }
-        token.token = u.token
-        token.user = u.user
+        token.token = user.token
+        token.user  = user.user
       }
       return token
     },
-    session: async ({ session, token }: { session: Session; token: JWT }) => {
-      if (token.user) {
-        session.user = token.user
-      }
-      if (token.token) {
-        session.token = token.token
-      }
+
+    // Expose token + user to useSession() / getSession() on the client
+    session({ session, token }) {
+      session.token = token.token
+      session.user  = token.user
       return session
     },
   },
+
   session: {
     strategy: "jwt",
-    maxAge: sessionMaxAge,
+    maxAge:   sessionMaxAge,
   },
+
   jwt: {
     maxAge: sessionMaxAge,
   },
+
   pages: {
     signIn: "/login",
-    error: "/login",
+    error:  "/login",
   },
+
   secret: process.env.NEXTAUTH_SECRET ?? process.env.SESSION_SECRET,
 }
-

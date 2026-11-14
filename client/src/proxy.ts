@@ -41,7 +41,7 @@ export async function proxy(req: NextRequest) {
 
   if (nextAuthToken?.user) {
     isLoggedIn = true
-    userRole = (nextAuthToken.user as unknown as { role: Role }).role
+    userRole = nextAuthToken.user.role
   } else {
     // 2. Check iron-session fallback
     const session = await getIronSession<SessionData>(req, res, SESSION_OPTIONS)

@@ -1,15 +1,9 @@
 import { TopBar }    from "@/shared/components/layout/topbar"
 import { Button }    from "@/shared/components/ui/button"
-import { serverFetch } from "@/shared/lib/api-server"
-import { AdminDashboardStats, ApiGroup, ApiUser } from "@/shared/types/api"
+import { getAdminDashboardApi } from "@/features/admin/apis/admin.api"
+import type { DashboardFull } from "@/features/admin/types/admin"
 import { BookOpen, CalendarCheck, MessageCircle, Users, XCircle } from "lucide-react"
 import Link from "next/link"
-
-interface DashboardFull {
-  stats:    AdminDashboardStats
-  teachers: ApiUser[]
-  groups:   ApiGroup[]
-}
 
 const COLORS = [
   "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
@@ -18,12 +12,9 @@ const COLORS = [
 ]
 
 export default async function AdminDashboard() {
-  // Single request — all dashboard data in one roundtrip.
-  // This endpoint is auth-scoped (same URL for every admin) so it must NOT go
-  // into the Next Data Cache: a cached admin dashboard could leak to another admin.
   let data: DashboardFull | null = null
   try {
-    data = await serverFetch<DashboardFull>("/api/admin/dashboard-full")
+    data = await getAdminDashboardApi()
   } catch {
     // graceful degradation — show empty state
   }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { IBM_Plex_Sans_Arabic, Geist_Mono, Cairo } from "next/font/google"
 import "./globals.css"
 import { cn }             from "@/shared/lib/tailwind-cn"
@@ -28,16 +28,24 @@ const geistMono = Geist_Mono({
   subsets:  ["latin"],
 })
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)",  color: "#1B2A4A" },
+  ],
+  width:        "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit:  "cover",
+}
+
 export const metadata: Metadata = {
   title: {
     default:  "معراج | Mi'Raj Educational Platform",
     template: "%s | معراج",
   },
   description: "منصة معراج التعليمية — نظّم مجموعاتك وتابع حضور طلابك",
-  themeColor:  [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)",  color: "#1B2A4A" },
-  ],
   appleWebApp: {
     capable:        true,
     statusBarStyle: "default",
@@ -50,13 +58,6 @@ export const metadata: Metadata = {
       { url: "/icon-192.svg",  sizes: "192x192", type: "image/svg+xml" },
     ],
     apple: [{ url: "/main-logo.svg", type: "image/svg+xml" }],
-  },
-  viewport: {
-    width:        "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit:  "cover",
   },
 }
 

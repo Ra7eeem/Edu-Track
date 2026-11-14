@@ -1,7 +1,8 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiGroup } from "@/shared/types/api"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import { ApiGroup, ApiResponse } from "@/shared/types/api"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -28,6 +29,9 @@ export async function createGroupAction(
   const parsed = createGroupSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   const body = {
     name:        parsed.data.name.trim(),
     description: parsed.data.description,
@@ -36,7 +40,16 @@ export async function createGroupAction(
   }
 
   try {
-    await serverFetch<ApiGroup>("/api/admin/groups", { method: "POST", body })
+    const res = await fetch(`${BASE_API_URL}/api/admin/groups`, {
+      method: "POST",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify(body),
+    })
+    const json: ApiResponse<ApiGroup> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ أثناء إنشاء المجموعة" }
     revalidatePath("/admin/groups")
     return { success: true }
   } catch (e: unknown) {
@@ -45,8 +58,19 @@ export async function createGroupAction(
 }
 
 export async function deleteGroupAction(id: string): Promise<GroupActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/admin/groups/${id}`, { method: "DELETE" })
+    const res = await fetch(`${BASE_API_URL}/api/admin/groups/${id}`, {
+      method: "DELETE",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+    })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ أثناء الحذف" }
     revalidatePath("/admin/groups")
     return { success: true }
   } catch (e: unknown) {
@@ -58,11 +82,20 @@ export async function addTeacherToGroupAction(
   groupId: string,
   teacherId: string
 ): Promise<GroupActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/admin/groups/${groupId}/teachers`, {
+    const res = await fetch(`${BASE_API_URL}/api/admin/groups/${groupId}/teachers`, {
       method: "POST",
-      body:   { teacherId },
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify({ teacherId }),
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ أثناء إضافة المدرس" }
     revalidatePath(`/admin/group/${groupId}`)
     return { success: true }
   } catch (e: unknown) {
@@ -74,10 +107,19 @@ export async function removeTeacherFromGroupAction(
   groupId: string,
   teacherId: string
 ): Promise<GroupActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/admin/groups/${groupId}/teachers/${teacherId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/admin/groups/${groupId}/teachers/${teacherId}`, {
       method: "DELETE",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ أثناء إزالة المدرس" }
     revalidatePath(`/admin/group/${groupId}`)
     return { success: true }
   } catch (e: unknown) {
@@ -89,10 +131,19 @@ export async function removeStudentFromGroupAction(
   groupId: string,
   studentId: string
 ): Promise<GroupActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/admin/groups/${groupId}/students/${studentId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/admin/groups/${groupId}/students/${studentId}`, {
       method: "DELETE",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) return { error: json.message || "حدث خطأ أثناء حذف الطالب" }
     revalidatePath(`/admin/group/${groupId}`)
     return { success: true }
   } catch (e: unknown) {

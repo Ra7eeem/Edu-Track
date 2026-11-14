@@ -13,17 +13,39 @@ export async function getNextAuthToken() {
     cookieStore.get("next-auth.session-token")?.value ??
     cookieStore.get("__Secure-next-auth.session-token")?.value
 
-  if (!token) return null
-
-  try {
-    const jwt = await decode({
-      token,
-      secret: (process.env.NEXTAUTH_SECRET ?? process.env.SESSION_SECRET)!,
-    })
-    return jwt
-  } catch {
-    return null
+  if (token) {
+    try {
+      const jwt = await decode({
+        token,
+        secret: (process.env.NEXTAUTH_SECRET ?? process.env.SESSION_SECRET)!,
+      })
+      if (jwt?.token) return jwt
+    } catch {
+      // ignore decode error and try fallback
+    }
   }
+
+  // Fallback to iron-session cookie if NextAuth token is not found
+  const ironCookie = cookieStore.get("edu_session")?.value
+  if (ironCookie) {
+    try {
+      const { getIronSession } = await import("iron-session")
+      const session = await getIronSession<any>(cookieStore, {
+        password: (process.env.SESSION_SECRET ?? process.env.NEXTAUTH_SECRET)!,
+        cookieName: "edu_session",
+      })
+      if (session?.token) {
+        return {
+          token: session.token as string,
+          user: session,
+        } as any
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return null
 }
 
 /**
@@ -36,4 +58,3 @@ export async function getAuthSession() {
     return null
   }
 }
-

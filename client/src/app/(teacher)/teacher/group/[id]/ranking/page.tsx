@@ -1,13 +1,13 @@
-import { RankingClient } from "@/features/teacher/components/ranking-client";
+import { RankingClient } from "@/features/teacher/components/ranking-client"
 import { TopBar } from "@/shared/components/layout/topbar"
-import { resolveOne, serverFetch } from "@/shared/lib/api-server"
+import {
+  getTeacherGroupByIdApi,
+  getTeacherNotificationsApi,
+} from "@/features/teacher/apis/teacher.api"
+import { getGroupRankingApi } from "@/features/student/apis/student.api"
+import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup, ApiNotification, ApiRankingEntry, PaginatedResponse } from "@/shared/types/api"
-
-interface RankingData {
-  month: number; year: number; groupId: string
-  ranking: ApiRankingEntry[]
-}
+import { ApiGroup, ApiRankingEntry } from "@/shared/types/api"
 
 export default async function RankingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id }  = await params
@@ -15,18 +15,18 @@ export default async function RankingPage({ params }: { params: Promise<{ id: st
   const now     = new Date()
 
   const [groupRes, rankingRes, notifsRes] = await Promise.allSettled([
-    serverFetch<ApiGroup>(`/api/groups/${id}`),
-    serverFetch<RankingData>(`/api/groups/${id}/ranking?month=${now.getMonth() + 1}&year=${now.getFullYear()}`),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
+    getTeacherGroupByIdApi(id),
+    getGroupRankingApi(id, now.getMonth() + 1, now.getFullYear()),
+    getTeacherNotificationsApi(1),
   ])
 
-  const group   = resolveOne(groupRes   as PromiseSettledResult<ApiGroup       | null>, null)
-  const rankRes = resolveOne(rankingRes as PromiseSettledResult<RankingData    | null>, null)
-  const ranking = rankRes?.ranking ?? []
+  const rawGroup = groupRes.status === "fulfilled" ? groupRes.value : null
+  const group = rawGroup ? ("group" in rawGroup ? rawGroup.group : rawGroup) as ApiGroup : null
+  const ranking: ApiRankingEntry[] = rankingRes.status === "fulfilled" ? rankingRes.value : []
 
-  const notifsVal = notifsRes.status === "fulfilled" ? notifsRes.value : null
-  const notifArr  = Array.isArray(notifsVal) ? notifsVal : (notifsVal?.data ?? [])
-  const unread    = notifArr.filter((n: ApiNotification) => !n.isRead).length
+  const unread = notifsRes.status === "fulfilled"
+    ? toPaginatedArray(notifsRes.value).filter((n) => !n.isRead).length
+    : 0
 
   return (
     <div className="flex flex-col">

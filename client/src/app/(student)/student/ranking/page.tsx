@@ -2,11 +2,12 @@ import { RankingClient } from "@/features/teacher/components/ranking-client"
 import { TopBar } from "@/shared/components/layout/topbar"
 import {
   getGroupRankingApi,
+  getNotificationsApi,
   getStudentGroupsApi,
 } from "@/features/student/apis/student.api"
-import { resolveList, serverFetch } from "@/shared/lib/api-server"
+import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiGroup, ApiNotification, ApiRankingEntry, PaginatedResponse, resolveId } from "@/shared/types/api"
+import { ApiRankingEntry, resolveId } from "@/shared/types/api"
 
 export default async function StudentRankingPage() {
   const session = await getSessionData()
@@ -14,11 +15,11 @@ export default async function StudentRankingPage() {
 
   const [groupsRes, notifsRes] = await Promise.allSettled([
     getStudentGroupsApi(),
-    serverFetch<PaginatedResponse<ApiNotification> | ApiNotification[]>("/api/notifications?limit=1"),
+    getNotificationsApi(1),
   ])
 
-  const groups = resolveList(groupsRes as PromiseSettledResult<PaginatedResponse<ApiGroup> | ApiGroup[] | null>)
-  const notifs = resolveList(notifsRes as PromiseSettledResult<PaginatedResponse<ApiNotification> | ApiNotification[] | null>)
+  const groups = groupsRes.status === "fulfilled" ? toPaginatedArray(groupsRes.value) : []
+  const notifs = notifsRes.status === "fulfilled" ? toPaginatedArray(notifsRes.value) : []
   const unread = notifs.filter((n) => !n.isRead).length
   const firstGroup = groups[0] ?? null
   const gid = firstGroup ? resolveId(firstGroup) : ""

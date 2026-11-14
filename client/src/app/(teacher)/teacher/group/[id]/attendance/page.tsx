@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 import { AttendanceClient } from "@/features/teacher/components/attendance-client"
 import { PwaInstallButton } from "@/features/teacher/components/pwa-install-button"
 import { TopBar }           from "@/shared/components/layout/topbar"
-import { resolveList, resolveOne, serverFetch } from "@/shared/lib/api-server"
-import { getGroup }         from "@/shared/lib/get-group"
+import { getGroupStudentsApi, getTeacherGroupByIdApi, getTeacherNotificationsApi } from "@/features/teacher/apis/teacher.api"
+import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { getSessionData }   from "@/shared/lib/session"
-import { ApiGroup, ApiGroupMembership, ApiNotification, PaginatedResponse } from "@/shared/types/api"
+import { ApiGroup, ApiGroupMembership, ApiNotification } from "@/shared/types/api"
 
 // ─── Dynamic metadata so the browser picks up the group-specific manifest ──────
 export async function generateMetadata(
@@ -18,9 +18,9 @@ export async function generateMetadata(
   const teacherName = session?.name ?? "المدرس"
 
   try {
-    // getGroup() is request-cache deduped — shared with the page body fetch below
-    const g = await getGroup(id)
-    if (g?.name) groupName = g.name
+    const g = await getTeacherGroupByIdApi(id)
+    if ("name" in g && g.name) groupName = g.name
+    else if ("group" in g && g.group?.name) groupName = g.group.name
   } catch { /* use defaults */ }
 
   return {
@@ -43,24 +43,17 @@ export default async function AttendancePage({
   const session = await getSessionData()
 
   const [groupRes, studentsRes, notifsRes] = await Promise.allSettled([
-    getGroup(id),
-    serverFetch<PaginatedResponse<ApiGroupMembership>>(
-      `/api/teacher/groups/${id}/students?limit=100`
-    ),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=1"),
+    getTeacherGroupByIdApi(id),
+    getGroupStudentsApi(id, 100),
+    getTeacherNotificationsApi(1),
   ])
 
-  const group       = resolveOne(groupRes as PromiseSettledResult<ApiGroup | null>, null)
-  const rawStudents = resolveList(
-    studentsRes as PromiseSettledResult<
-      PaginatedResponse<ApiGroupMembership> | ApiGroupMembership[] | null
-    >
-  )
-  const unread = resolveList(
-    notifsRes as PromiseSettledResult<
-      PaginatedResponse<ApiNotification> | ApiNotification[] | null
-    >
-  ).filter(n => !n.isRead).length
+  const rawGroup = groupRes.status === "fulfilled" ? groupRes.value : null
+  const group = rawGroup ? ("group" in rawGroup ? rawGroup.group : rawGroup) as ApiGroup : null
+  const rawStudents = studentsRes.status === "fulfilled" ? toPaginatedArray(studentsRes.value) : []
+  const unread = notifsRes.status === "fulfilled"
+    ? toPaginatedArray(notifsRes.value).filter((n) => !n.isRead).length
+    : 0
 
   const students = rawStudents
     .map(s => {

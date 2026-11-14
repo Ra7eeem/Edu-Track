@@ -1,8 +1,9 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
 import { getSession } from "@/shared/lib/session"
-import { ApiUser } from "@/shared/types/api"
+import { ApiResponse, ApiUser } from "@/shared/types/api"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -32,14 +33,31 @@ export async function updateAdminProfileAction(
   const parsed = updateSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    const updated = await serverFetch<ApiUser>("/api/admin/profile", {
+    const res = await fetch(`${BASE_API_URL}/api/admin/profile`, {
       method: "PATCH",
-      body:   parsed.data,
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify(parsed.data),
     })
-    const session = await getSession()
-    session.name = updated.name
-    await session.save()
+    const json: ApiResponse<ApiUser> = await res.json()
+    if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
+
+    try {
+      const session = await getSession()
+      if (session.isLoggedIn && json.data?.name) {
+        session.name = json.data.name
+        await session.save()
+      }
+    } catch {
+      // ignore
+    }
+
     revalidatePath("/admin/profile")
     return { success: true }
   } catch (e: unknown) {

@@ -1,18 +1,17 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { LogoutButton } from "@/features/auth/components/logout-button"
 import {
+  getNotificationsApi,
   getStudentAttendanceApi,
   getStudentGroupsApi,
   getStudentProfileApi,
 } from "@/features/student/apis/student.api"
-import { serverFetch } from "@/shared/lib/api-server"
 import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { cn } from "@/shared/lib/tailwind-cn"
 import {
   ApiGroup,
   ApiNotification,
   ApiUser,
-  PaginatedResponse,
   resolveId,
 } from "@/shared/types/api"
 import { LogOut } from "lucide-react"
@@ -21,7 +20,7 @@ export default async function StudentProfilePage() {
   const [profile, groupsResponse, notificationsResponse] = await Promise.all([
     getStudentProfileApi().catch(() => null),
     getStudentGroupsApi().catch(() => null),
-    serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=50").catch(() => null),
+    getNotificationsApi(50).catch(() => null),
   ])
 
   const groups = toPaginatedArray<ApiGroup>(groupsResponse)

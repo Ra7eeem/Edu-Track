@@ -1,7 +1,8 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiPost } from "@/shared/types/api"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import { ApiPost, ApiResponse } from "@/shared/types/api"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
@@ -23,11 +24,22 @@ export async function createPostAction(
     return { error: parsed.error.errors[0].message }
   }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch<ApiPost>(`/api/groups/${groupId}/posts`, {
+    const res = await fetch(`${BASE_API_URL}/api/groups/${groupId}/posts`, {
       method: "POST",
-      body:   { content },
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify({ content }),
     })
+    const json: ApiResponse<ApiPost> = await res.json()
+    if (!res.ok || !json.success) {
+      return { error: json.message || "حدث خطأ أثناء إنشاء المنشور" }
+    }
     revalidatePath(`/teacher/group/${groupId}/posts`)
     revalidatePath(`/teacher/group/${groupId}`)
     return { success: true }
@@ -41,10 +53,21 @@ export async function deletePostAction(
   groupId: string,
   postId:  string
 ): Promise<PostActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/groups/${groupId}/posts/${postId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/groups/${groupId}/posts/${postId}`, {
       method: "DELETE",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) {
+      return { error: json.message || "حدث خطأ أثناء حذف المنشور" }
+    }
     revalidatePath(`/teacher/group/${groupId}/posts`)
     return { success: true }
   } catch (e: unknown) {
@@ -57,10 +80,21 @@ export async function toggleLikeAction(
   groupId: string,
   postId:  string
 ): Promise<PostActionState> {
+  const token = await getNextAuthToken()
+  if (!token?.token) return { error: "غير مصرح" }
+
   try {
-    await serverFetch(`/api/groups/${groupId}/posts/${postId}/like`, {
+    const res = await fetch(`${BASE_API_URL}/api/groups/${groupId}/posts/${postId}/like`, {
       method: "POST",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
     })
+    const json = await res.json()
+    if (!res.ok || json.success === false) {
+      return { error: json.message || "حدث خطأ" }
+    }
     revalidatePath(`/teacher/group/${groupId}/posts`)
     return { success: true }
   } catch (e: unknown) {

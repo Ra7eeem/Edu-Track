@@ -1,12 +1,11 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
-import { ApiGroup, Grade } from "@/shared/types/api"
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import { ApiGroup, ApiResponse, Grade } from "@/shared/types/api"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
-// Mirrors the server's group creation rules (group.schemas.ts) so editing a group
-// applies the exact same validation as creating one.
 const updateGroupSchema = z.object({
   name:        z.string().min(2, "اسم المجموعة يجب ألا يقل عن حرفين").max(150).trim(),
   description: z.string().max(1000).optional(),
@@ -26,22 +25,31 @@ export async function updateGroupAction(
   const parsed = updateGroupSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.errors[0].message }
 
+  const token = await getNextAuthToken()
+  if (!token?.token) return { success: false, error: "غير مصرح" }
+
   try {
-    // The PATCH endpoint itself re-verifies the caller is the group's teacher
-    // (GroupTeacher link) and re-validates every field server-side — the action
-    // also performs input validation above for an early, user-friendly error.
-    const group = await serverFetch<ApiGroup>(`/api/groups/${groupId}`, {
+    const res = await fetch(`${BASE_API_URL}/api/groups/${groupId}`, {
       method: "PATCH",
-      body:   {
+      headers: {
+        ...HEADERS.JsonBody,
+        ...HEADERS.authorize(token.token),
+      },
+      body: JSON.stringify({
         name:        parsed.data.name.trim(),
         description: (parsed.data.description ?? "").trim(),
         grades:      parsed.data.grades ? [...new Set(parsed.data.grades)] : [],
-      },
+      }),
     })
+
+    const json: ApiResponse<ApiGroup> = await res.json()
+    if (!res.ok || !json.success) {
+      return { success: false, error: json.message || "حدث خطأ أثناء تعديل المجموعة" }
+    }
 
     revalidatePath("/teacher/groups")
     revalidatePath(`/teacher/group/${groupId}`)
-    return { success: true, data: group }
+    return { success: true, data: json.data }
   } catch (e: unknown) {
     return {
       success: false,

@@ -1,6 +1,6 @@
-import { serverFetch } from "@/shared/lib/api-server"
+import { getTeacherAssignmentsApi } from "@/features/teacher/apis/teacher.api"
 import { getSessionData } from "@/shared/lib/session"
-import { ApiAssignment, PaginatedResponse } from "@/shared/types/api"
+import { ApiAssignment } from "@/shared/types/api"
 import AssignmentsClient from "./assignments-client"
 
 interface AssignmentsPageProps {
@@ -11,11 +11,13 @@ export default async function AssignmentsPage({ params }: AssignmentsPageProps) 
   const { id: groupId } = await params
   const session = await getSessionData()
 
-  const result = await serverFetch<PaginatedResponse<ApiAssignment> | ApiAssignment[]>(
-    `/api/assignments/group/${groupId}?limit=50`
-  )
-
-  const initialAssignments = Array.isArray(result) ? result : result.data ?? []
+  let initialAssignments: ApiAssignment[] = []
+  try {
+    const result = await getTeacherAssignmentsApi(groupId, 50)
+    initialAssignments = Array.isArray(result) ? result : result.data ?? []
+  } catch {
+    initialAssignments = []
+  }
 
   return (
     <AssignmentsClient

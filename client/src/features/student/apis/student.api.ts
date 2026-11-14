@@ -1,17 +1,20 @@
 /**
  * Student API Service
- * Follows Rose-App architecture: pure, strongly-typed API functions using native fetch.
- * Designed to minimize round-trips and optimize performance.
+ * Follows Rose-App architecture: pure, strongly-typed API functions using native fetch directly.
+ * Zero wrapper functions. Each function writes fetch explicitly with BASE_API_URL and HEADERS.
  */
-import { serverFetch } from "@/shared/lib/api-server"
-import {
+import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
+import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import type {
   ApiAnonymousMessage,
   ApiAssignment,
   ApiComment,
   ApiExamSubmission,
   ApiGroup,
+  ApiNotification,
   ApiPost,
   ApiRankingEntry,
+  ApiResponse,
   ApiUser,
   PaginatedResponse,
 } from "@/shared/types/api"
@@ -21,19 +24,53 @@ import type {
   StudentRankEntry,
 } from "../types/student"
 
+/** Helper to get auth headers with current token */
+async function getAuthHeader() {
+  const token = await getNextAuthToken()
+  return token?.token ? HEADERS.authorize(token.token) : {}
+}
+
 /**
  * 1. Single-request student dashboard
  * User-scoped: returns student profile, groups, unread count, posts, and ranking in 1 request.
  */
 export async function getStudentDashboardApi(): Promise<StudentDashboardData> {
-  return serverFetch<StudentDashboardData>("/api/students/me/dashboard")
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/students/me/dashboard`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<StudentDashboardData> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل لوحة تحكم الطالب")
+  }
+  return json.data
 }
 
 /**
  * 2. Student profile data
  */
 export async function getStudentProfileApi(): Promise<ApiUser> {
-  return serverFetch<ApiUser>("/api/students/me")
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/students/me`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<ApiUser> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل الملف الشخصي")
+  }
+  return json.data
 }
 
 /**
@@ -42,9 +79,21 @@ export async function getStudentProfileApi(): Promise<ApiUser> {
 export async function getStudentGroupsApi(
   limit = 20
 ): Promise<PaginatedResponse<ApiGroup> | ApiGroup[]> {
-  return serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>(
-    `/api/students/me/groups?limit=${limit}`
-  )
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/students/me/groups?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<PaginatedResponse<ApiGroup> | ApiGroup[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل مجموعات الطالب")
+  }
+  return json.data
 }
 
 /**
@@ -53,16 +102,45 @@ export async function getStudentGroupsApi(
 export async function getStudentAttendanceApi(
   groupId: string
 ): Promise<StudentAttendanceRecord[]> {
-  return serverFetch<StudentAttendanceRecord[]>(
-    `/api/students/me/groups/${groupId}/attendance`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/students/me/groups/${groupId}/attendance`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<StudentAttendanceRecord[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل سجل الحضور")
+  }
+  return json.data ?? []
 }
 
 /**
  * 5. Student monthly score history
  */
 export async function getStudentScoresApi(): Promise<unknown[]> {
-  return serverFetch<unknown[]>("/api/students/me/scores")
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/students/me/scores`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<unknown[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل درجات الطالب")
+  }
+  return json.data ?? []
 }
 
 /**
@@ -73,9 +151,24 @@ export async function getStudentRankApi(
   month: number,
   year: number
 ): Promise<StudentRankEntry> {
-  return serverFetch<StudentRankEntry>(
-    `/api/groups/${groupId}/ranking/students/me?month=${month}&year=${year}`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/groups/${groupId}/ranking/students/me?month=${month}&year=${year}`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<StudentRankEntry> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل الترتيب الشخصي")
+  }
+  return json.data
 }
 
 /**
@@ -86,32 +179,72 @@ export async function getGroupRankingApi(
   month: number,
   year: number
 ): Promise<ApiRankingEntry[]> {
-  return serverFetch<ApiRankingEntry[]>(
-    `/api/groups/${groupId}/ranking?month=${month}&year=${year}`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/groups/${groupId}/ranking?month=${month}&year=${year}`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<ApiRankingEntry[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل ترتيب المجموعة")
+  }
+  return json.data ?? []
 }
 
 /**
  * 8. Group assignments (homeworks and exams)
- * Uses Next.js cache tags for targeted revalidation on submission.
  */
 export async function getGroupAssignmentsApi(
   groupId: string,
   limit = 50
 ): Promise<ApiAssignment[]> {
-  return serverFetch<ApiAssignment[]>(
-    `/api/assignments/group/${groupId}?limit=${limit}`,
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/assignments/group/${groupId}?limit=${limit}`,
     {
-      tags: [`student-assignments-${groupId}`],
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      next: { tags: [`student-assignments-${groupId}`] },
     }
   )
+
+  const json: ApiResponse<ApiAssignment[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل الواجبات والامتحانات")
+  }
+  return json.data ?? []
 }
 
 /**
  * 9. Assignment / Exam details by ID
  */
 export async function getAssignmentByIdApi(id: string): Promise<ApiAssignment> {
-  return serverFetch<ApiAssignment>(`/api/assignments/${id}`)
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/assignments/${id}`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<ApiAssignment> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل تفاصيل الواجب")
+  }
+  return json.data
 }
 
 /**
@@ -120,16 +253,44 @@ export async function getAssignmentByIdApi(id: string): Promise<ApiAssignment> {
 export async function getAssignmentSubmissionApi(
   id: string
 ): Promise<ApiExamSubmission | null> {
-  return serverFetch<ApiExamSubmission | null>(
-    `/api/assignments/${id}/my-submission`
-  )
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/assignments/${id}/my-submission`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  if (res.status === 404) return null
+
+  const json: ApiResponse<ApiExamSubmission> = await res.json()
+  if (!res.ok || !json.success) {
+    return null
+  }
+  return json.data ?? null
 }
 
 /**
  * 11. Teachers belonging to a group
  */
 export async function getGroupTeachersApi(groupId: string): Promise<ApiUser[]> {
-  return serverFetch<ApiUser[]>(`/api/groups/${groupId}/teachers`)
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/groups/${groupId}/teachers`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<ApiUser[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل مدرسي المجموعة")
+  }
+  return json.data ?? []
 }
 
 /**
@@ -138,9 +299,21 @@ export async function getGroupTeachersApi(groupId: string): Promise<ApiUser[]> {
 export async function getStudentAnonymousMessagesApi(
   limit = 50
 ): Promise<PaginatedResponse<ApiAnonymousMessage>> {
-  return serverFetch<PaginatedResponse<ApiAnonymousMessage>>(
-    `/api/anonymous/me?limit=${limit}`
-  )
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/anonymous/me?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<PaginatedResponse<ApiAnonymousMessage>> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل الرسائل المجهولة")
+  }
+  return json.data
 }
 
 /**
@@ -150,9 +323,24 @@ export async function getGroupPostsApi(
   groupId: string,
   limit = 50
 ): Promise<PaginatedResponse<ApiPost> | ApiPost[]> {
-  return serverFetch<PaginatedResponse<ApiPost> | ApiPost[]>(
-    `/api/groups/${groupId}/posts?limit=${limit}`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/groups/${groupId}/posts?limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<PaginatedResponse<ApiPost> | ApiPost[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل منشورات المجموعة")
+  }
+  return json.data
 }
 
 /**
@@ -163,9 +351,24 @@ export async function getPostCommentsApi(
   postId: string,
   limit = 50
 ): Promise<PaginatedResponse<ApiComment> | ApiComment[]> {
-  return serverFetch<PaginatedResponse<ApiComment> | ApiComment[]>(
-    `/api/groups/${groupId}/posts/${postId}/comments?limit=${limit}`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/groups/${groupId}/posts/${postId}/comments?limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<PaginatedResponse<ApiComment> | ApiComment[]> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل التعليقات")
+  }
+  return json.data
 }
 
 /**
@@ -177,8 +380,46 @@ export async function getCommentRepliesApi(
   commentId: string,
   limit = 50
 ): Promise<PaginatedResponse<ApiComment> | { data: ApiComment[] }> {
-  return serverFetch<PaginatedResponse<ApiComment> | { data: ApiComment[] }>(
-    `/api/groups/${groupId}/posts/${postId}/comments/${commentId}/replies?limit=${limit}`
+  const authHeader = await getAuthHeader()
+  const res = await fetch(
+    `${BASE_API_URL}/api/groups/${groupId}/posts/${postId}/comments/${commentId}/replies?limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        ...HEADERS.JsonBody,
+        ...authHeader,
+      },
+      cache: "no-store",
+    }
   )
+
+  const json: ApiResponse<PaginatedResponse<ApiComment> | { data: ApiComment[] }> = await res.json()
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || "فشل تحميل الردود")
+  }
+  return json.data
+}
+
+/**
+ * 16. Student notifications list
+ */
+export async function getNotificationsApi(
+  limit = 50
+): Promise<PaginatedResponse<ApiNotification>> {
+  const authHeader = await getAuthHeader()
+  const res = await fetch(`${BASE_API_URL}/api/notifications?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      ...HEADERS.JsonBody,
+      ...authHeader,
+    },
+    cache: "no-store",
+  })
+
+  const json: ApiResponse<PaginatedResponse<ApiNotification>> = await res.json()
+  if (!res.ok || !json.success) {
+    return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } }
+  }
+  return json.data
 }
 

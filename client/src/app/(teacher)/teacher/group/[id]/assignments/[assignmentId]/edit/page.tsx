@@ -1,4 +1,4 @@
-import { serverFetch } from "@/shared/lib/api-server"
+import { getTeacherAssignmentByIdApi } from "@/features/teacher/apis/teacher.api"
 import { getSessionData } from "@/shared/lib/session"
 import { ApiAssignment } from "@/shared/types/api"
 import EditAssignmentClient from "./edit-client"
@@ -14,7 +14,7 @@ export default async function EditAssignmentPage({ params }: EditAssignmentPageP
 
   let assignment: ApiAssignment | null = null
   try {
-    assignment = await serverFetch<ApiAssignment>(`/api/assignments/${assignmentId}`)
+    assignment = await getTeacherAssignmentByIdApi(assignmentId)
   } catch {
     notFound()
   }

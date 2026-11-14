@@ -1,6 +1,6 @@
+import { getTeacherNotificationsApi } from "@/features/teacher/apis/teacher.api"
 import { NotificationsClient } from "@/features/teacher/components/notifications-client"
 import { TopBar } from "@/shared/components/layout/topbar"
-import { serverFetch } from "@/shared/lib/api-server"
 import { getSessionData } from "@/shared/lib/session"
 import { ApiNotification, PaginatedResponse } from "@/shared/types/api"
 
@@ -10,11 +10,9 @@ export default async function TeacherNotificationsPage() {
   let unread = 0
 
   try {
-    const res = await serverFetch<PaginatedResponse<ApiNotification>>(
-      "/api/notifications?limit=50"
-    )
+    const res = await getTeacherNotificationsApi(50)
     notifsData = res
-    unread = res.data.filter((n) => !n.isRead).length
+    unread = (res.data || []).filter((n) => !n.isRead).length
   } catch {}
 
   return (
