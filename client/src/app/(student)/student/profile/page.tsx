@@ -1,6 +1,11 @@
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
 import { logoutAction } from "@/features/auth/actions/logout.action"
+import {
+  getStudentAttendanceApi,
+  getStudentGroupsApi,
+  getStudentProfileApi,
+} from "@/features/student/apis/student.api"
 import { serverFetch } from "@/shared/lib/api-server"
 import { toPaginatedArray } from "@/shared/lib/api-helpers"
 import { cn } from "@/shared/lib/tailwind-cn"
@@ -13,24 +18,20 @@ import {
 } from "@/shared/types/api"
 import { LogOut } from "lucide-react"
 
-type AttendanceRecord = { date: string; status: string }
-
 export default async function StudentProfilePage() {
   const [profile, groupsResponse, notificationsResponse] = await Promise.all([
-    serverFetch<ApiUser>("/api/students/me").catch(() => null),
-    serverFetch<PaginatedResponse<ApiGroup> | ApiGroup[]>("/api/students/me/groups").catch(() => null),
+    getStudentProfileApi().catch(() => null),
+    getStudentGroupsApi().catch(() => null),
     serverFetch<PaginatedResponse<ApiNotification>>("/api/notifications?limit=50").catch(() => null),
   ])
 
   const groups = toPaginatedArray<ApiGroup>(groupsResponse)
   const firstGroup = groups[0]
   const attendance = firstGroup
-    ? await serverFetch<AttendanceRecord[]>(
-        `/api/students/me/groups/${resolveId(firstGroup)}/attendance`
-      ).catch(() => [])
+    ? await getStudentAttendanceApi(resolveId(firstGroup)).catch(() => [])
     : []
   const notifications = toPaginatedArray<ApiNotification>(notificationsResponse)
-  const unread = notifications.filter(notification => !notification.isRead).length
+  const unread = notifications.filter((notification) => !notification.isRead).length
   const records = attendance
 
   return (

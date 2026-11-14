@@ -1,26 +1,12 @@
-import { TopBar }           from "@/shared/components/layout/topbar"
-import { Button }           from "@/shared/components/ui/button"
-import { serverFetch }      from "@/shared/lib/api-server"
-import { getSessionData }   from "@/shared/lib/session"
-import { ApiGroup, ApiPost, ApiUser, resolveId } from "@/shared/types/api"
+import { TopBar } from "@/shared/components/layout/topbar"
+import { Button } from "@/shared/components/ui/button"
+import { getStudentDashboardApi } from "@/features/student/apis/student.api"
+import type { StudentDashboardData } from "@/features/student/types/student"
+import { getSessionData } from "@/shared/lib/session"
+import { resolveId } from "@/shared/types/api"
 import { DashboardPostsFeed } from "./posts-feed"
 import { ArrowLeft, CalendarCheck, Trophy, XCircle } from "lucide-react"
 import Link from "next/link"
-
-interface RankEntry {
-  rank: number; score: number
-  presentCount: number; absentCount: number; totalMembers: number
-}
-
-interface StudentDashboardData {
-  student:       ApiUser
-  groups:        ApiGroup[]
-  notifications: { isRead: boolean }[]
-  unreadCount:   number
-  firstGroup:    (ApiGroup & { _id?: string; id?: string }) | null
-  posts:         ApiPost[]
-  rank:          RankEntry | null
-}
 
 export default async function StudentDashboard() {
   const session = await getSessionData()
@@ -29,7 +15,7 @@ export default async function StudentDashboard() {
   // every student) → never cache it server-side or it can leak across students.
   let data: StudentDashboardData | null = null
   try {
-    data = await serverFetch<StudentDashboardData>("/api/students/me/dashboard")
+    data = await getStudentDashboardApi()
   } catch {
     // graceful fallback — show session data
   }

@@ -1,25 +1,11 @@
 "use server"
 
-import { serverFetch } from "@/shared/lib/api-server"
+import { getGroupsByGradeApi } from "../apis/auth.api"
+import type { PublicGroup } from "../types/auth"
 
-export interface PublicGroup {
-  _id: string
-  name: string
-  grades: string[]
-}
+export type { PublicGroup }
 
 export async function fetchGroupsByGradeAction(grade: string): Promise<PublicGroup[]> {
-  try {
-    const res = await serverFetch<PublicGroup[] | { data: PublicGroup[] }>(
-      `/api/auth/groups?grade=${encodeURIComponent(grade)}`
-    )
-    if (!res) return []
-    if (Array.isArray(res)) return res
-    if ("data" in (res as object) && Array.isArray((res as { data: PublicGroup[] }).data)) {
-      return (res as { data: PublicGroup[] }).data
-    }
-    return []
-  } catch {
-    return []
-  }
+  if (!grade) return []
+  return getGroupsByGradeApi(grade)
 }

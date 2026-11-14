@@ -45,8 +45,8 @@ export function ExamTaker({
         Object.entries(ans).map(([questionId, chosen]) => ({ questionId, chosen })),
         groupId
       )
-      if ("error" in result) {
-        setError(result.error)
+      if (!result.success) {
+        setError(result.error || "فشل تسليم الامتحان")
         return
       }
       submitted.current = true

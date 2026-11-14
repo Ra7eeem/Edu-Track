@@ -1,7 +1,8 @@
 import { ExamTaker } from "@/features/student/components/exam-taker"
+import { getAssignmentByIdApi } from "@/features/student/apis/student.api"
 import { getExamAvailability } from "@/features/student/lib/exam-availability"
 import { Button } from "@/shared/components/ui/button"
-import { ApiServerError, serverFetch } from "@/shared/lib/api-server"
+import { ApiServerError } from "@/shared/lib/api-server"
 import { ApiAssignment, AssignmentType, resolveId } from "@/shared/types/api"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -15,7 +16,7 @@ export default async function TakeExamPage({
 
   let assignment: ApiAssignment
   try {
-    assignment = await serverFetch<ApiAssignment>(`/api/assignments/${id}`)
+    assignment = await getAssignmentByIdApi(id)
   } catch (e) {
     const notFound = e instanceof ApiServerError && (e.status === 404 || e.status === 403)
     return (

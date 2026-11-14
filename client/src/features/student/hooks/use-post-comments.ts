@@ -7,11 +7,12 @@ import { useQuery } from "@tanstack/react-query"
 export function usePostComments(groupId: string, postId: string, enabled = false) {
   return useQuery({
     queryKey: ["groups", groupId, "posts", postId, "comments"],
-    queryFn:  () =>
+    queryFn: () =>
       clientFetch<PaginatedResponse<ApiComment>>(
         `/api/groups/${groupId}/posts/${postId}/comments?limit=50`
       ),
     enabled: enabled && !!groupId && !!postId,
-    staleTime: 30_000,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   })
 }

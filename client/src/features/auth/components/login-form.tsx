@@ -5,7 +5,6 @@ import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { loginAction } from "@/features/auth/actions/login.action"
 import { loginSchema, LoginFormValues } from "@/features/auth/schemas/login.schema"
-import { clearTokenCache } from "@/shared/lib/api-client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import Link from "next/link"
@@ -27,11 +26,8 @@ export function LoginForm() {
   })
 
   const onSubmit = (values: LoginFormValues) => {
-    // Bust any previous session's cached token BEFORE the redirect, so the first
-    // client request after login picks up the freshly-set session cookie
-    clearTokenCache()
     const fd = new FormData()
-    fd.set("email",    values.email)
+    fd.set("email", values.email)
     fd.set("password", values.password)
     startTransition(() => formAction(fd))
   }

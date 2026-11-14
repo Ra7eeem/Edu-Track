@@ -1,27 +1,28 @@
 /**
  * Server-side API client — used in Server Components & Server Actions.
  * Reads the token from iron-session automatically.
+ * Native fetch implementation following Rose-App pattern.
  */
 import { getSessionData } from "./session"
+import { HEADERS, BASE_API_URL } from "@/shared/constant/api.constant"
 import { PaginatedResponse } from "@/shared/types/api"
-
-const BASE_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? ""
 
 type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE"
 
-interface FetchOptions {
-  method?:  HttpMethod
-  body?:    unknown
-  token?:   string
+export interface ServerFetchOptions {
+  method?: HttpMethod
+  body?: unknown
+  token?: string
   revalidate?: number | false
-  tags?:    string[]
+  tags?: string[]
+  headers?: Record<string, string>
 }
 
 export class ApiServerError extends Error {
   constructor(
-    public status:  number,
-    public code:    string,
-    message:        string,
+    public status: number,
+    public code: string,
+    message: string,
     public errors?: Record<string, string[]>
   ) {
     super(message)
@@ -31,9 +32,16 @@ export class ApiServerError extends Error {
 
 export async function serverFetch<T>(
   path: string,
-  options: FetchOptions = {}
+  options: ServerFetchOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, token: overrideToken, revalidate, tags } = options
+  const {
+    method = "GET",
+    body,
+    token: overrideToken,
+    revalidate,
+    tags,
+    headers: extraHeaders = {},
+  } = options
 
   let token = overrideToken
   if (token === undefined) {
@@ -42,24 +50,38 @@ export async function serverFetch<T>(
   }
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept:         "application/json",
+    ...HEADERS.JsonBody,
+    ...(token ? HEADERS.authorize(token) : {}),
+    ...extraHeaders,
   }
-  if (token) headers["Authorization"] = `Bearer ${token}`
 
   const nextOpts: Record<string, unknown> = {}
   if (revalidate !== undefined) nextOpts.revalidate = revalidate
   else nextOpts.revalidate = 0
   if (tags) nextOpts.tags = tags
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${BASE_API_URL}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
     next: nextOpts as RequestInit["next"],
   })
 
-  const json = await res.json()
+  // Handle 204 No Content
+  if (res.status === 204) {
+    return undefined as unknown as T
+  }
+
+  let json: { success?: boolean; data?: T; message?: string; code?: string; errors?: Record<string, string[]> }
+  try {
+    json = await res.json()
+  } catch {
+    throw new ApiServerError(
+      res.status,
+      "INVALID_JSON",
+      `استجابة غير صالحة من الخادم (${res.status})`
+    )
+  }
 
   if (!res.ok || json.success === false) {
     throw new ApiServerError(
@@ -70,7 +92,7 @@ export async function serverFetch<T>(
     )
   }
 
-  return (json as { success: true; data: T }).data
+  return (json.data !== undefined ? json.data : (json as unknown as T))
 }
 
 /**
