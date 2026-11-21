@@ -48,6 +48,8 @@ export enum NotificationType {
   NEW_EXAM = "NEW_EXAM",
   ATTENDANCE_RECORDED = "ATTENDANCE_RECORDED",
   QUESTION_REPLIED = "QUESTION_REPLIED",
+  LESSON_REMINDER = "LESSON_REMINDER",
+  TASK_REMINDER = "TASK_REMINDER",
 }
 
 // ─────────────────────────────────────────

@@ -61,6 +61,8 @@ export enum NotificationType {
   NEW_EXAM              = "NEW_EXAM",
   ATTENDANCE_RECORDED   = "ATTENDANCE_RECORDED",
   QUESTION_REPLIED      = "QUESTION_REPLIED",
+  LESSON_REMINDER       = "LESSON_REMINDER",
+  TASK_REMINDER         = "TASK_REMINDER",
 }
 
 // ─── Helper: resolve id from MongoDB _id or id ───────────────────────────────
@@ -570,3 +572,106 @@ export interface ApiDailyAnswerResult {
   selectedOptionIndex: number
   answerId?:           string
 }
+
+// ─── Courses & Lessons ────────────────────────────────────────────────────────
+
+export enum WatchStatus {
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED   = "COMPLETED",
+}
+
+export interface ApiLessonProgress {
+  status:              WatchStatus | "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  percentage:          number
+  lastPositionSeconds: number
+  formattedPosition:   string
+  isCompleted:         boolean
+  completedAt?:        string | null
+  lastWatchedAt?:      string | null
+}
+
+export interface ApiLesson {
+  _id:                string
+  id?:                string
+  course:             string | { _id: string; title: string; classroom: string }
+  classroom:          string
+  title:              string
+  description?:       string
+  youtubeUrl:         string
+  youtubeVideoId:     string
+  durationSeconds:    number
+  formattedDuration?: string
+  order:              number
+  isActive?:          boolean
+  progress?:          ApiLessonProgress
+  createdAt?:         string
+  updatedAt?:         string
+}
+
+export interface ApiCourse {
+  _id:                       string
+  id?:                       string
+  classroom:                 string
+  teacher:                   string
+  title:                     string
+  description:               string
+  thumbnailUrl?:             string | null
+  order:                     number
+  isActive:                  boolean
+  totalLessons:              number
+  completedLessons:          number
+  courseProgressPercentage:  number
+  lessons:                   ApiLesson[]
+  createdAt?:                string
+  updatedAt?:                string
+}
+
+export interface ApiLessonComment {
+  _id:        string
+  id?:        string
+  lesson:     string
+  author: {
+    _id:      string
+    name:     string
+    email:    string
+    avatar?:  string | null
+    role:     Role | string
+  }
+  content:    string
+  createdAt:  string
+  updatedAt?: string
+}
+
+export interface ApiLessonAnalyticsStudent {
+  studentId:           string
+  name:                string
+  email:               string
+  avatarUrl?:          string | null
+  status:              WatchStatus | "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  percentage:          number
+  lastPositionSeconds: number
+  durationSeconds:     number
+  formattedPosition:   string
+  isCompleted:         boolean
+  completedAt?:        string | null
+  lastWatchedAt?:      string | null
+}
+
+export interface ApiLessonAnalytics {
+  lesson: {
+    _id:                string
+    title:              string
+    durationSeconds:    number
+    formattedDuration:  string
+    youtubeUrl:         string
+  }
+  totalStudents:        number
+  completedCount:       number
+  inProgressCount:      number
+  notStartedCount:      number
+  completionRate:       number
+  averageWatchProgress: number
+  students:             ApiLessonAnalyticsStudent[]
+}
+

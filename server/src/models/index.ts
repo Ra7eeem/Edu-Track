@@ -42,3 +42,13 @@ export { ArchivedScore } from "./ArchivedScore";
 export type { IArchivedScore } from "./ArchivedScore";
 export { PushSubscription } from "./PushSubscription";
 export type { IPushSubscription } from "./PushSubscription";
+
+export { Course } from "./Course";
+export type { ICourse } from "./Course";
+export { Lesson } from "./Lesson";
+export type { ILesson } from "./Lesson";
+export { LessonProgress, WatchStatus } from "./LessonProgress";
+export type { ILessonProgress } from "./LessonProgress";
+export { LessonComment } from "./LessonComment";
+export type { ILessonComment } from "./LessonComment";
+
