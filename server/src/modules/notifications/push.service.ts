@@ -1,4 +1,3 @@
-import webpush from "web-push";
 import mongoose from "mongoose";
 import { PushSubscription } from "../../models/PushSubscription";
 import { logger } from "../../utils/logger";
@@ -14,11 +13,32 @@ export const VAPID_PRIVATE_KEY =
 export const VAPID_SUBJECT =
   process.env.VAPID_SUBJECT ?? "mailto:admin@edutrack.com";
 
-// Initialize webpush with VAPID details
-try {
-  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-} catch (err) {
-  logger.warn("WebPush VAPID configuration error:", err);
+let webpushInstance: any = null;
+let vapidConfigured = false;
+
+function getWebPush(): any {
+  if (!webpushInstance) {
+    try {
+      // Safe dynamic require for CommonJS runtime
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require("web-push");
+      webpushInstance = mod.default ?? mod;
+    } catch (err) {
+      logger.warn("WebPush library load error:", err);
+      return null;
+    }
+  }
+
+  if (webpushInstance && !vapidConfigured) {
+    try {
+      webpushInstance.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+      vapidConfigured = true;
+    } catch (err) {
+      logger.warn("WebPush VAPID configuration error:", err);
+    }
+  }
+
+  return webpushInstance;
 }
 
 export interface WebPushPayload {
@@ -80,6 +100,12 @@ export async function sendWebPushNotification(
 
   if (validIds.length === 0) return;
 
+  const wp = getWebPush();
+  if (!wp) {
+    logger.warn("WebPush instance unavailable, skipping push delivery");
+    return;
+  }
+
   const subscriptions = await PushSubscription.find({
     user: { $in: validIds },
   }).lean();
@@ -100,7 +126,7 @@ export async function sendWebPushNotification(
 
   const sendPromises = subscriptions.map(async (sub) => {
     try {
-      await webpush.sendNotification(
+      await wp.sendNotification(
         {
           endpoint: sub.endpoint,
           keys: sub.keys,
@@ -109,7 +135,7 @@ export async function sendWebPushNotification(
       );
     } catch (err: any) {
       // 404 Not Found or 410 Gone means user unsubscribed or expired
-      if (err.statusCode === 404 || err.statusCode === 410) {
+      if (err?.statusCode === 404 || err?.statusCode === 410) {
         await PushSubscription.deleteOne({ _id: sub._id }).catch(() => {});
       } else {
         logger.warn(`Failed to send web-push to sub ${sub._id}:`, err?.message ?? err);
