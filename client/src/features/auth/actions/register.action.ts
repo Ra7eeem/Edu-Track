@@ -1,7 +1,5 @@
 "use server"
 
-import { getSession } from "@/shared/lib/session"
-import { Role, resolveId } from "@/shared/types/api"
 import { redirect } from "next/navigation"
 import { registerStudentApi } from "../apis/auth.api"
 import { registerStudentSchema } from "../schemas/register.schema"
@@ -27,24 +25,12 @@ export async function registerStudentAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  let result
   try {
-    result = await registerStudentApi(parsed.data)
+    await registerStudentApi(parsed.data)
   } catch (e: unknown) {
     const err = e as { message?: string }
     return { error: err?.message ?? "حدث خطأ أثناء إنشاء الحساب" }
   }
 
-  const session = await getSession()
-  session.token = result.token
-  session.userId = resolveId(result.user)
-  session.role = Role.STUDENT
-  session.name = result.user.name
-  session.email = result.user.email
-  session.avatarUrl = null
-  session.grade = result.user.grade ?? null
-  session.isLoggedIn = true
-  await session.save()
-
-  redirect("/student/dashboard")
+  redirect("/login?registered=true")
 }

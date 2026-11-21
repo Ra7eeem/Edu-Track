@@ -2,7 +2,6 @@
 
 import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
 import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
-import { getSession } from "@/shared/lib/session"
 import { ApiResponse, ApiUser } from "@/shared/types/api"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
@@ -42,17 +41,6 @@ export async function updateTeacherProfileAction(
     })
     const json: ApiResponse<ApiUser> = await res.json()
     if (!res.ok || !json.success) return { error: json.message || "حدث خطأ" }
-
-    // Update iron-session if present
-    try {
-      const session = await getSession()
-      if (session.isLoggedIn && json.data?.name) {
-        session.name = json.data.name
-        await session.save()
-      }
-    } catch {
-      // ignore
-    }
 
     revalidatePath("/teacher/profile")
     return { success: true }

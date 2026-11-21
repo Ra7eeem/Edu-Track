@@ -1,6 +1,6 @@
 /**
  * Server-side API client — used in Server Components & Server Actions.
- * Reads the token from iron-session automatically.
+ * Reads the token from NextAuth session automatically.
  * Native fetch implementation following Rose-App pattern.
  */
 import { getSessionData } from "./session"

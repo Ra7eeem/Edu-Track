@@ -1,6 +1,9 @@
 import { ThemeToggle } from "@/shared/components/theme-toggle"
+import { getSessionData } from "@/shared/lib/session"
+import { Role } from "@/shared/types/api"
 import Image           from "next/image"
 import Link            from "next/link"
+import { redirect }    from "next/navigation"
 import {
   ArrowLeft, BadgeCheck, CalendarCheck,
   MessagesSquare, ShieldCheck, Sparkles, Star, Trophy, Users,
@@ -76,7 +79,18 @@ function GhostButton({ children, href = "#" }: { children: React.ReactNode; href
 }
 
 /* ─── Page ───────────────────────────────────────────────────────────────── */
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getSessionData()
+  if (session?.isLoggedIn && session.role) {
+    const dest =
+      session.role === Role.ADMIN
+        ? "/admin/dashboard"
+        : session.role === Role.TEACHER
+        ? "/teacher/dashboard"
+        : "/student/dashboard"
+    redirect(dest)
+  }
+
   return (
     /* bg-night uses --gradient-night which adapts light/dark via CSS vars */
     <div className="min-h-screen bg-night font-sans text-foreground">

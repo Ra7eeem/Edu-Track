@@ -1,11 +1,25 @@
 import { RegisterStudentForm } from "@/features/auth/components/register-student-form"
+import { getSessionData } from "@/shared/lib/session"
+import { Role } from "@/shared/types/api"
 import Image                   from "next/image"
 import Link                    from "next/link"
+import { redirect }            from "next/navigation"
 import { Sparkles }            from "lucide-react"
 
 const NAVY = "oklch(0.19 0.05 261)"
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const session = await getSessionData()
+  if (session?.isLoggedIn && session.role) {
+    const dest =
+      session.role === Role.ADMIN
+        ? "/admin/dashboard"
+        : session.role === Role.TEACHER
+        ? "/teacher/dashboard"
+        : "/student/dashboard"
+    redirect(dest)
+  }
+
   return (
     <div
       className="relative min-h-screen font-sans text-foreground"

@@ -365,7 +365,7 @@ export interface AdminDashboardStats {
   todayAbsent:   number
 }
 
-// ─── Session (stored in iron-session cookie) ─────────────────────────────────
+// ─── Session (NextAuth) ──────────────────────────────────────────────────
 
 export interface SessionData {
   token:      string

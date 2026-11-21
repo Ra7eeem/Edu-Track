@@ -13,7 +13,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
 
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
-  JWT_EXPIRES_IN: z.string().default("7d"),
+  JWT_EXPIRES_IN: z.string().default("60d"),
 
   // On Vercel only /tmp is writable — default to /tmp/uploads
   UPLOAD_DIR: z.string().default("/tmp/uploads"),

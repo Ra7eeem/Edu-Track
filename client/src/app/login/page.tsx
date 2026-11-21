@@ -1,6 +1,9 @@
 import { LoginForm } from "@/features/auth/components/login-form"
+import { getSessionData } from "@/shared/lib/session"
+import { Role } from "@/shared/types/api"
 import Image          from "next/image"
 import Link           from "next/link"
+import { redirect }   from "next/navigation"
 import { Sparkles, Star } from "lucide-react"
 
 /* ─── fixed navy palette (same in light + dark) ─────────────────────────── */
@@ -14,6 +17,17 @@ export default async function LoginPage({
 }: {
   searchParams?: Promise<{ from?: string; callbackUrl?: string }>
 }) {
+  const session = await getSessionData()
+  if (session?.isLoggedIn && session.role) {
+    const dest =
+      session.role === Role.ADMIN
+        ? "/admin/dashboard"
+        : session.role === Role.TEACHER
+        ? "/teacher/dashboard"
+        : "/student/dashboard"
+    redirect(dest)
+  }
+
   const params = await searchParams
   const callbackUrl = params?.callbackUrl ?? params?.from
   return (

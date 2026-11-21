@@ -1,12 +1,10 @@
 import { getToken } from "next-auth/jwt"
-import { getIronSession } from "iron-session"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
-import { SESSION_OPTIONS } from "@/shared/lib/session"
-import { SessionData, Role } from "@/shared/types/api"
+import { Role } from "@/shared/types/api"
 
 const PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password"]
-const AUTH_PATHS = ["/login", "/register"]
+const REDIRECT_WHEN_LOGGED_IN = ["/", "/login", "/register", "/forgot-password"]
 
 // Role → allowed path prefixes
 const ROLE_PATHS: Record<Role, string> = {
@@ -30,7 +28,7 @@ export async function proxy(req: NextRequest) {
 
   const res = NextResponse.next()
 
-  // 1. Check NextAuth JWT first
+  // 1. Check NextAuth JWT
   const nextAuthToken = await getToken({
     req,
     secret: (process.env.NEXTAUTH_SECRET ?? process.env.SESSION_SECRET)!,
@@ -39,25 +37,27 @@ export async function proxy(req: NextRequest) {
   let isLoggedIn = false
   let userRole: Role | undefined
 
-  if (nextAuthToken?.user) {
-    isLoggedIn = true
-    userRole = nextAuthToken.user.role
-  } else {
-    // 2. Check iron-session fallback
-    const session = await getIronSession<SessionData>(req, res, SESSION_OPTIONS)
-    if (session.isLoggedIn) {
+  if (nextAuthToken) {
+    const role = (nextAuthToken.user?.role ?? (nextAuthToken as any).role) as Role | undefined
+    if (role && ROLE_PATHS[role]) {
       isLoggedIn = true
-      userRole = session.role
+      userRole = role
     }
   }
 
-  // If visiting auth pages while logged in → redirect to dashboard
-  if (isLoggedIn && userRole && AUTH_PATHS.some((p) => pathname.startsWith(p))) {
+  // If user is already logged in with token, immediately redirect to their role's dashboard
+  const isAuthOrRootPath =
+    pathname === "/" ||
+    REDIRECT_WHEN_LOGGED_IN.some(
+      (p) => p !== "/" && (pathname === p || pathname.startsWith(p + "/"))
+    )
+
+  if (isLoggedIn && userRole && isAuthOrRootPath) {
     const dest = ROLE_PATHS[userRole] + "/dashboard"
     return NextResponse.redirect(new URL(dest, req.url))
   }
 
-  // Public paths are always accessible
+  // Public paths are accessible to unauthenticated visitors
   if (PUBLIC_PATHS.includes(pathname)) return res
 
   // Protected: must be logged in

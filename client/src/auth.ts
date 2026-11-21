@@ -45,6 +45,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.token = user.token
         token.user  = user.user
+        token.role  = user.user.role
       }
       return token
     },
@@ -64,6 +65,22 @@ export const authOptions: NextAuthOptions = {
 
   jwt: {
     maxAge: sessionMaxAge,
+  },
+
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-next-auth.session-token"
+          : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: sessionMaxAge,
+      },
+    },
   },
 
   pages: {

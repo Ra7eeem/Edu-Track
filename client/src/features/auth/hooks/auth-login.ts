@@ -51,7 +51,14 @@ export function useLogin(callbackUrl?: string) {
           ? "/teacher/dashboard"
           : "/student/dashboard"
 
-      const destination = callbackUrl || defaultDest
+      const isSafeCallback =
+        callbackUrl &&
+        callbackUrl !== "/" &&
+        callbackUrl !== "/login" &&
+        callbackUrl !== "/register" &&
+        callbackUrl !== "/forgot-password"
+
+      const destination = isSafeCallback ? callbackUrl : defaultDest
       window.location.href = destination
     } catch {
       setError("root", {
