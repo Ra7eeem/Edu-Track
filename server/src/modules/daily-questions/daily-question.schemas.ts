@@ -11,7 +11,7 @@ export const createDailyQuestionSchema = z.object({
   options: z.array(z.string().min(1, "نص الاختيار مطلوب")).length(4, "يجب إدخال 4 اختيارات بالضبط"),
   correctOptionIndex: z.number().int().min(0).max(3),
   explanation: z.string().max(1000).optional(),
-  rewardPoints: z.number().int().min(1).default(5),
+  rewardPoints: z.number().int().min(0).default(0),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ غير صالح (YYYY-MM-DD)").optional(),
 });
 

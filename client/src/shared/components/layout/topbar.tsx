@@ -1,7 +1,8 @@
 import React from "react"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { ThemeToggle } from "@/shared/components/theme-toggle"
-import { Bell, Wifi, WifiOff } from "lucide-react"
+import { TopBarNotificationBell } from "./topbar-notification-bell"
+import { Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
 
 interface TopBarProps {

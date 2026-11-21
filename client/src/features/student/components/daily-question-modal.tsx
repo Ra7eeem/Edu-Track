@@ -84,9 +84,9 @@ export function DailyQuestionModal({ classroomId, isOpen, onClose }: Props) {
               <Sparkles className="size-5" />
             </span>
             <div>
-              <h2 className="text-base font-bold text-heading">سؤال اليوم التنافسي 💡</h2>
+              <h2 className="text-base font-bold text-heading">سؤال اليوم المعرفي 💡</h2>
               <p className="text-[11px] text-muted-foreground">
-                أجب صح واربح نقاطاً إضافية تضاف لرصيدك ولفريقك!
+                أجب واختبر معلوماتك وثبّت فهمك للدروس اليومية!
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@ export function DailyQuestionModal({ classroomId, isOpen, onClose }: Props) {
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-primary">تحدي اليوم</span>
                   <span className="rounded-full bg-accent/20 px-2.5 py-0.5 font-bold text-heading">
-                    +{question.rewardPoints} نقاط
+                    سؤال معرفي
                   </span>
                 </div>
                 <p className="font-display text-base font-bold text-foreground leading-relaxed">
@@ -199,7 +199,7 @@ export function DailyQuestionModal({ classroomId, isOpen, onClose }: Props) {
                     {currentResult.isCorrect ? (
                       <>
                         <CheckCircle2 className="size-5 text-emerald-500" />
-                        <span>إجابة صحيحة! أحسنت 🎉 حصلت على +{currentResult.pointsEarned} نقاط</span>
+                        <span>إجابة صحيحة ومتميزة! أحسنت 🎉</span>
                       </>
                     ) : (
                       <>

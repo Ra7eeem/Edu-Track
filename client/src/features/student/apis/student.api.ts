@@ -416,10 +416,14 @@ export async function getNotificationsApi(
     cache: "no-store",
   })
 
-  const json: ApiResponse<PaginatedResponse<ApiNotification>> = await res.json()
+  const json: any = await res.json()
   if (!res.ok || !json.success) {
     return { data: [], pagination: { page: 1, limit, total: 0, totalPages: 0 } }
   }
-  return json.data
+  return {
+    data: Array.isArray(json.data) ? json.data : [],
+    pagination: json.pagination || { page: 1, limit, total: 0, totalPages: 0 },
+    unreadCount: json.unreadCount,
+  }
 }
 

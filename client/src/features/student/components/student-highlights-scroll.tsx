@@ -238,10 +238,10 @@ export function StudentHighlightsScroll({
             <p className="font-display text-sm font-bold text-foreground">
               {todayQuestion?.alreadyAnswered
                 ? "أحسنت! أتممت سؤال اليوم"
-                : "أجب عن سؤال اليوم واربح!"}
+                : "أجب عن سؤال اليوم المعرفي"}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              +{todayQuestion?.rewardPoints || 5} نقاط تضاف إلى رصيدك وفريقك
+              سؤال يومي لتثبيت معلوماتك ومراجعة الدروس
             </p>
           </div>
 

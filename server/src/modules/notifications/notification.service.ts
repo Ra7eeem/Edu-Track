@@ -19,7 +19,7 @@ export async function notifyUsers({
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   const validIds = userIds
-    .filter(Boolean)
+    .filter((id) => id && mongoose.Types.ObjectId.isValid(String(id)))
     .map((id) => (typeof id === "string" ? new mongoose.Types.ObjectId(id) : id));
 
   if (validIds.length === 0) return;

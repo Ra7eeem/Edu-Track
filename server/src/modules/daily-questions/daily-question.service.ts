@@ -36,7 +36,7 @@ export async function createOrUpdateDailyQuestion(
         options: dto.options.map((o) => o.trim()),
         correctOptionIndex: dto.correctOptionIndex,
         explanation: dto.explanation?.trim(),
-        rewardPoints: dto.rewardPoints || 5,
+        rewardPoints: dto.rewardPoints ?? 0,
         isActive: true,
       },
     },
@@ -151,39 +151,8 @@ export async function answerDailyQuestion(
   }
 
   const isCorrect = dto.selectedOptionIndex === question.correctOptionIndex;
-  const pointsEarned = isCorrect ? question.rewardPoints : 0;
-
-  if (pointsEarned > 0) {
-    // 1. Award individual student score
-    await StudentScore.findOneAndUpdate(
-      { group: question.classroom, student: studentId },
-      { $inc: { score: pointsEarned, bonusPoints: pointsEarned } },
-      { upsert: true }
-    );
-
-    // 2. Award student's team score if they belong to an active team
-    const team = await Team.findOne({
-      classroom: question.classroom,
-      members: studentId,
-      isActive: true,
-    });
-    if (team) {
-      team.totalScore += pointsEarned;
-      team.currentCycleScore += pointsEarned;
-      await team.save();
-    }
-
-    // 3. Log points in audit log
-    await ScoreLog.create({
-      classroom: question.classroom,
-      student: new mongoose.Types.ObjectId(studentId),
-      team: team?._id,
-      points: pointsEarned,
-      reason: `إجابة صحيحة على سؤال اليوم (${question.date})`,
-      actionType: "MANUAL_BONUS",
-      awardedBy: question.teacher,
-    });
-  }
+  // Strictly 0 points/grades: السؤال اليومي بدون درجات
+  const pointsEarned = 0;
 
   const answer = await DailyAnswer.create({
     dailyQuestion: question._id,
@@ -191,7 +160,7 @@ export async function answerDailyQuestion(
     classroom: question.classroom,
     selectedOptionIndex: dto.selectedOptionIndex,
     isCorrect,
-    pointsEarned,
+    pointsEarned: 0,
     answeredAt: new Date(),
   });
 
@@ -199,7 +168,7 @@ export async function answerDailyQuestion(
     isCorrect,
     correctOptionIndex: question.correctOptionIndex,
     explanation: question.explanation,
-    pointsEarned,
+    pointsEarned: 0,
     selectedOptionIndex: dto.selectedOptionIndex,
     answerId: answer._id,
   };

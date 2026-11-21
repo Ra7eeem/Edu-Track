@@ -134,13 +134,13 @@ export function TeacherTaskTracker({ groupId }: Props) {
         options: dqOptions.map((o) => o.trim()),
         correctOptionIndex: dqCorrectIndex,
         explanation: dqExplanation.trim() || undefined,
-        rewardPoints: dqPoints,
+        rewardPoints: 0,
       })
       setShowDailyQModal(false)
       setDqQuestion("")
       setDqOptions(["", "", "", ""])
       setDqExplanation("")
-      setDqPoints(5)
+      setDqPoints(0)
       setReminderToast("تم نشر سؤال اليوم بنجاح!")
       setTimeout(() => setReminderToast(null), 3500)
     } catch (err: any) {
@@ -704,21 +704,6 @@ export function TeacherTaskTracker({ groupId }: Props) {
                   value={dqExplanation}
                   onChange={(e) => setDqExplanation(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-input bg-background p-3 text-xs outline-none focus:border-primary"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="dqPoints" className="text-xs font-bold">
-                  نقاط المكافأة للمجيب الصحيح
-                </Label>
-                <Input
-                  id="dqPoints"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={dqPoints}
-                  onChange={(e) => setDqPoints(Number(e.target.value))}
-                  className="mt-1 rounded-xl w-32"
                 />
               </div>
 

@@ -131,14 +131,22 @@ export async function clientFetch<T>(
     } satisfies ClientApiError
   }
 
-  // Standard wrapper: { success: true, data: ... }
+  // Standard wrapper: { success: true, data: ..., pagination: ... }
   if (
     typeof json === "object" &&
     json !== null &&
-    "success" in json &&
-    "data" in json
+    "success" in json
   ) {
-    return json.data as T
+    if ("pagination" in json) {
+      return {
+        data: json.data,
+        pagination: (json as any).pagination,
+        unreadCount: (json as any).unreadCount,
+      } as unknown as T
+    }
+    if ("data" in json) {
+      return json.data as T
+    }
   }
 
   return json as unknown as T

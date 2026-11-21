@@ -60,8 +60,8 @@ const dailyQuestionSchema = new Schema<IDailyQuestion>(
     },
     rewardPoints: {
       type: Number,
-      default: 5,
-      min: 1,
+      default: 0,
+      min: 0,
     },
     isActive: {
       type: Boolean,

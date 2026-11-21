@@ -44,7 +44,7 @@ interface Props { initialData?: PaginatedResponse<ApiNotification> }
 export function NotificationsClient({ initialData }: Props) {
   const { data } = useNotifications({ initialData })
   const markAll = useMarkAllRead()
-  const notifs = data?.data ?? []
+  const notifs = Array.isArray(data) ? data : (data?.data ?? [])
   const unread = notifs.filter((n) => !n.isRead).length
 
   const [filter, setFilter] = useState<FilterCategory>("ALL")
