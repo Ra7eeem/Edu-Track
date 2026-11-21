@@ -150,7 +150,7 @@ export function StudentTaskBar({ classroomId }: Props) {
                 >
                   <button
                     type="button"
-                    onClick={() => toggleClassMut.mutate(ctid)}
+                    onClick={() => toggleClassMut.mutate({ taskId: ctid, isCompleted: !ct.isCompleted })}
                     className="flex items-center gap-2.5 text-start flex-1 min-w-0"
                   >
                     <span className="shrink-0 text-primary">

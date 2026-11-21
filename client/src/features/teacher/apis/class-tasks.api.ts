@@ -86,7 +86,8 @@ export async function getClassTaskProgressApi(
 }
 
 export async function toggleClassTaskApi(
-  taskId: string
+  taskId: string,
+  isCompleted?: boolean
 ): Promise<{ isCompleted: boolean; completedAt?: string }> {
   const authHeader = await getAuthHeader()
   const res = await fetch(`${BASE_API_URL}/api/class-tasks/${taskId}/toggle`, {
@@ -95,6 +96,7 @@ export async function toggleClassTaskApi(
       ...HEADERS.JsonBody,
       ...authHeader,
     },
+    body: JSON.stringify({ isCompleted }),
   })
 
   const json: ApiResponse<{ isCompleted: boolean; completedAt?: string }> = await res.json()

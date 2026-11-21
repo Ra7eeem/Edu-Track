@@ -34,9 +34,12 @@ export const getClassTaskProgress = asyncHandler(async (req: Request, res: Respo
 });
 
 export const toggleStudentTaskProgress = asyncHandler(async (req: Request, res: Response) => {
+  const isCompleted =
+    typeof req.body?.isCompleted === "boolean" ? req.body.isCompleted : undefined;
   const progress = await ClassTaskService.toggleStudentTaskProgress(
     req.user!.userId,
-    p(req.params.taskId)
+    p(req.params.taskId),
+    isCompleted
   );
   sendSuccess(res, progress, 200, "تم تحديث حالة إنجاز المهمة");
 });

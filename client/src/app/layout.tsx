@@ -7,6 +7,7 @@ import { QueryProvider }  from "@/shared/providers/query-provider"
 import { ThemeProvider }  from "@/shared/providers/theme-provider"
 import { PwaRegister }    from "@/shared/components/pwa-register"
 import { SplashScreen }   from "@/shared/components/splash-screen"
+import { PushNotificationSubscriber } from "@/shared/components/push-notification-subscriber"
 
 // Body & UI font — IBM Plex Sans Arabic
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
@@ -81,7 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PwaRegister />
 
           <NextAuthProvider>
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              {children}
+              <PushNotificationSubscriber />
+            </QueryProvider>
           </NextAuthProvider>
         </ThemeProvider>
       </body>

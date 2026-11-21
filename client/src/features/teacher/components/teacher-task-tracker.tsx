@@ -3,12 +3,12 @@
 import { useState } from "react"
 import {
   useClassTasks,
-  useCreateClassTask,
   useClassTaskProgress,
   useSendTaskReminder,
   useTeacherDailyQuestions,
   useCreateDailyQuestion,
 } from "../hooks/use-class-tasks"
+import { CreateTaskModal } from "./create-task-modal"
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
@@ -23,12 +23,9 @@ import {
   Users,
   X,
   Calendar,
-  AlertCircle,
-  HelpCircle,
   Sparkles,
   ChevronLeft,
   RotateCw,
-  Flame,
 } from "lucide-react"
 
 interface Props {
@@ -37,7 +34,6 @@ interface Props {
 
 export function TeacherTaskTracker({ groupId }: Props) {
   const { data, isLoading } = useClassTasks(groupId)
-  const createMut = useCreateClassTask(groupId)
   const reminderMut = useSendTaskReminder(groupId)
   const createDailyQMut = useCreateDailyQuestion(groupId)
   const { data: dailyQuestions = [] } = useTeacherDailyQuestions(groupId)
@@ -47,14 +43,10 @@ export function TeacherTaskTracker({ groupId }: Props) {
 
   // Create Task Modal state
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
-  const [taskTitle, setTaskTitle] = useState("")
-  const [taskDesc, setTaskDesc] = useState("")
-  const [taskType, setTaskType] = useState<"ONCE" | "DAILY">("ONCE")
-  const [taskDueDate, setTaskDueDate] = useState("")
-  const [createErr, setCreateErr] = useState<string | null>(null)
 
   // Drilldown progress modal state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [modalTab, setModalTab] = useState<"pending" | "completed">("pending")
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   )
@@ -73,34 +65,9 @@ export function TeacherTaskTracker({ groupId }: Props) {
   const [dqOptions, setDqOptions] = useState(["", "", "", ""])
   const [dqCorrectIndex, setDqCorrectIndex] = useState(0)
   const [dqExplanation, setDqExplanation] = useState("")
-  const [dqPoints, setDqPoints] = useState(5)
   const [dqErr, setDqErr] = useState<string | null>(null)
 
   const [reminderToast, setReminderToast] = useState<string | null>(null)
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!taskTitle.trim()) {
-      setCreateErr("عنوان المهمة مطلوب")
-      return
-    }
-    setCreateErr(null)
-    try {
-      await createMut.mutateAsync({
-        title: taskTitle.trim(),
-        description: taskDesc.trim() || undefined,
-        type: taskType,
-        dueDate: taskType === "ONCE" && taskDueDate ? taskDueDate : undefined,
-      })
-      setShowCreateTaskModal(false)
-      setTaskTitle("")
-      setTaskDesc("")
-      setTaskType("ONCE")
-      setTaskDueDate("")
-    } catch (err: any) {
-      setCreateErr(err.message || "حدث خطأ أثناء إضافة المهمة")
-    }
-  }
 
   const handleSendReminder = async (taskId: string, studentIds?: string[]) => {
     try {
@@ -140,7 +107,6 @@ export function TeacherTaskTracker({ groupId }: Props) {
       setDqQuestion("")
       setDqOptions(["", "", "", ""])
       setDqExplanation("")
-      setDqPoints(0)
       setReminderToast("تم نشر سؤال اليوم بنجاح!")
       setTimeout(() => setReminderToast(null), 3500)
     } catch (err: any) {
@@ -286,11 +252,12 @@ export function TeacherTaskTracker({ groupId }: Props) {
                       variant="outline"
                       onClick={() => {
                         setSelectedTaskId(tid)
+                        setModalTab("pending")
                         setSelectedDate(new Date().toISOString().split("T")[0])
                       }}
                       className="h-8 rounded-xl text-xs font-semibold"
                     >
-                      عرض تفاصيل الإنجاز
+                      عرض المتابعة
                       <ChevronLeft className="size-3 ms-1" />
                     </Button>
 
@@ -312,7 +279,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
         </div>
       )}
 
-      {/* ─── Drill-down Progress Modal ────────────────────────────── */}
+      {/* ─── Drill-down Progress Modal / Drawer ───────────────────── */}
       {selectedTaskId && progressData && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
@@ -385,104 +352,136 @@ export function TeacherTaskTracker({ groupId }: Props) {
                 />
               </div>
 
-              {/* Pending Students (with one-click reminder) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-1.5 text-xs font-bold text-amber-600">
-                    <Clock className="size-3.5" />
-                    الطلاب الذين لم ينجزوا بعد ({progressData.pending.length})
-                  </h3>
+              {/* Segmented Tabs: Pending vs Completed */}
+              <div className="flex rounded-xl border border-border p-1 bg-muted/40">
+                <button
+                  type="button"
+                  onClick={() => setModalTab("pending")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                    modalTab === "pending"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Clock className="size-3.5 text-amber-600" />
+                  <span>لم ينجزوا ({progressData.pending.length})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab("completed")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                    modalTab === "completed"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  <span>تم الإنجاز ({progressData.completed.length})</span>
+                </button>
+              </div>
 
-                  {progressData.pending.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSendReminder(selectedTaskId)}
-                      disabled={reminderMut.isPending}
-                      className="h-7 text-xs border-amber-500/40 text-amber-700 dark:text-amber-300"
-                    >
-                      <BellRing className="size-3 me-1" />
-                      إرسال تذكير للكل
-                    </Button>
+              {/* Tab 1: Pending Students */}
+              {modalTab === "pending" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      قائمة الطلاب المتأخرين عن تسليم المهمة
+                    </span>
+
+                    {progressData.pending.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSendReminder(selectedTaskId)}
+                        disabled={reminderMut.isPending}
+                        className="h-7 text-xs border-amber-500/40 text-amber-700 dark:text-amber-300"
+                      >
+                        <BellRing className="size-3 me-1" />
+                        تذكير الجميع 🔔
+                      </Button>
+                    )}
+                  </div>
+
+                  {progressData.pending.length === 0 ? (
+                    <p className="text-xs text-emerald-600 font-semibold p-4 rounded-2xl bg-emerald-500/10 text-center">
+                      رائع! جميع طلاب المجموعة أتموا هذه المهمة {isSelectedDaily ? "لهذا اليوم" : ""} 🎉
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                      {progressData.pending.map((p: any) => {
+                        const sid = resolveId(p.student)
+                        return (
+                          <div
+                            key={sid}
+                            className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="grid size-6 place-items-center rounded-lg bg-amber-500/10 text-[10px] font-bold text-amber-700">
+                                {p.student.name?.[0] || "؟"}
+                              </span>
+                              <span className="font-medium">{p.student.name}</span>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleSendReminder(selectedTaskId, [sid])}
+                              className="h-6 px-2 text-[11px] text-amber-600 hover:bg-amber-50"
+                            >
+                              تذكير
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
+              )}
 
-                {progressData.pending.length === 0 ? (
-                  <p className="text-xs text-emerald-600 font-semibold p-3 rounded-xl bg-emerald-500/10 text-center">
-                    رائع! جميع طلاب المجموعة أتموا هذه المهمة {isSelectedDaily ? "لهذا اليوم" : ""} 🎉
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                    {progressData.pending.map((p: any) => {
-                      const sid = resolveId(p.student)
-                      return (
-                        <div
-                          key={sid}
-                          className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="grid size-6 place-items-center rounded-lg bg-amber-500/10 text-[10px] font-bold text-amber-700">
-                              {p.student.name?.[0] || "؟"}
-                            </span>
-                            <span className="font-medium">{p.student.name}</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSendReminder(selectedTaskId, [sid])}
-                            className="h-6 px-2 text-[11px] text-amber-600 hover:bg-amber-50"
+              {/* Tab 2: Completed Students */}
+              {modalTab === "completed" && (
+                <div className="space-y-2">
+                  <span className="text-xs text-muted-foreground">
+                    الطلاب الذين قاموا بوضع علامة الإنجاز للمهمة
+                  </span>
+
+                  {progressData.completed.length === 0 ? (
+                    <p className="text-xs text-muted-foreground italic p-4 text-center rounded-2xl border border-dashed">
+                      لم يقم أي طالب بإنهاء هذه المهمة بعد
+                    </p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-56 overflow-y-auto">
+                      {progressData.completed.map((c: any) => {
+                        const sid = resolveId(c.student)
+                        return (
+                          <div
+                            key={sid}
+                            className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs"
                           >
-                            تذكير
-                          </Button>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Completed Students */}
-              <div className="space-y-2 pt-2 border-t border-border/60">
-                <h3 className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                  <CheckCircle2 className="size-3.5" />
-                  الطلاب الذين أنجزوا المهمة ({progressData.completed.length})
-                </h3>
-
-                {progressData.completed.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic p-3 text-center">
-                    لم يقم أي طالب بإنهاء هذه المهمة بعد
-                  </p>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                    {progressData.completed.map((c: any) => {
-                      const sid = resolveId(c.student)
-                      return (
-                        <div
-                          key={sid}
-                          className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="grid size-6 place-items-center rounded-lg bg-emerald-500/15 text-[10px] font-bold text-emerald-700">
-                              {c.student.name?.[0] || "؟"}
-                            </span>
-                            <span className="font-medium text-emerald-950 dark:text-emerald-200">
-                              {c.student.name}
+                            <div className="flex items-center gap-2">
+                              <span className="grid size-6 place-items-center rounded-lg bg-emerald-500/15 text-[10px] font-bold text-emerald-700">
+                                {c.student.name?.[0] || "؟"}
+                              </span>
+                              <span className="font-medium text-emerald-950 dark:text-emerald-200">
+                                {c.student.name}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
+                              {c.completedAt
+                                ? new Date(c.completedAt).toLocaleTimeString("ar-EG", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : "منجز"}
                             </span>
                           </div>
-                          <span className="text-[10px] text-muted-foreground">
-                            {c.completedAt
-                              ? new Date(c.completedAt).toLocaleTimeString("ar-EG", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "منجز"}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-border/60 text-end bg-muted/20">
@@ -499,138 +498,12 @@ export function TeacherTaskTracker({ groupId }: Props) {
         </div>
       )}
 
-      {/* ─── Create Class Task Modal (with Toggle Switch / Segmented Button) ── */}
-      {showCreateTaskModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={(e) => e.target === e.currentTarget && setShowCreateTaskModal(false)}
-        >
-          <div className="w-full max-w-md rounded-3xl bg-card border border-border shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
-              <h2 className="flex items-center gap-2 text-base font-bold text-heading">
-                <ListTodo className="size-5 text-primary" />
-                تعيين مهمة جديدة للمجموعة
-              </h2>
-              <button
-                onClick={() => setShowCreateTaskModal(false)}
-                className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateTask} className="p-5 space-y-4">
-              {/* Interactive Toggle Switch / Segmented Button */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold">نوع المهمة *</Label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/40 rounded-2xl border border-border/60">
-                  <button
-                    type="button"
-                    onClick={() => setTaskType("ONCE")}
-                    className={cn(
-                      "flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all",
-                      taskType === "ONCE"
-                        ? "bg-card text-foreground shadow-sm border border-border/80"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    📌 مهمة لمرة واحدة
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTaskType("DAILY")}
-                    className={cn(
-                      "flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all",
-                      taskType === "DAILY"
-                        ? "bg-card text-foreground shadow-sm border border-border/80"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    🔄 مهمة يومية متجددة
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {taskType === "ONCE"
-                    ? "واجب مدرسي، تسليم مشروع، أو حل تدريبات محددة (ينجزها الطالب لمرة واحدة)."
-                    : "ورد قرآني، أذكار الصباح، مراجعة يومية (تتجدد تلقائياً كل يوم عند منتصف الليل)."}
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="cTaskTitle" className="text-xs font-bold">
-                  عنوان المهمة *
-                </Label>
-                <Input
-                  id="cTaskTitle"
-                  placeholder={
-                    taskType === "ONCE"
-                      ? "مثال: مراجعة الدرس الأول، حل تدريبات ص 45..."
-                      : "مثال: قراءة ورد صفحتين من القرآن، أذكار الصباح..."
-                  }
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  className="mt-1 rounded-xl"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="cTaskDesc" className="text-xs font-bold">
-                  تفاصيل وتوجيهات (اختياري)
-                </Label>
-                <textarea
-                  id="cTaskDesc"
-                  rows={2}
-                  placeholder="اكتب أي تعليمات أو توضيحات إضافية للطلاب..."
-                  value={taskDesc}
-                  onChange={(e) => setTaskDesc(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-input bg-background p-3 text-xs outline-none focus:border-primary"
-                />
-              </div>
-
-              {/* Show Due Date only when taskType === 'ONCE' */}
-              {taskType === "ONCE" && (
-                <div>
-                  <Label htmlFor="cTaskDue" className="text-xs font-bold">
-                    موعد التسليم الأخير (اختياري)
-                  </Label>
-                  <Input
-                    id="cTaskDue"
-                    type="date"
-                    value={taskDueDate}
-                    onChange={(e) => setTaskDueDate(e.target.value)}
-                    className="mt-1 rounded-xl"
-                  />
-                </div>
-              )}
-
-              {createErr && (
-                <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive text-center">
-                  {createErr}
-                </p>
-              )}
-
-              <div className="flex gap-2 pt-2 border-t border-border/60">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 rounded-xl"
-                  onClick={() => setShowCreateTaskModal(false)}
-                >
-                  إلغاء
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createMut.isPending}
-                  className="flex-1 rounded-xl bg-primary text-primary-foreground font-semibold"
-                >
-                  {createMut.isPending ? "جارٍ الحفظ..." : "نشر المهمة للطلاب"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ─── Create Class Task Modal (Reusable Component) ─────────── */}
+      <CreateTaskModal
+        classroomId={groupId}
+        isOpen={showCreateTaskModal}
+        onClose={() => setShowCreateTaskModal(false)}
+      />
 
       {/* ─── Create Daily Question Modal ──────────────────────────── */}
       {showDailyQModal && (
@@ -642,7 +515,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
               <h2 className="flex items-center gap-2 text-base font-bold text-heading">
                 <Sparkles className="size-5 text-accent" />
-                إضافة / تعديل سؤال اليوم التنافسي
+                إضافة / تعديل سؤال اليوم المعرفي
               </h2>
               <button
                 onClick={() => setShowDailyQModal(false)}

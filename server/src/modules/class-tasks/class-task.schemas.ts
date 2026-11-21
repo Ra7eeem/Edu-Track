@@ -26,6 +26,11 @@ export const sendTaskReminderSchema = z.object({
   dateStr: z.string().optional(),
 });
 
+export const toggleStudentTaskProgressSchema = z.object({
+  isCompleted: z.boolean().optional(),
+});
+
 export type CreateClassTaskDto = z.infer<typeof createClassTaskSchema>;
 export type UpdateClassTaskDto = z.infer<typeof updateClassTaskSchema>;
 export type SendTaskReminderDto = z.infer<typeof sendTaskReminderSchema>;
+export type ToggleStudentTaskProgressDto = z.infer<typeof toggleStudentTaskProgressSchema>;

@@ -66,18 +66,10 @@ export function TopBar({
         <ThemeToggle />
 
         {/* Notifications */}
-        <Link
-          href={notifHref}
-          className="relative grid size-9 place-items-center rounded border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
-          aria-label="الإشعارات"
-        >
-          <Bell className="size-4" />
-          {unreadCount > 0 && (
-            <span className="absolute -end-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-accent text-[10px] font-bold text-white">
-              {unreadCount > 9 ? "٩+" : unreadCount}
-            </span>
-          )}
-        </Link>
+        <TopBarNotificationBell
+          notifHref={notifHref}
+          initialUnreadCount={unreadCount}
+        />
 
         {/* Avatar */}
         <Link href={profileHref} aria-label="الحساب">

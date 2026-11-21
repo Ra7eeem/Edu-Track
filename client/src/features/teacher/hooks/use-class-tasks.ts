@@ -62,15 +62,20 @@ export function useClassTaskProgress(taskId: string | null, date?: string) {
 export function useToggleClassTask(classroomId?: string | null) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (taskId: string) => {
+    mutationFn: async (payload: string | { taskId: string; isCompleted?: boolean }) => {
+      const taskId = typeof payload === "string" ? payload : payload.taskId
+      const isCompleted = typeof payload === "string" ? undefined : payload.isCompleted
       return clientFetch<{ isCompleted: boolean; completedAt?: string }>(
         `/api/class-tasks/${taskId}/toggle`,
         {
           method: "PATCH",
+          data: { isCompleted },
         }
       )
     },
-    onMutate: async (taskId: string) => {
+    onMutate: async (payload: string | { taskId: string; isCompleted?: boolean }) => {
+      const taskId = typeof payload === "string" ? payload : payload.taskId
+      const explicitCompleted = typeof payload === "string" ? undefined : payload.isCompleted
       if (!classroomId) return
       await qc.cancelQueries({ queryKey: ["class-tasks", classroomId] })
       const queryKey = ["class-tasks", classroomId, "today"]
@@ -85,7 +90,8 @@ export function useToggleClassTask(classroomId?: string | null) {
           ...previousData,
           tasks: previousData.tasks.map((t) => {
             if (resolveId(t) === taskId) {
-              const nextCompleted = !t.isCompleted
+              const nextCompleted =
+                explicitCompleted !== undefined ? explicitCompleted : !t.isCompleted
               return {
                 ...t,
                 isCompleted: nextCompleted,
@@ -122,7 +128,7 @@ export function useToggleClassTask(classroomId?: string | null) {
 
       return { previousData }
     },
-    onError: (_err, _taskId, context) => {
+    onError: (_err, _payload, context) => {
       if (classroomId && context?.previousData) {
         qc.setQueryData(
           ["class-tasks", classroomId, "today"],

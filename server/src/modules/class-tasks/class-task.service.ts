@@ -250,7 +250,7 @@ export async function getClassTasks(
 }
 
 // ─────────────────────────────────────────
-// 3. Teacher Task Progress Drill-down (Completed vs Pending)
+// 3. Teacher Task Progress / Breakdown Drill-down (Completed vs Pending)
 // ─────────────────────────────────────────
 export async function getClassTaskProgress(
   teacherId: string,
@@ -307,9 +307,29 @@ export async function getClassTaskProgress(
   const total = memberships.length;
   const percentage = total > 0 ? Math.round((completed.length / total) * 100) : 0;
 
+  const completedStudents = completed.map((c) => ({
+    _id: c.student?._id || c.student?.id,
+    name: c.student?.name || "طالب",
+    avatarUrl: c.student?.avatarUrl,
+    completedAt: c.completedAt,
+  }));
+
+  const pendingStudents = pending.map((p) => ({
+    _id: p.student?._id || p.student?.id,
+    name: p.student?.name || "طالب",
+    avatarUrl: p.student?.avatarUrl,
+  }));
+
   return {
+    taskId: task._id,
     task,
     selectedDate: targetDateStr,
+    totalStudents: total,
+    completedCount: completed.length,
+    pendingCount: pending.length,
+    percentage,
+    completedStudents,
+    pendingStudents,
     completed,
     pending,
     stats: {
@@ -324,7 +344,11 @@ export async function getClassTaskProgress(
 // ─────────────────────────────────────────
 // 4. Student toggles class task completion
 // ─────────────────────────────────────────
-export async function toggleStudentTaskProgress(studentId: string, taskId: string) {
+export async function toggleStudentTaskProgress(
+  studentId: string,
+  taskId: string,
+  explicitIsCompleted?: boolean
+) {
   if (!mongoose.Types.ObjectId.isValid(taskId)) throw ApiError.badRequest("معرّف غير صالح");
   const task = await ClassTask.findById(taskId);
   if (!task || !task.isActive) throw ApiError.notFound("المهمة غير موجودة");
@@ -351,7 +375,8 @@ export async function toggleStudentTaskProgress(studentId: string, taskId: strin
   }
 
   const existing = await StudentTaskProgress.findOne(findFilter);
-  const nextCompleted = existing ? !existing.isCompleted : true;
+  const nextCompleted =
+    explicitIsCompleted !== undefined ? explicitIsCompleted : (existing ? !existing.isCompleted : true);
 
   const updateDoc: any = {
     task: task._id,
@@ -415,14 +440,13 @@ export async function sendTaskReminder(
   }
 
   if (targetStudentIds.length > 0) {
-    const message = isDaily
-      ? `تذكير من المعلم: لم تقم بإنجاز الورد اليومي/المهمة اليومية: "${task.title}".`
-      : `تذكير من المعلم: لم تقم بإنجاز المهمة المطلوبة بعد: "${task.title}".`;
+    const title = `تذكير بمهمة: ${task.title}`;
+    const message = `يرجى إنجاز المهمة المطلوبة: ${task.title}`;
 
     await notifyUsers({
       userIds: targetStudentIds,
       type: NotificationType.NEW_POST,
-      title: "تذكير بمهمة دراسية",
+      title,
       message,
       metadata: { taskId: task._id, classroomId: task.classroom, dateStr: targetDateStr },
     });

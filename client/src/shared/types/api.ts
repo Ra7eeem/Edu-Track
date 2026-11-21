@@ -334,8 +334,9 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedResponse<T> {
-  data:       T[]
-  pagination: PaginationMeta
+  data:        T[]
+  pagination:  PaginationMeta
+  unreadCount?: number
 }
 
 // ─── Auth DTOs ────────────────────────────────────────────────────────────────

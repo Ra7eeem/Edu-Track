@@ -121,7 +121,7 @@ export function NotificationsClient({ initialData }: Props) {
         <div className="space-y-2">
           {filteredNotifs.map((n) => {
             const { icon: Icon, color } =
-              iconMap[n.type] ?? { icon: Bell, color: "text-muted-foreground bg-muted" }
+              iconMap[n.type as NotificationType] ?? { icon: Bell, color: "text-muted-foreground bg-muted" }
             return (
               <div
                 key={n.id || n._id}

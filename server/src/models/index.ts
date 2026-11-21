@@ -40,3 +40,5 @@ export type { IDailyQuestion } from "./DailyQuestion";
 export type { IDailyAnswer } from "./DailyAnswer";
 export { ArchivedScore } from "./ArchivedScore";
 export type { IArchivedScore } from "./ArchivedScore";
+export { PushSubscription } from "./PushSubscription";
+export type { IPushSubscription } from "./PushSubscription";

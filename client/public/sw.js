@@ -104,3 +104,49 @@ self.addEventListener("fetch", event => {
     })
   )
 })
+
+// ── Web Push Event: Receives notification even if website is closed ──────────
+self.addEventListener("push", event => {
+  if (!event.data) return
+
+  try {
+    const data = event.data.json()
+    const title = data.title || "EduTrack — تنبيه جديد"
+    const options = {
+      body: data.body || data.message || "",
+      icon: data.icon || "/logo.png",
+      badge: "/favicon.ico",
+      data: {
+        url: data.data?.url || "/student/notifications",
+      },
+      vibrate: [200, 100, 200],
+      dir: "rtl",
+      lang: "ar",
+      tag: data.tag || "edutrack-notification",
+      renotify: true,
+    }
+
+    event.waitUntil(self.registration.showNotification(title, options))
+  } catch (err) {
+    console.error("Push notification display error:", err)
+  }
+})
+
+// ── Notification Click Event: Opens the relevant page ─────────────────────────
+self.addEventListener("notificationclick", event => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.url || "/student/notifications"
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url.includes(targetUrl) && "focus" in client) {
+          return client.focus()
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl)
+      }
+    })
+  )
+})

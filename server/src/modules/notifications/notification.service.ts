@@ -4,6 +4,7 @@ import { ApiError } from "../../utils/ApiError";
 import { NotificationType } from "../../types";
 import mongoose from "mongoose";
 import { Request } from "express";
+import { sendWebPushNotification } from "./push.service";
 
 export async function notifyUsers({
   userIds,
@@ -39,6 +40,13 @@ export async function notifyUsers({
   }));
 
   await Notification.insertMany(docs);
+
+  // Method 2: Fire Web Push notifications in background to all user devices
+  sendWebPushNotification(uniqueIds, {
+    title,
+    message,
+    metadata,
+  }).catch(() => {});
 }
 
 export async function getNotifications(userId: string, req: Request) {
