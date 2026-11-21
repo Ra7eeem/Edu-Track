@@ -406,3 +406,71 @@ export interface AttendanceRegister {
   month:    number
   year:     number
 }
+
+// ─── Gamified Teams & Student Tasks ───────────────────────────────────────────
+
+export interface ApiTeamMember {
+  _id?:            string
+  id?:             string
+  name:            string
+  email?:          string
+  avatarUrl?:      string | null
+  grade?:          Grade
+  phone?:          string
+  individualScore: number
+  presentCount?:   number
+  internalRank?:   number
+}
+
+export interface ApiTeam {
+  _id:                string
+  id?:                string
+  name:               string
+  classroom:          string
+  teacher:            string
+  totalScore:         number
+  currentCycleScore:  number
+  teamRank?:          number
+  membersCount:       number
+  members:            ApiTeamMember[]
+  createdAt:          string
+}
+
+export interface ApiStudentTeamInfo {
+  team: {
+    _id:               string
+    id?:               string
+    name:              string
+    totalScore:        number
+    currentCycleScore: number
+    teamRank:          number
+    totalTeams:        number
+  }
+  studentRankInTeam:  number
+  studentScoreInTeam: number
+  totalMembersInTeam: number
+}
+
+export interface ApiStudentTask {
+  _id?:        string
+  id?:         string
+  student:     string
+  title:       string
+  isCompleted: boolean
+  dueDate?:    string | null
+  order:       number
+  createdAt:   string
+  updatedAt:   string
+}
+
+export interface StudentTaskStats {
+  total:      number
+  completed:  number
+  pending:    number
+  percentage: number
+}
+
+export interface ApiStudentTasksResponse {
+  tasks: ApiStudentTask[]
+  stats: StudentTaskStats
+}

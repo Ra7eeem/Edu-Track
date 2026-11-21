@@ -3,13 +3,15 @@ import { Attendance } from "../../models/Attendance";
 import { StudentScore } from "../../models/StudentScore";
 import { GroupMembership } from "../../models/GroupMembership";
 import { ApiError } from "../../utils/ApiError";
-import { AttendanceStatus } from "../../types";
+import { AttendanceStatus, NotificationType } from "../../types";
 import { toDateOnly, parseMonthYear } from "../../utils/date";
 import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { ATTENDANCE_SCORE } from "../../config/constants";
 import { Request } from "express";
 import { RecordAttendanceDto } from "./attendance.schemas";
 import { assertTeacherOwnsGroup } from "../teachers/teacher.service";
+import { calculateTeamAttendancePoints } from "../teams/team.service";
+import { notifyUsers } from "../notifications/notification.service";
 
 // ─────────────────────────────────────────
 // Record / upsert attendance (idempotent)
@@ -95,6 +97,35 @@ export async function recordAttendance(
   });
 
   await Promise.all(scoreOps);
+
+  // 1. Calculate & apply team attendance points according to the 3/2/1/0 gamified formula
+  try {
+    await calculateTeamAttendancePoints(groupId, dto.records, teacherId, dto.date);
+  } catch (e) {
+    console.error("Failed to calculate team attendance points:", e);
+  }
+
+  // 2. Dispatch attendance notification to each student
+  try {
+    for (const r of dto.records) {
+      const statusArabic =
+        r.status === AttendanceStatus.PRESENT
+          ? "حاضر"
+          : r.status === AttendanceStatus.LATE
+          ? "متأخر"
+          : "غائب";
+
+      await notifyUsers({
+        userIds: [r.studentId],
+        type: NotificationType.ATTENDANCE_RECORDED,
+        title: "تسجيل الحضور",
+        message: `تم تسجيل حالة حضورك لتاريخ ${dto.date}: ${statusArabic}`,
+        metadata: { groupId, date: dto.date, status: r.status },
+      });
+    }
+  } catch (e) {
+    console.error("Failed to dispatch attendance notifications:", e);
+  }
 }
 
 // ─────────────────────────────────────────

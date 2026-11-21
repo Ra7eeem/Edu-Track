@@ -1,8 +1,45 @@
 import { Notification } from "../../models/Notification";
 import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { ApiError } from "../../utils/ApiError";
+import { NotificationType } from "../../types";
 import mongoose from "mongoose";
 import { Request } from "express";
+
+export async function notifyUsers({
+  userIds,
+  type,
+  title,
+  message,
+  metadata,
+}: {
+  userIds: (string | mongoose.Types.ObjectId)[];
+  type: NotificationType;
+  title: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const validIds = userIds
+    .filter(Boolean)
+    .map((id) => (typeof id === "string" ? new mongoose.Types.ObjectId(id) : id));
+
+  if (validIds.length === 0) return;
+
+  // Deduplicate user IDs so no user gets duplicate notifications for the same trigger
+  const uniqueIds = Array.from(new Set(validIds.map((id) => String(id)))).map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
+
+  const docs = uniqueIds.map((userId) => ({
+    user: userId,
+    type,
+    title,
+    message,
+    metadata,
+    isRead: false,
+  }));
+
+  await Notification.insertMany(docs);
+}
 
 export async function getNotifications(userId: string, req: Request) {
   const { page, limit, skip } = parsePagination(req);

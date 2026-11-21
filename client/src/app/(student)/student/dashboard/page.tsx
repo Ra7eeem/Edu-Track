@@ -6,6 +6,8 @@ import type { StudentDashboardData } from "@/features/student/types/student"
 import { getSessionData } from "@/shared/lib/session"
 import { resolveId } from "@/shared/types/api"
 import { DashboardPostsFeed } from "./posts-feed"
+import { StudentTeamCard } from "@/features/student/components/student-team-card"
+import { StudentTaskBar } from "@/features/student/components/student-task-bar"
 import { ArrowLeft, CalendarCheck, Trophy, XCircle } from "lucide-react"
 import Link from "next/link"
 
@@ -86,6 +88,12 @@ export default async function StudentDashboard() {
             );
           })}
         </div>
+
+        {/* Gamified Team & Rank Card */}
+        <StudentTeamCard classroomId={firstGroup ? resolveId(firstGroup) : null} />
+
+        {/* Private Student Task & Progress Bar */}
+        <StudentTaskBar />
 
         {/* Recent posts */}
         {posts.length > 0 && firstGroup && (

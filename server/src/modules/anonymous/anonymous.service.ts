@@ -4,6 +4,8 @@ import { GroupMembership } from "../../models/GroupMembership";
 import { GroupTeacher } from "../../models/GroupTeacher";
 import { ApiError } from "../../utils/ApiError";
 import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
+import { notifyUsers } from "../notifications/notification.service";
+import { NotificationType } from "../../types";
 import { Request } from "express";
 import { SendMessageDto, ReplyMessageDto } from "./anonymous.schemas";
 
@@ -96,6 +98,21 @@ export async function replyToMessage(
   msg.repliedAt = new Date();
   msg.repliedBy = new mongoose.Types.ObjectId(teacherId);
   await msg.save();
+
+  if (msg.sender) {
+    try {
+      const snippet = dto.reply.trim().slice(0, 50) + (dto.reply.trim().length > 50 ? "..." : "");
+      await notifyUsers({
+        userIds: [msg.sender],
+        type: NotificationType.QUESTION_REPLIED,
+        title: "تم الرد على استفسارك",
+        message: `قام المعلم بالرد على استفسارك: ${snippet}`,
+        metadata: { messageId: msg._id, groupId: msg.group },
+      });
+    } catch (e) {
+      console.error("Failed to notify student about reply to message:", e);
+    }
+  }
 
   // Return WITHOUT exposing sender
   return {

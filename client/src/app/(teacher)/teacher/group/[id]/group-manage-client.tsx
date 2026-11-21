@@ -24,6 +24,7 @@ import { cn } from "@/shared/lib/tailwind-cn"
 import { PostCommentsSection } from "@/features/teacher/components/post-comments-section"
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import { EditGroupModal }     from "@/features/teacher/components/edit-group-modal"
+import { TeamsClient }        from "@/features/teacher/components/teams-client"
 import {
   resolveId,
   AttendanceStatus,
@@ -37,7 +38,7 @@ import {
 import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/use-group-students"
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
-  AlertTriangle, CheckCircle2, Clock, ClipboardList, Gift, Heart,
+  AlertTriangle, CheckCircle2, Clock, ClipboardList, Flame, Gift, Heart,
   PenLine, Plus, RefreshCcw, RotateCcw, Save, Search, Settings,
   Trash2, Trophy, Users, X, XCircle,
 } from "lucide-react"
@@ -47,6 +48,7 @@ import { useQueryClient } from "@tanstack/react-query"
 
 const TABS = [
   { key: "overview",      label: "نظرة عامة",        icon: BarChart3     },
+  { key: "teams",         label: "الفرق والتنافس",   icon: Flame         },
   { key: "students",      label: "الطلاب",             icon: Users         },
   { key: "attendance",    label: "الحضور",             icon: CalendarCheck },
   { key: "register",      label: "كشاف الغياب",        icon: ClipboardList },
@@ -884,6 +886,9 @@ export function GroupManageClient({
             </div>
           )
         )}
+
+        {/* ── Teams (الفرق والمنافسة) ── */}
+        {tab === "teams" && <TeamsClient groupId={id} />}
 
         {/* ── Students ── */}
         {tab === "students" && (

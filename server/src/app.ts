@@ -19,6 +19,8 @@ import { studentRouter } from "./modules/students/student.routes";
 import { notificationRouter } from "./modules/notifications/notification.routes";
 import { anonymousRouter } from "./modules/anonymous/anonymous.routes";
 import { assignmentRouter } from "./modules/assignments/assignment.routes";
+import { teamRouter } from "./modules/teams/team.routes";
+import { studentTaskRouter } from "./modules/student-tasks/student-task.routes";
 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
@@ -126,6 +128,10 @@ app.use("/api/students",      studentRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/anonymous",     anonymousRouter);
 app.use("/api/assignments",   assignmentRouter);
+app.use("/api/teams",         teamRouter);
+app.use("/api/v1/teams",      teamRouter);
+app.use("/api/student/tasks", studentTaskRouter);
+app.use("/api/v1/student/tasks", studentTaskRouter);
 
 // ── 404 ───────────────────────────────────
 app.use(notFoundHandler);

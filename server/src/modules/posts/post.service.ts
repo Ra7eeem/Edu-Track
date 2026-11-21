@@ -9,6 +9,7 @@ import { ApiError } from "../../utils/ApiError";
 import { Role, NotificationType } from "../../types";
 import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { getFileUrl } from "../../middleware/upload";
+import { notifyUsers } from "../notifications/notification.service";
 import { Request } from "express";
 import {
   CreatePostDto,
@@ -93,22 +94,27 @@ export async function createPost(
     imageUrl: imageFilename ? getFileUrl(imageFilename) : undefined,
   });
 
-  // Notify all group members
-  const memberships = await GroupMembership.find({
-    group: groupId,
-    isActive: true,
-  }).select("student");
+  // Notify all group members (excluding author)
+  try {
+    const memberships = await GroupMembership.find({
+      group: groupId,
+      isActive: true,
+    }).select("student");
 
-  const notifications = memberships.map((m) => ({
-    user: m.student,
-    type: NotificationType.NEW_POST,
-    title: "منشور جديد في مجموعتك",
-    message: `نشر المدرس منشوراً جديداً في المجموعة`,
-    metadata: { postId: post._id, groupId },
-  }));
+    const recipientIds = memberships
+      .map((m) => m.student)
+      .filter((s) => String(s) !== String(authorId));
 
-  if (notifications.length > 0) {
-    await Notification.insertMany(notifications);
+    const postSnippet = dto.content.trim().slice(0, 40) + (dto.content.trim().length > 40 ? "..." : "");
+    await notifyUsers({
+      userIds: recipientIds,
+      type: NotificationType.NEW_POST,
+      title: "منشور جديد",
+      message: `نشر المعلم منشوراً جديداً: ${postSnippet}`,
+      metadata: { postId: post._id, groupId },
+    });
+  } catch (e) {
+    console.error("Failed to notify users about new post:", e);
   }
 
   return post;
@@ -236,24 +242,33 @@ export async function createComment(
   }
 
   // Notifications
-  const notificationType = parentComment
-    ? NotificationType.NEW_REPLY
-    : NotificationType.NEW_COMMENT;
-
   const notifyUserId = parentComment
     ? String(parentComment.author)  // notify parent comment author on reply
     : String(post.author);           // notify post author on comment
 
   if (notifyUserId !== authorId) {
-    await Notification.create({
-      user: notifyUserId,
-      type: notificationType,
-      title: parentComment ? "رد جديد على تعليقك" : "تعليق جديد على منشورك",
-      message: parentComment
-        ? "رد شخص ما على تعليقك"
-        : "علّق شخص ما على منشورك",
-      metadata: { postId, commentId: comment._id },
-    });
+    try {
+      const snippet = dto.content.trim().slice(0, 50) + (dto.content.trim().length > 50 ? "..." : "");
+      if (parentComment) {
+        await notifyUsers({
+          userIds: [notifyUserId],
+          type: NotificationType.QUESTION_REPLIED,
+          title: "تم الرد على استفسارك",
+          message: `قام المعلم بالرد على استفسارك: ${snippet}`,
+          metadata: { postId, commentId: comment._id, parentCommentId: parentComment._id },
+        });
+      } else {
+        await notifyUsers({
+          userIds: [notifyUserId],
+          type: NotificationType.NEW_COMMENT,
+          title: "تعليق جديد على منشورك",
+          message: `علّق شخص ما على منشورك: ${snippet}`,
+          metadata: { postId, commentId: comment._id },
+        });
+      }
+    } catch (e) {
+      console.error("Failed to notify comment recipient:", e);
+    }
   }
 
   return comment.populate("author", "name avatarUrl role");

@@ -7,7 +7,8 @@ import { parsePagination, buildPaginationMeta } from "../../utils/pagination";
 import { Request } from "express";
 import { assertTeacherOwnsGroup } from "../teachers/teacher.service";
 import { CreateAssignmentDto, UpdateAssignmentDto } from "./assignment.schemas";
-import { PaginatedResult } from "../../types";
+import { PaginatedResult, NotificationType } from "../../types";
+import { notifyUsers } from "../notifications/notification.service";
 
 function resultsAreVisible(showResults: boolean | undefined): boolean {
   // Missing field on older documents should keep the previous default (visible).
@@ -74,6 +75,24 @@ export async function createAssignment(teacherId: string, dto: CreateAssignmentD
       availableTo:     dto.availableTo     ? new Date(dto.availableTo)     : null,
       questions:       dto.questions       ?? [],
     });
+
+    try {
+      const memberships = await GroupMembership.find({
+        group: dto.groupId,
+        isActive: true,
+      }).select("student");
+      const userIds = memberships.map((m) => m.student);
+      const isExam = dto.type === AssignmentType.EXAM;
+      await notifyUsers({
+        userIds,
+        type: NotificationType.NEW_EXAM,
+        title: isExam ? "اختبار جديد" : "واجب جديد",
+        message: `تم إضافة ${isExam ? "اختبار جديد" : "واجب جديد"}: ${dto.title}`,
+        metadata: { assignmentId: assignment._id, groupId: dto.groupId, type: dto.type },
+      });
+    } catch (e) {
+      console.error("Failed to dispatch assignment notifications:", e);
+    }
 
     return assignment.populate("author", "name avatarUrl");
   } finally {
