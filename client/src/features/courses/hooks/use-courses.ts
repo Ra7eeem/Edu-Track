@@ -79,7 +79,7 @@ export function useDeleteCourse(classroomId?: string) {
   });
 }
 
-export function useCreateLesson(classroomId: string) {
+export function useCreateLesson(classroomId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -96,17 +96,23 @@ export function useCreateLesson(classroomId: string) {
       };
     }) => createLessonApi(courseId, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      if (classroomId) {
+        qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      }
+      qc.invalidateQueries({ queryKey: courseKeys.all });
     },
   });
 }
 
-export function useDeleteLesson(classroomId: string) {
+export function useDeleteLesson(classroomId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (lessonId: string) => deleteLessonApi(lessonId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      if (classroomId) {
+        qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      }
+      qc.invalidateQueries({ queryKey: courseKeys.all });
     },
   });
 }

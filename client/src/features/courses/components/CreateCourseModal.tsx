@@ -115,7 +115,7 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
                     <option value="" disabled>-- اختر المجموعة --</option>
                     {groups.map((group) => {
                       const gid = resolveId(group);
-                      const stageName = (group.academicStage as any)?.name;
+                      const stageName = (group as any)?.academicStage?.name || (group as any)?.grade;
                       return (
                         <option key={gid} value={gid}>
                           {group.name} {stageName ? `(${stageName})` : ""}

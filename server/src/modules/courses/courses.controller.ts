@@ -9,7 +9,7 @@ import {
   CreateLessonCommentDto,
 } from "./courses.schemas";
 
-const p = (v: string | string[]): string => String(v);
+const p = (v: unknown): string => String(v);
 
 // ── Courses ──────────────────────────────────────────
 
