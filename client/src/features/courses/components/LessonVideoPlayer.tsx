@@ -93,6 +93,8 @@ export function LessonVideoPlayer({
       if (!isMounted) return;
       try {
         playerRef.current = new (window as any).YT.Player("youtube-player", {
+          width: "100%",
+          height: "100%",
           videoId: youtubeVideoId,
           playerVars: {
             autoplay: 0,
@@ -170,7 +172,7 @@ export function LessonVideoPlayer({
   return (
     <div className="flex flex-col gap-3">
       {/* Video Container */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-black shadow-xl">
+      <div className="relative aspect-[16/10] sm:aspect-[16/9.5] min-h-[380px] sm:min-h-[480px] lg:min-h-[520px] max-h-[640px] w-full overflow-hidden rounded-2xl border border-border bg-black shadow-2xl [&_iframe]:h-full [&_iframe]:w-full">
         <div id="youtube-player" className="h-full w-full" />
       </div>
 

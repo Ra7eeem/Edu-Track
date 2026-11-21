@@ -1,22 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCreateCourse } from "../hooks/use-courses";
-import { X, BookOpen, Image as ImageIcon, Loader2 } from "lucide-react";
+import { useTeacherGroups } from "@/features/teacher/hooks/use-teacher-groups";
+import { resolveId } from "@/shared/types/api";
+import { X, BookOpen, Image as ImageIcon, Loader2, Users } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  classroomId: string;
+  classroomId?: string;
 }
 
 export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
+  const [selectedClassroomId, setSelectedClassroomId] = useState(classroomId || "");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const createMutation = useCreateCourse(classroomId);
+  const { data: groups = [], isLoading: isLoadingGroups } = useTeacherGroups();
+  const createMutation = useCreateCourse(selectedClassroomId || classroomId);
+
+  useEffect(() => {
+    if (classroomId) {
+      setSelectedClassroomId(classroomId);
+    } else if (groups.length > 0 && !selectedClassroomId) {
+      setSelectedClassroomId(resolveId(groups[0]));
+    }
+  }, [classroomId, groups, selectedClassroomId]);
 
   if (!isOpen) return null;
 
@@ -26,6 +38,10 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
       setError("يرجى إدخال عنوان الكورس");
       return;
     }
+    if (!selectedClassroomId) {
+      setError("يرجى اختيار المجموعة التي سيظهر لها الكورس");
+      return;
+    }
     setError(null);
 
     try {
@@ -33,6 +49,7 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
         title: title.trim(),
         description: description.trim() || undefined,
         thumbnailUrl: thumbnailUrl.trim() || undefined,
+        classroomId: selectedClassroomId,
       });
       setTitle("");
       setDescription("");
@@ -57,7 +74,7 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
             </div>
             <div>
               <h3 className="text-base font-bold text-foreground">إضافة كورس جديد</h3>
-              <p className="text-xs text-muted-foreground">أنشئ كورساً جديداً لإضافة الدروس التعليمية داخله</p>
+              <p className="text-xs text-muted-foreground">أنشئ كورساً جديداً وحدد المجموعة الموجه إليها</p>
             </div>
           </div>
           <button
@@ -75,6 +92,45 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
               {error}
             </div>
           )}
+
+          {/* Classroom Selector */}
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-foreground">
+              المجموعة المستهدفة <span className="text-destructive">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={selectedClassroomId}
+                onChange={(e) => setSelectedClassroomId(e.target.value)}
+                required
+                disabled={isLoadingGroups}
+                className="w-full appearance-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-medium outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                {isLoadingGroups ? (
+                  <option>جاري تحميل المجموعات...</option>
+                ) : groups.length === 0 ? (
+                  <option value="">لا توجد مجموعات متاحة</option>
+                ) : (
+                  <>
+                    <option value="" disabled>-- اختر المجموعة --</option>
+                    {groups.map((group) => {
+                      const gid = resolveId(group);
+                      const stageName = (group.academicStage as any)?.name;
+                      return (
+                        <option key={gid} value={gid}>
+                          {group.name} {stageName ? `(${stageName})` : ""}
+                        </option>
+                      );
+                    })}
+                  </>
+                )}
+              </select>
+              <Users className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              سيتمكن طلاب هذه المجموعة فقط من الوصول إلى الكورس والدروس المضافة بداخله.
+            </p>
+          </div>
 
           <div>
             <label className="mb-1.5 block text-xs font-bold text-foreground">
@@ -129,7 +185,7 @@ export function CreateCourseModal({ isOpen, onClose, classroomId }: Props) {
             </button>
             <button
               type="submit"
-              disabled={createMutation.isPending || !title.trim()}
+              disabled={createMutation.isPending || !title.trim() || !selectedClassroomId}
               className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
             >
               {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

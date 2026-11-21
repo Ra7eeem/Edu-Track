@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getGroupCoursesApi,
+  getMyCoursesApi,
   createCourseApi,
   deleteCourseApi,
   createLessonApi,
@@ -18,6 +19,7 @@ import {
 
 export const courseKeys = {
   all: ["courses"] as const,
+  myCourses: (groupId?: string) => [...courseKeys.all, "my", groupId ?? "all"] as const,
   byGroup: (groupId: string) => [...courseKeys.all, "group", groupId] as const,
   lesson: (lessonId: string) => ["lesson", lessonId] as const,
   analytics: (lessonId: string) => ["lesson-analytics", lessonId] as const,
@@ -33,7 +35,15 @@ export function useGroupCourses(classroomId: string) {
   });
 }
 
-export function useCreateCourse(classroomId: string) {
+export function useMyCourses(classroomId?: string) {
+  return useQuery({
+    queryKey: courseKeys.myCourses(classroomId),
+    queryFn: () => getMyCoursesApi(classroomId),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useCreateCourse(classroomId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: {
@@ -41,19 +51,30 @@ export function useCreateCourse(classroomId: string) {
       description?: string;
       thumbnailUrl?: string | null;
       order?: number;
-    }) => createCourseApi({ ...data, classroomId }),
+      classroomId?: string;
+    }) => {
+      const targetClassroom = data.classroomId || classroomId;
+      if (!targetClassroom) throw new Error("يجب اختيار المجموعة المستهدفة للكورس");
+      return createCourseApi({
+        title: data.title,
+        description: data.description,
+        thumbnailUrl: data.thumbnailUrl,
+        order: data.order,
+        classroomId: targetClassroom,
+      });
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
     },
   });
 }
 
-export function useDeleteCourse(classroomId: string) {
+export function useDeleteCourse(classroomId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (courseId: string) => deleteCourseApi(courseId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: courseKeys.byGroup(classroomId) });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
     },
   });
 }
@@ -145,7 +166,10 @@ export function useLessonComments(lessonId: string) {
 export function useCreateLessonComment(lessonId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (content: string) => createLessonCommentApi(lessonId, { content }),
+    mutationFn: (data: string | { content: string; parentId?: string | null }) => {
+      const payload = typeof data === "string" ? { content: data } : data;
+      return createLessonCommentApi(lessonId, payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: courseKeys.comments(lessonId) });
     },

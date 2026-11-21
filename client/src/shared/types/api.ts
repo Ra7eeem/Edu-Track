@@ -612,7 +612,7 @@ export interface ApiLesson {
 export interface ApiCourse {
   _id:                       string
   id?:                       string
-  classroom:                 string
+  classroom:                 string | { _id: string; name: string; imageUrl?: string; grades?: string[] }
   teacher:                   string
   title:                     string
   description:               string
@@ -639,6 +639,7 @@ export interface ApiLessonComment {
     role:     Role | string
   }
   content:    string
+  parentId?:  string | null
   createdAt:  string
   updatedAt?: string
 }

@@ -12,6 +12,12 @@ export async function getGroupCoursesApi(classroomId: string): Promise<ApiCourse
   return Array.isArray(res) ? res : ((res as any)?.data ?? []);
 }
 
+export async function getMyCoursesApi(classroomId?: string): Promise<ApiCourse[]> {
+  const query = classroomId ? `?classroomId=${classroomId}` : "";
+  const res = await clientFetch<ApiCourse[]>(`/api/v1/courses/my-courses${query}`);
+  return Array.isArray(res) ? res : ((res as any)?.data ?? []);
+}
+
 export async function createCourseApi(data: {
   classroomId: string;
   title: string;
@@ -114,7 +120,7 @@ export async function getLessonCommentsApi(
 
 export async function createLessonCommentApi(
   lessonId: string,
-  data: { content: string }
+  data: { content: string; parentId?: string | null }
 ): Promise<ApiLessonComment> {
   const res = await clientFetch<ApiLessonComment>(`/api/v1/lessons/${lessonId}/comments`, {
     method: "POST",

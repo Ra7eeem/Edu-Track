@@ -30,6 +30,16 @@ export const getGroupCourses = asyncHandler(async (req: Request, res: Response) 
   sendSuccess(res, courses);
 });
 
+export const getMyCourses = asyncHandler(async (req: Request, res: Response) => {
+  const classroomId = req.query.classroomId ? p(req.query.classroomId) : undefined;
+  const courses = await CoursesService.getMyCourses(
+    req.user!.userId,
+    req.user!.role,
+    classroomId
+  );
+  sendSuccess(res, courses);
+});
+
 export const deleteCourse = asyncHandler(async (req: Request, res: Response) => {
   const result = await CoursesService.deleteCourse(
     req.user!.userId,
@@ -102,11 +112,12 @@ export const getLessonComments = asyncHandler(async (req: Request, res: Response
 });
 
 export const createLessonComment = asyncHandler(async (req: Request, res: Response) => {
-  const { content } = req.body as CreateLessonCommentDto;
+  const { content, parentId } = req.body as CreateLessonCommentDto;
   const comment = await CoursesService.createLessonComment(
     req.user!.userId,
     p(req.params.lessonId),
-    content
+    content,
+    parentId
   );
   sendSuccess(res, comment, 201, "تم إضافة التعليق بنجاح");
 });

@@ -26,6 +26,7 @@ courseRouter.post(
   CoursesController.createCourse
 );
 
+courseRouter.get("/my-courses", CoursesController.getMyCourses);
 courseRouter.get("/classroom/:classroomId", CoursesController.getGroupCourses);
 
 courseRouter.delete(

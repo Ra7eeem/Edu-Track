@@ -16,6 +16,7 @@ import {
   Trophy,
   UserCheck,
   Users,
+  Video,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -29,7 +30,8 @@ interface NavItem {
 }
 
 const teacherNav: NavItem[] = [
-  { label: "الرئيسية",         href: "/teacher/dashboard",    icon: LayoutDashboard },
+  { label: "الرئيسية",         href: "/teacher/dashboard",     icon: LayoutDashboard },
+  { label: "الكورسات والدروس", href: "/teacher/courses",       icon: Video           },
   { label: "مجموعاتي",         href: "/teacher/groups",        icon: BookOpen        },
   { label: "طلبات الانضمام",   href: "/teacher/join-requests", icon: UserCheck       },
   { label: "الرسائل المجهولة", href: "/teacher/messages",      icon: MessageCircle   },
@@ -38,7 +40,8 @@ const teacherNav: NavItem[] = [
 ]
 
 const studentNav: NavItem[] = [
-  { label: "الرئيسية",         href: "/student/dashboard",    icon: LayoutDashboard },
+  { label: "الرئيسية",         href: "/student/dashboard",     icon: LayoutDashboard },
+  { label: "الكورسات والدروس", href: "/student/courses",       icon: Video           },
   { label: "مجموعتي",          href: "/student/group",         icon: BookOpen        },
   { label: "الواجبات",         href: "/student/assignments",   icon: ClipboardList   },
   { label: "الترتيب",          href: "/student/ranking",       icon: Trophy          },

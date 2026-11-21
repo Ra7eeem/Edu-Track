@@ -12,6 +12,7 @@ import {
   Trophy,
   UserCheck,
   Users,
+  Video,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -19,18 +20,18 @@ import type { SidebarVariant } from "./sidebar"
 
 const teacherItems = [
   { label: "الرئيسية",  href: "/teacher/dashboard",    icon: LayoutDashboard },
+  { label: "الكورسات",  href: "/teacher/courses",      icon: Video           },
   { label: "مجموعاتي", href: "/teacher/groups",         icon: BookOpen        },
   { label: "طلبات",    href: "/teacher/join-requests",  icon: UserCheck       },
-  { label: "رسائل",    href: "/teacher/messages",       icon: MessageCircle   },
   { label: "إشعارات",  href: "/teacher/notifications",  icon: Bell            },
 ]
 
 const studentItems = [
   { label: "الرئيسية", href: "/student/dashboard",    icon: LayoutDashboard },
+  { label: "الكورسات", href: "/student/courses",      icon: Video           },
   { label: "مجموعتي", href: "/student/group",          icon: BookOpen        },
   { label: "الواجبات", href: "/student/assignments",   icon: ClipboardList   },
   { label: "الترتيب", href: "/student/ranking",        icon: Trophy          },
-  { label: "رسائل",   href: "/student/messages",       icon: MessageCircle   },
 ]
 
 const adminItems = [

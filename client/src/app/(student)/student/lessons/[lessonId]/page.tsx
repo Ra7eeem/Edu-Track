@@ -75,8 +75,8 @@ export default function StudentLessonPage({ params }: Props) {
         {/* Navigation / Breadcrumb */}
         <div className="mb-5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Link href="/student/group" className="hover:text-foreground">
-              المجموعة
+            <Link href="/student/courses" className="hover:text-foreground">
+              الكورسات والدروس
             </Link>
             <span>/</span>
             <span className="text-foreground font-semibold">
@@ -87,11 +87,11 @@ export default function StudentLessonPage({ params }: Props) {
           </div>
 
           <Link
-            href="/student/group"
+            href="/student/courses"
             className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
             <ArrowRight className="h-4 w-4" />
-            <span>العودة للمجموعة</span>
+            <span>العودة للكورسات</span>
           </Link>
         </div>
 

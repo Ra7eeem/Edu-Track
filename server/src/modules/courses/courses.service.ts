@@ -590,7 +590,8 @@ export async function getLessonComments(lessonId: string, limit = 50) {
 export async function createLessonComment(
   userId: string,
   lessonId: string,
-  content: string
+  content: string,
+  parentId?: string | null
 ) {
   const lesson = await Lesson.findById(lessonId);
   if (!lesson) throw ApiError.notFound("الدرس غير موجود");
@@ -599,6 +600,7 @@ export async function createLessonComment(
     lesson: lessonId,
     author: userId,
     content: content.trim(),
+    parentId: parentId || null,
   });
 
   const populated = await LessonComment.findById(comment._id)
