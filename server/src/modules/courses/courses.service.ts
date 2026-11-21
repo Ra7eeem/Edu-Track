@@ -161,6 +161,118 @@ export async function getGroupCourses(classroomId: string, studentId?: string) {
 }
 
 /**
+ * Get courses across user's groups (standalone courses view)
+ */
+export async function getMyCourses(
+  userId: string,
+  userRole: string,
+  classroomId?: string
+) {
+  let groupIds: mongoose.Types.ObjectId[] = [];
+
+  if (classroomId && mongoose.Types.ObjectId.isValid(classroomId)) {
+    groupIds = [new mongoose.Types.ObjectId(classroomId)];
+  } else if (userRole === "ADMIN") {
+    const allGroups = await Group.find({ isActive: true }).select("_id").lean();
+    groupIds = allGroups.map((g) => g._id);
+  } else if (userRole === "TEACHER") {
+    const [links, createdGroups] = await Promise.all([
+      GroupTeacher.find({ teacher: userId }).select("group").lean(),
+      Group.find({ createdBy: userId, isActive: true }).select("_id").lean(),
+    ]);
+    const set = new Set<string>();
+    links.forEach((l) => set.add(String(l.group)));
+    createdGroups.forEach((g) => set.add(String(g._id)));
+    groupIds = Array.from(set).map((id) => new mongoose.Types.ObjectId(id));
+  } else {
+    // Student
+    const memberships = await GroupMembership.find({
+      student: userId,
+      isActive: { $ne: false },
+    })
+      .select("group")
+      .lean();
+    groupIds = memberships.map((m) => m.group as mongoose.Types.ObjectId);
+  }
+
+  const courses = await Course.find({ classroom: { $in: groupIds }, isActive: true })
+    .populate("classroom", "name imageUrl grades")
+    .sort({ order: 1, createdAt: -1 })
+    .lean();
+
+  const courseIds = courses.map((c) => c._id);
+
+  const lessons = await Lesson.find({
+    course: { $in: courseIds },
+    isActive: true,
+  })
+    .sort({ order: 1, createdAt: 1 })
+    .lean();
+
+  // If student, get progress
+  const progressMap = new Map<string, any>();
+  if (userRole === "STUDENT") {
+    const progressList = await LessonProgress.find({
+      student: userId,
+      course: { $in: courseIds },
+    }).lean();
+    for (const p of progressList) {
+      progressMap.set(String(p.lesson), p);
+    }
+  }
+
+  return courses.map((course) => {
+    const cid = String(course._id);
+    const courseLessons = lessons.filter((l) => String(l.course) === cid);
+    const totalLessons = courseLessons.length;
+    let completedLessons = 0;
+
+    const lessonsWithProgress = courseLessons.map((lesson) => {
+      const lid = String(lesson._id);
+      const prog = progressMap.get(lid);
+      const isCompleted = prog?.isCompleted ?? false;
+      if (isCompleted) completedLessons++;
+      return {
+        _id: lesson._id,
+        title: lesson.title,
+        description: lesson.description,
+        youtubeUrl: lesson.youtubeUrl,
+        youtubeVideoId: lesson.youtubeVideoId,
+        durationSeconds: lesson.durationSeconds ?? 0,
+        formattedDuration: formatTime(lesson.durationSeconds ?? 0),
+        order: lesson.order,
+        progress: prog
+          ? {
+              status: prog.status,
+              percentage: prog.percentage,
+              lastPositionSeconds: prog.lastPositionSeconds,
+              formattedPosition: formatTime(prog.lastPositionSeconds),
+              isCompleted: prog.isCompleted,
+            }
+          : {
+              status: WatchStatus.NOT_STARTED,
+              percentage: 0,
+              lastPositionSeconds: 0,
+              formattedPosition: "00:00",
+              isCompleted: false,
+            },
+      };
+    });
+
+    const courseProgressPercentage =
+      totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+    return {
+      ...course,
+      totalLessons,
+      completedLessons,
+      courseProgressPercentage,
+      lessons: lessonsWithProgress,
+    };
+  });
+}
+
+/**
  * Create a new Lesson in a Course
  */
 export async function createLesson(

@@ -22,8 +22,11 @@ export async function assertTeacherOwnsGroup(
 ): Promise<void> {
   if (!mongoose.Types.ObjectId.isValid(groupId))
     throw ApiError.badRequest("معرّف المجموعة غير صالح");
-  const link = await GroupTeacher.findOne({ group: groupId, teacher: teacherId });
-  if (!link) throw ApiError.forbidden("لا تملك صلاحية الوصول لهذه المجموعة");
+  const [link, group] = await Promise.all([
+    GroupTeacher.findOne({ group: groupId, teacher: teacherId }),
+    Group.findOne({ _id: groupId, createdBy: teacherId }),
+  ]);
+  if (!link && !group) throw ApiError.forbidden("لا تملك صلاحية الوصول لهذه المجموعة");
 }
 
 // ─────────────────────────────────────────
@@ -417,15 +420,17 @@ export async function getAttendanceRegister(
     }
   }
 
-  const students = memberships.map(m => {
-    const s   = m.student as unknown as { _id: unknown; name?: string };
-    const sid = String(s._id);
-    return {
-      id:      sid,
-      name:    s.name ?? "—",
-      records: dates.map(d => ({ date: d, status: matrix[sid]?.[d] ?? "ABSENT" })),
-    };
-  });
+  const students = memberships
+    .filter(m => m.student != null)
+    .map(m => {
+      const s   = m.student as unknown as { _id: unknown; name?: string };
+      const sid = String(s._id);
+      return {
+        id:      sid,
+        name:    s.name ?? "—",
+        records: dates.map(d => ({ date: d, status: matrix[sid]?.[d] ?? "ABSENT" })),
+      };
+    });
 
   return { dates, students, month, year };
 }

@@ -5,6 +5,7 @@ export interface ILessonComment extends Document {
   lesson: mongoose.Types.ObjectId;  // Ref: Lesson
   author: mongoose.Types.ObjectId;  // Ref: User
   content: string;
+  parentId?: mongoose.Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,12 @@ const lessonCommentSchema = new Schema<ILessonComment>(
       required: true,
       trim: true,
       maxlength: 1000,
+    },
+    parentId: {
+      type: Schema.Types.ObjectId,
+      ref: "LessonComment",
+      default: null,
+      index: true,
     },
   },
   { timestamps: true }

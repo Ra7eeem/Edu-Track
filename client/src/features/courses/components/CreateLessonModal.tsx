@@ -69,37 +69,40 @@ export function CreateLessonModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          type="button"
-          className="absolute left-4 top-4 rounded-lg p-1 text-muted-foreground transition hover:bg-muted"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        {/* Title */}
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Video className="h-5 w-5" />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-6 backdrop-blur-sm overflow-y-auto animate-in fade-in"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden font-sans">
+        {/* Header */}
+        <div className="shrink-0 flex items-center justify-between border-b border-border/60 px-5 py-4 bg-muted/20">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Video className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-foreground">إضافة درس جديد</h3>
+              <p className="text-xs text-muted-foreground">
+                ضمن كورس: <span className="font-semibold text-foreground">{courseTitle}</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-foreground">إضافة درس جديد</h3>
-            <p className="text-xs text-muted-foreground">
-              ضمن كورس: <span className="font-semibold text-foreground">{courseTitle}</span>
-            </p>
-          </div>
+          <button
+            onClick={onClose}
+            type="button"
+            className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {error && (
-          <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
-            {error}
-          </div>
-        )}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-4">
+          {error && (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold text-foreground">
               عنوان الدرس <span className="text-destructive">*</span>
@@ -165,7 +168,7 @@ export function CreateLessonModal({
             />
           </div>
 
-          <div className="mt-2 flex items-center justify-end gap-2.5">
+          <div className="shrink-0 mt-2 flex items-center justify-end gap-2.5 pt-3 border-t border-border/60">
             <button
               onClick={onClose}
               type="button"

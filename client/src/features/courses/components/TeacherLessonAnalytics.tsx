@@ -249,9 +249,9 @@ export function TeacherLessonAnalytics({ lessonId, onClose }: Props) {
 
       {/* Students Progress Table */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="w-full text-right text-sm">
-            <thead className="border-b border-border bg-muted/30 text-xs font-bold text-muted-foreground">
+            <thead className="sticky top-0 z-10 border-b border-border bg-muted/95 backdrop-blur-sm text-xs font-bold text-muted-foreground shadow-sm">
               <tr>
                 <th className="px-4 py-3">الطالب</th>
                 <th className="px-4 py-3">الحالة</th>

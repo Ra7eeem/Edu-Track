@@ -40,6 +40,7 @@ export type UpdateLessonProgressDto = z.infer<typeof updateLessonProgressSchema>
 
 export const createLessonCommentSchema = z.object({
   content: z.string().min(1, "محتوى التعليق مطلوب").max(1000),
+  parentId: z.string().optional().nullable(),
 });
 
 export type CreateLessonCommentDto = z.infer<typeof createLessonCommentSchema>;

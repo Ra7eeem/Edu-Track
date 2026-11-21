@@ -84,7 +84,7 @@ const userSchema = new Schema<IUser>(
 // Indexes
 // ─────────────────────────────────────────
 
-userSchema.index({ email: 1 });
+// email index is already created automatically via unique: true in schema definition
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 

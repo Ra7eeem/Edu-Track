@@ -9,6 +9,7 @@ const p = (v: string | string[]): string => String(v);
 export const createClassTask = asyncHandler(async (req: Request, res: Response) => {
   const task = await ClassTaskService.createClassTask(
     req.user!.userId,
+    req.user!.role,
     req.body as CreateClassTaskDto
   );
   sendSuccess(res, task, 201, "تم إنشاء المهمة بنجاح");
@@ -27,6 +28,7 @@ export const getClassTasks = asyncHandler(async (req: Request, res: Response) =>
 export const getClassTaskProgress = asyncHandler(async (req: Request, res: Response) => {
   const data = await ClassTaskService.getClassTaskProgress(
     req.user!.userId,
+    req.user!.role,
     p(req.params.taskId),
     req.query.date as string | undefined
   );
@@ -47,6 +49,7 @@ export const toggleStudentTaskProgress = asyncHandler(async (req: Request, res: 
 export const sendTaskReminder = asyncHandler(async (req: Request, res: Response) => {
   const result = await ClassTaskService.sendTaskReminder(
     req.user!.userId,
+    req.user!.role,
     p(req.params.taskId),
     req.body as SendTaskReminderDto
   );

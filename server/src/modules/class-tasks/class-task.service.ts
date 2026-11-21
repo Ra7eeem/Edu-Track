@@ -3,9 +3,9 @@ import { ClassTask, IClassTask, TaskType } from "../../models/ClassTask";
 import { StudentTaskProgress } from "../../models/StudentTaskProgress";
 import { GroupMembership } from "../../models/GroupMembership";
 import { GroupTeacher } from "../../models/GroupTeacher";
+import { Group } from "../../models/Group";
 import { ApiError } from "../../utils/ApiError";
 import { Role, NotificationType } from "../../types";
-import { assertTeacherOwnsGroup } from "../teachers/teacher.service";
 import { notifyUsers } from "../notifications/notification.service";
 import {
   CreateClassTaskDto,
@@ -18,19 +18,39 @@ function getTodayDateStr(): string {
 }
 
 // ─────────────────────────────────────────
+// Guard: Teacher or Admin can manage classroom tasks
+// ─────────────────────────────────────────
+async function assertTeacherOrAdmin(userId: string, role: Role, groupId: string): Promise<void> {
+  if (role === Role.ADMIN) return;
+  if (!mongoose.Types.ObjectId.isValid(groupId)) {
+    throw ApiError.badRequest("معرّف المجموعة غير صالح");
+  }
+  const [link, group] = await Promise.all([
+    GroupTeacher.findOne({ group: groupId, teacher: userId }),
+    Group.findOne({ _id: groupId, createdBy: userId }),
+  ]);
+  if (!link && !group) {
+    throw ApiError.forbidden("لا تملك صلاحية الوصول لهذه المجموعة");
+  }
+}
+
+// ─────────────────────────────────────────
 // Guard: User has access to classroom
 // ─────────────────────────────────────────
-async function assertClassroomAccess(userId: string, role: Role, classroomId: string) {
+async function assertClassroomAccess(userId: string, role: Role, classroomId: string): Promise<void> {
   if (role === Role.ADMIN) return;
   if (role === Role.TEACHER) {
-    const link = await GroupTeacher.findOne({ group: classroomId, teacher: userId });
-    if (!link) throw ApiError.forbidden("لا تملك صلاحية الوصول لهذه المجموعة");
+    const [link, group] = await Promise.all([
+      GroupTeacher.findOne({ group: classroomId, teacher: userId }),
+      Group.findOne({ _id: classroomId, createdBy: userId }),
+    ]);
+    if (!link && !group) throw ApiError.forbidden("لا تملك صلاحية الوصول لهذه المجموعة");
     return;
   }
   const membership = await GroupMembership.findOne({
     group: classroomId,
     student: userId,
-    isActive: true,
+    isActive: { $ne: false },
   });
   if (!membership) throw ApiError.forbidden("يجب أن تكون عضواً في المجموعة للوصول إلى المهام");
 }
@@ -68,18 +88,30 @@ function calculateDailyStreak(completedDates: Set<string>, todayStr: string): nu
 // ─────────────────────────────────────────
 // 1. Teacher creates a class task (ONCE or DAILY)
 // ─────────────────────────────────────────
-export async function createClassTask(teacherId: string, dto: CreateClassTaskDto) {
-  await assertTeacherOwnsGroup(teacherId, dto.classroomId);
+export async function createClassTask(
+  userId: string,
+  role: Role,
+  dto: CreateClassTaskDto
+) {
+  await assertTeacherOrAdmin(userId, role, dto.classroomId);
 
   const taskType = dto.type || TaskType.ONCE;
 
+  let parsedDueDate: Date | null = null;
+  if (taskType === TaskType.ONCE && dto.dueDate && dto.dueDate.trim() !== "") {
+    const parsed = new Date(dto.dueDate);
+    if (!isNaN(parsed.getTime())) {
+      parsedDueDate = parsed;
+    }
+  }
+
   const task = await ClassTask.create({
     classroom: dto.classroomId,
-    teacher: teacherId,
+    teacher: userId,
     title: dto.title.trim(),
     description: dto.description?.trim(),
     type: taskType,
-    dueDate: taskType === TaskType.ONCE && dto.dueDate ? new Date(dto.dueDate) : null,
+    dueDate: parsedDueDate,
     isActive: true,
   });
 
@@ -253,7 +285,8 @@ export async function getClassTasks(
 // 3. Teacher Task Progress / Breakdown Drill-down (Completed vs Pending)
 // ─────────────────────────────────────────
 export async function getClassTaskProgress(
-  teacherId: string,
+  userId: string,
+  role: Role,
   taskId: string,
   queryDateStr?: string
 ) {
@@ -261,7 +294,7 @@ export async function getClassTaskProgress(
   const task = await ClassTask.findById(taskId);
   if (!task || !task.isActive) throw ApiError.notFound("المهمة غير موجودة");
 
-  await assertTeacherOwnsGroup(teacherId, String(task.classroom));
+  await assertTeacherOrAdmin(userId, role, String(task.classroom));
 
   const isDaily = task.type === TaskType.DAILY;
   const targetDateStr = isDaily ? (queryDateStr || getTodayDateStr()) : undefined;
@@ -405,7 +438,8 @@ export async function toggleStudentTaskProgress(
 // 5. Teacher sends reminder to pending students
 // ─────────────────────────────────────────
 export async function sendTaskReminder(
-  teacherId: string,
+  userId: string,
+  role: Role,
   taskId: string,
   dto: SendTaskReminderDto
 ) {
@@ -413,7 +447,7 @@ export async function sendTaskReminder(
   const task = await ClassTask.findById(taskId);
   if (!task || !task.isActive) throw ApiError.notFound("المهمة غير موجودة");
 
-  await assertTeacherOwnsGroup(teacherId, String(task.classroom));
+  await assertTeacherOrAdmin(userId, role, String(task.classroom));
 
   const isDaily = task.type === TaskType.DAILY;
   const targetDateStr = isDaily ? (dto.dateStr || getTodayDateStr()) : undefined;

@@ -23,7 +23,8 @@ export async function getGroupRanking(groupId: string, req: Request) {
   // Assign ranks (handle ties — same rank for same score)
   let currentRank = 0;
   let previousScore = -1;
-  const ranked = scores.map((s, idx) => {
+  const validScores = scores.filter((s) => s.student != null);
+  const ranked = validScores.map((s, idx) => {
     if (s.score !== previousScore) {
       currentRank = idx + 1;
       previousScore = s.score;

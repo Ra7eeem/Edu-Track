@@ -1,16 +1,9 @@
-import { BASE_API_URL, HEADERS } from "@/shared/constant/api.constant"
-import { getNextAuthToken } from "@/shared/lib/utils/auth.utils"
+import { clientFetch } from "@/shared/lib/api-client"
 import type {
-  ApiResponse,
   ApiClassTask,
   ApiClassTaskProgressResponse,
   ApiDailyQuestion,
 } from "@/shared/types/api"
-
-async function getAuthHeader() {
-  const token = await getNextAuthToken()
-  return token?.token ? HEADERS.authorize(token.token) : {}
-}
 
 export async function createClassTaskApi(dto: {
   classroomId: string
@@ -19,91 +12,47 @@ export async function createClassTaskApi(dto: {
   dueDate?: string
   description?: string
 }): Promise<ApiClassTask> {
-  const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/class-tasks`, {
+  const res = await clientFetch<ApiClassTask>("/api/v1/class-tasks", {
     method: "POST",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    body: JSON.stringify(dto),
+    data: dto,
   })
-
-  const json: ApiResponse<ApiClassTask> = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل إنشاء المهمة")
-  }
-  return json.data
+  return (res as any)?.data ?? res
 }
 
 export async function getClassTasksApi(
   classroomId: string,
   date?: string
 ): Promise<{ tasks: ApiClassTask[]; totalStudents: number; date?: string }> {
-  const authHeader = await getAuthHeader()
-  const url = `${BASE_API_URL}/api/class-tasks/classroom/${classroomId}${
+  const url = `/api/v1/class-tasks/classroom/${classroomId}${
     date ? `?date=${encodeURIComponent(date)}` : ""
   }`
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    cache: "no-store",
-  })
-
-  const json: ApiResponse<{ tasks: ApiClassTask[]; totalStudents: number; date?: string }> =
-    await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل تحميل المهام")
-  }
-  return json.data
+  const res = await clientFetch<{ tasks: ApiClassTask[]; totalStudents: number; date?: string }>(url)
+  return (res as any)?.data ?? res
 }
 
 export async function getClassTaskProgressApi(
   taskId: string,
   date?: string
 ): Promise<ApiClassTaskProgressResponse> {
-  const authHeader = await getAuthHeader()
-  const url = `${BASE_API_URL}/api/class-tasks/${taskId}/progress${
+  const url = `/api/v1/class-tasks/${taskId}/progress${
     date ? `?date=${encodeURIComponent(date)}` : ""
   }`
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    cache: "no-store",
-  })
-
-  const json: ApiResponse<ApiClassTaskProgressResponse> = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل تحميل تفاصيل الإنجاز")
-  }
-  return json.data
+  const res = await clientFetch<ApiClassTaskProgressResponse>(url)
+  return (res as any)?.data ?? res
 }
 
 export async function toggleClassTaskApi(
   taskId: string,
   isCompleted?: boolean
 ): Promise<{ isCompleted: boolean; completedAt?: string }> {
-  const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/class-tasks/${taskId}/toggle`, {
-    method: "PATCH",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    body: JSON.stringify({ isCompleted }),
-  })
-
-  const json: ApiResponse<{ isCompleted: boolean; completedAt?: string }> = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل تحديث حالة المهمة")
-  }
-  return json.data
+  const res = await clientFetch<{ isCompleted: boolean; completedAt?: string }>(
+    `/api/v1/class-tasks/${taskId}/toggle`,
+    {
+      method: "PATCH",
+      data: { isCompleted },
+    }
+  )
+  return (res as any)?.data ?? res
 }
 
 export async function sendTaskReminderApi(
@@ -111,22 +60,14 @@ export async function sendTaskReminderApi(
   studentIds?: string[],
   dateStr?: string
 ): Promise<{ success: boolean; message: string; count: number }> {
-  const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/class-tasks/${taskId}/remind`, {
-    method: "POST",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    body: JSON.stringify({ studentIds, dateStr }),
-  })
-
-  const json: ApiResponse<{ success: boolean; message: string; count: number }> =
-    await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل إرسال التنبيه")
-  }
-  return json.data
+  const res = await clientFetch<{ success: boolean; message: string; count: number }>(
+    `/api/v1/class-tasks/${taskId}/remind`,
+    {
+      method: "POST",
+      data: { studentIds, dateStr },
+    }
+  )
+  return (res as any)?.data ?? res
 }
 
 // ─── Teacher Daily Question APIs ───────────────────────────────────────────────
@@ -140,42 +81,18 @@ export async function createDailyQuestionApi(dto: {
   rewardPoints?: number
   date?: string
 }): Promise<ApiDailyQuestion> {
-  const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/daily-questions`, {
+  const res = await clientFetch<ApiDailyQuestion>("/api/v1/daily-questions", {
     method: "POST",
-    headers: {
-      ...HEADERS.JsonBody,
-      ...authHeader,
-    },
-    body: JSON.stringify(dto),
+    data: dto,
   })
-
-  const json: ApiResponse<ApiDailyQuestion> = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل إنشاء سؤال اليوم")
-  }
-  return json.data
+  return (res as any)?.data ?? res
 }
 
 export async function getTeacherDailyQuestionsApi(
   classroomId: string
 ): Promise<ApiDailyQuestion[]> {
-  const authHeader = await getAuthHeader()
-  const res = await fetch(
-    `${BASE_API_URL}/api/daily-questions/classroom/${classroomId}/teacher`,
-    {
-      method: "GET",
-      headers: {
-        ...HEADERS.JsonBody,
-        ...authHeader,
-      },
-      cache: "no-store",
-    }
+  const res = await clientFetch<ApiDailyQuestion[]>(
+    `/api/v1/daily-questions/classroom/${classroomId}/teacher`
   )
-
-  const json: ApiResponse<ApiDailyQuestion[]> = await res.json()
-  if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل تحميل أسئلة اليوم")
-  }
-  return json.data
+  return Array.isArray(res) ? res : ((res as any)?.data ?? [])
 }

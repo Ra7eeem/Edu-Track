@@ -52,11 +52,11 @@ export function CreateTaskModal({ classroomId, isOpen, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-md rounded-3xl bg-card border border-border shadow-2xl overflow-hidden font-sans">
-        <div className="flex items-center justify-between border-b border-border/60 px-5 py-4 bg-muted/20">
+      <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl bg-card border border-border shadow-2xl overflow-hidden font-sans">
+        <div className="shrink-0 flex items-center justify-between border-b border-border/60 px-5 py-4 bg-muted/20">
           <h2 className="flex items-center gap-2 text-base font-bold text-heading">
             <ListTodo className="size-5 text-primary" />
             تعيين مهمة جديدة للمجموعة
@@ -69,7 +69,7 @@ export function CreateTaskModal({ classroomId, isOpen, onClose }: Props) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           {/* Segmented Button / Toggle */}
           <div className="flex rounded-xl border border-border p-1 bg-muted/40 mb-4">
             <button
@@ -154,7 +154,7 @@ export function CreateTaskModal({ classroomId, isOpen, onClose }: Props) {
             </p>
           )}
 
-          <div className="flex gap-2 pt-2 border-t border-border/60">
+          <div className="shrink-0 flex gap-2 pt-3 border-t border-border/60">
             <Button
               type="button"
               variant="outline"
