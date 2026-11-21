@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -27,7 +27,7 @@ import { dailyQuestionRouter } from "./modules/daily-questions/daily-question.ro
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger";
 
-const app = express();
+const app: Express = express();
 
 // ── Trust proxy ───────────────────────────
 // Required on Vercel: all traffic passes through Vercel's load balancer.
