@@ -96,6 +96,21 @@ export async function getLessonAnalyticsApi(lessonId: string): Promise<ApiLesson
   return (res as any)?.data ?? res;
 }
 
+export async function updateStudentProgressByTeacherApi(
+  lessonId: string,
+  studentId: string,
+  isCompleted: boolean
+): Promise<ApiLessonProgress> {
+  const res = await clientFetch<ApiLessonProgress>(
+    `/api/v1/lessons/${lessonId}/students/${studentId}/progress`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ isCompleted }),
+    }
+  );
+  return (res as any)?.data ?? res;
+}
+
 export async function sendLessonReminderApi(
   lessonId: string
 ): Promise<{ notifiedCount: number }> {

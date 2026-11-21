@@ -71,8 +71,9 @@ export function LessonVideoPlayer({
     (event: any) => {
       // 1 = PLAYING
       if (event.data === 1) {
+        sendProgress(false); // send immediate heartbeat on start
         if (!intervalRef.current) {
-          intervalRef.current = setInterval(() => sendProgress(false), 12000); // 12s heartbeat
+          intervalRef.current = setInterval(() => sendProgress(false), 5000); // 5s heartbeat
         }
       } else {
         // PAUSED (2) or ENDED (0)
@@ -98,6 +99,7 @@ export function LessonVideoPlayer({
           videoId: youtubeVideoId,
           playerVars: {
             autoplay: 0,
+            enablejsapi: 1,
             start: Math.floor(initialPositionSeconds),
             rel: 0,
             modestbranding: 1,
@@ -199,6 +201,17 @@ export function LessonVideoPlayer({
             <span className="text-xs text-muted-foreground">
               {formatTime(currentSec)} / {formatTime(durationSec)} دقيقة
             </span>
+          )}
+
+          {!completed && (
+            <button
+              onClick={() => sendProgress(true)}
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/20"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>تأكيد إكمال المشاهدة ✅</span>
+            </button>
           )}
         </div>
 

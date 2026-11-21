@@ -84,6 +84,17 @@ export const updateLessonProgress = asyncHandler(async (req: Request, res: Respo
   sendSuccess(res, progress, 200, "تم تحديث مستوى مشاهدة الدرس");
 });
 
+export const updateStudentProgressByTeacher = asyncHandler(async (req: Request, res: Response) => {
+  const { isCompleted } = req.body as { isCompleted: boolean };
+  const progress = await CoursesService.updateStudentProgressByTeacher(
+    req.user!.userId,
+    p(req.params.lessonId),
+    p(req.params.studentId),
+    Boolean(isCompleted)
+  );
+  sendSuccess(res, progress, 200, "تم تحديث مستوى مشاهدة الطالب بنجاح");
+});
+
 export const getLessonAnalytics = asyncHandler(async (req: Request, res: Response) => {
   const analytics = await CoursesService.getLessonAnalytics(
     req.user!.userId,

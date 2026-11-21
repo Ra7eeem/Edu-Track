@@ -446,9 +446,9 @@ export async function getLessonAnalytics(teacherId: string, lessonId: string) {
   // Fetch all active students in the classroom
   const memberships = await GroupMembership.find({
     group: lesson.classroom,
-    status: "ACTIVE",
+    isActive: { $ne: false },
   })
-    .populate("student", "_id name email avatar")
+    .populate("student", "_id name email avatarUrl")
     .lean();
 
   const students = memberships
@@ -491,7 +491,7 @@ export async function getLessonAnalytics(teacherId: string, lessonId: string) {
       studentId: student._id,
       name: student.name,
       email: student.email,
-      avatarUrl: student.avatar ?? null,
+      avatarUrl: student.avatarUrl ?? null,
       status,
       percentage,
       lastPositionSeconds,
@@ -530,6 +530,42 @@ export async function getLessonAnalytics(teacherId: string, lessonId: string) {
 /**
  * Send reminder to pending/non-completed students for a lesson
  */
+export async function updateStudentProgressByTeacher(
+  teacherId: string,
+  lessonId: string,
+  studentId: string,
+  isCompleted: boolean
+) {
+  const lesson = await Lesson.findById(lessonId);
+  if (!lesson) throw ApiError.notFound("الدرس غير موجود");
+
+  await assertTeacherOrAdmin(teacherId, String(lesson.classroom));
+
+  const durationSeconds = lesson.durationSeconds ?? 600;
+  const percentage = isCompleted ? 100 : 0;
+  const status = isCompleted ? WatchStatus.COMPLETED : WatchStatus.NOT_STARTED;
+  const now = new Date();
+
+  const progress = await LessonProgress.findOneAndUpdate(
+    { lesson: lessonId, student: studentId },
+    {
+      $set: {
+        course: lesson.course,
+        lastPositionSeconds: isCompleted ? durationSeconds : 0,
+        durationSeconds,
+        percentage,
+        status,
+        isCompleted,
+        lastWatchedAt: now,
+        completedAt: isCompleted ? now : null,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return progress;
+}
+
 export async function sendLessonReminder(teacherId: string, lessonId: string) {
   const lesson = await Lesson.findById(lessonId).lean();
   if (!lesson) throw ApiError.notFound("الدرس غير موجود");
@@ -539,7 +575,7 @@ export async function sendLessonReminder(teacherId: string, lessonId: string) {
   // Fetch active students in classroom
   const memberships = await GroupMembership.find({
     group: lesson.classroom,
-    status: "ACTIVE",
+    isActive: { $ne: false },
   }).select("student");
 
   const studentIds = memberships.map((m) => m.student);

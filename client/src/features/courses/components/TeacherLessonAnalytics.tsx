@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   useLessonAnalytics,
   useSendLessonReminder,
+  useUpdateStudentProgressByTeacher,
 } from "../hooks/use-courses";
 import { WatchStatus, ApiLessonAnalyticsStudent } from "@/shared/types/api";
 import {
@@ -15,6 +16,7 @@ import {
   Search,
   ArrowRight,
   TrendingUp,
+  RotateCcw,
 } from "lucide-react";
 
 interface Props {
@@ -25,6 +27,7 @@ interface Props {
 export function TeacherLessonAnalytics({ lessonId, onClose }: Props) {
   const { data: analytics, isLoading } = useLessonAnalytics(lessonId);
   const remindMutation = useSendLessonReminder(lessonId);
+  const updateProgressMutation = useUpdateStudentProgressByTeacher(lessonId);
   const [filter, setFilter] = useState<"ALL" | "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED">("ALL");
   const [search, setSearch] = useState("");
   const [remindSuccessMsg, setRemindSuccessMsg] = useState<string | null>(null);
@@ -258,12 +261,13 @@ export function TeacherLessonAnalytics({ lessonId, onClose }: Props) {
                 <th className="px-4 py-3">نسبة المشاهدة</th>
                 <th className="px-4 py-3">مدة المشاهدة</th>
                 <th className="px-4 py-3">آخر نشاط</th>
+                <th className="px-4 py-3">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
                     لا يوجد طلاب مطابقين للفلتر الحالي.
                   </td>
                 </tr>
@@ -347,6 +351,42 @@ export function TeacherLessonAnalytics({ lessonId, onClose }: Props) {
                             minute: "2-digit",
                           })
                         : "—"}
+                    </td>
+
+                    {/* Actions: Manual Toggle */}
+                    <td className="px-4 py-3.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateProgressMutation.mutate({
+                            studentId: s.studentId,
+                            isCompleted: s.status !== WatchStatus.COMPLETED,
+                          })
+                        }
+                        disabled={updateProgressMutation.isPending}
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold transition ${
+                          s.status === WatchStatus.COMPLETED
+                            ? "border border-border text-muted-foreground hover:bg-muted"
+                            : "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"
+                        }`}
+                        title={
+                          s.status === WatchStatus.COMPLETED
+                            ? "تصفير حالة المشاهدة"
+                            : "تعيين كمكتمل يدوياً"
+                        }
+                      >
+                        {s.status === WatchStatus.COMPLETED ? (
+                          <>
+                            <RotateCcw className="h-3 w-3" />
+                            <span>تصفير</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>تعيين كمكتمل</span>
+                          </>
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))

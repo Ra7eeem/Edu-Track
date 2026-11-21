@@ -53,9 +53,15 @@ lessonRouter.delete(
 
 lessonRouter.patch(
   "/:lessonId/progress",
-  authorize(Role.STUDENT),
+  authorize(Role.STUDENT, Role.TEACHER, Role.ADMIN),
   validate(updateLessonProgressSchema),
   CoursesController.updateLessonProgress
+);
+
+lessonRouter.patch(
+  "/:lessonId/students/:studentId/progress",
+  authorize(Role.TEACHER, Role.ADMIN),
+  CoursesController.updateStudentProgressByTeacher
 );
 
 lessonRouter.get(

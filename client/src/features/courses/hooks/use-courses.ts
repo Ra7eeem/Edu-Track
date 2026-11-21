@@ -11,6 +11,7 @@ import {
   deleteLessonApi,
   updateLessonProgressApi,
   getLessonAnalyticsApi,
+  updateStudentProgressByTeacherApi,
   sendLessonReminderApi,
   getLessonCommentsApi,
   createLessonCommentApi,
@@ -146,7 +147,24 @@ export function useLessonAnalytics(lessonId: string) {
     queryKey: courseKeys.analytics(lessonId),
     queryFn: () => getLessonAnalyticsApi(lessonId),
     enabled: Boolean(lessonId),
-    staleTime: 10 * 1000,
+    staleTime: 5 * 1000,
+  });
+}
+
+export function useUpdateStudentProgressByTeacher(lessonId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      isCompleted,
+    }: {
+      studentId: string;
+      isCompleted: boolean;
+    }) => updateStudentProgressByTeacherApi(lessonId, studentId, isCompleted),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: courseKeys.analytics(lessonId) });
+      qc.invalidateQueries({ queryKey: courseKeys.all });
+    },
   });
 }
 
