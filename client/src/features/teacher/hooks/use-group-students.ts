@@ -33,6 +33,6 @@ export function useGroupStudents(
     },
     enabled:     !!groupId,
     staleTime:   30 * 1000,
-    initialData: search ? undefined : opts?.initialData,
+    initialData: search || !opts?.initialData?.length ? undefined : opts?.initialData,
   })
 }

@@ -18,6 +18,7 @@ export const groupRouter = Router();
 groupRouter.get("/",           authenticate, userLimiter, GroupController.listGroups);
 groupRouter.get("/:id",        authenticate, userLimiter, GroupController.getGroup);
 groupRouter.get("/:id/members",  authenticate, userLimiter, GroupController.getGroupMembers);
+groupRouter.get("/:id/students", authenticate, userLimiter, GroupController.getGroupMembers);
 groupRouter.get("/:id/teachers", authenticate, userLimiter, GroupController.getGroupTeachers);
 
 // Create — teacher or admin

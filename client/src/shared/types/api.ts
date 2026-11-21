@@ -58,6 +58,9 @@ export enum NotificationType {
   NEW_COMMENT           = "NEW_COMMENT",
   NEW_REPLY             = "NEW_REPLY",
   ADDED_TO_GROUP        = "ADDED_TO_GROUP",
+  NEW_EXAM              = "NEW_EXAM",
+  ATTENDANCE_RECORDED   = "ATTENDANCE_RECORDED",
+  QUESTION_REPLIED      = "QUESTION_REPLIED",
 }
 
 // ─── Helper: resolve id from MongoDB _id or id ───────────────────────────────

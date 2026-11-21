@@ -108,7 +108,7 @@ export async function getGroupStudentsApi(
 ): Promise<PaginatedResponse<GroupStudent> | GroupStudent[]> {
   const authHeader = await getAuthHeader()
   const res = await fetch(
-    `${BASE_API_URL}/api/groups/${groupId}/students?limit=${limit}`,
+    `${BASE_API_URL}/api/teacher/groups/${groupId}/students?limit=${limit}`,
     {
       method: "GET",
       headers: {
@@ -291,7 +291,7 @@ export async function getTeacherJoinRequestsApi(
   limit = 50
 ): Promise<PaginatedResponse<ApiJoinRequest> | ApiJoinRequest[]> {
   const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/join-requests?limit=${limit}`, {
+  const res = await fetch(`${BASE_API_URL}/api/teacher/join-requests?limit=${limit}`, {
     method: "GET",
     headers: {
       ...HEADERS.JsonBody,
