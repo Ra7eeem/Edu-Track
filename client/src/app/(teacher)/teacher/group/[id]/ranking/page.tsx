@@ -37,7 +37,7 @@ export default async function RankingPage({ params }: { params: Promise<{ id: st
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
       <RankingClient

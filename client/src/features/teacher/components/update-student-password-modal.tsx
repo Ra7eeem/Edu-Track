@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
@@ -62,7 +62,7 @@ export function UpdateStudentPasswordModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
           <h2 className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <KeyRound className="size-4 text-violet-500" />
+            <KeyRound className="size-4 text-accent" />
             تغيير كلمة المرور
           </h2>
           <button
@@ -150,7 +150,7 @@ export function UpdateStudentPasswordModal({
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90 font-bold"
+                  className="flex-1 rounded-2xl bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground font-bold"
                   disabled={isPending}
                 >
                   <Lock className="size-3.5" />
@@ -164,3 +164,4 @@ export function UpdateStudentPasswordModal({
     </div>
   )
 }
+

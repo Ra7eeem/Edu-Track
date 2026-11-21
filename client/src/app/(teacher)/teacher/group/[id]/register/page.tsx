@@ -30,7 +30,7 @@ export default async function AttendanceRegisterPage({
         unreadCount={0}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
         actions={<PwaInstallButton groupId={id} />}
       />

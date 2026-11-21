@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { TopBar } from "@/shared/components/layout/topbar"
 import { useGroupPosts } from "@/features/teacher/hooks/use-group-posts"
@@ -578,7 +578,7 @@ export function StudentGroupClient({
                   className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden"
                 >
                   <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-                    <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                    <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                       {author?.name?.[0] ?? "م"}
                     </span>
                     <div>
@@ -634,7 +634,7 @@ export function StudentGroupClient({
                       <span className="w-7 text-center shrink-0 text-sm font-bold">
                         {entry.rank <= 3 ? MEDALS[entry.rank - 1] : `#${entry.rank}`}
                       </span>
-                      <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                      <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                         {entry.student.name[0]}
                       </span>
                       <span className="flex-1 truncate text-sm">{entry.student.name}</span>
@@ -675,7 +675,7 @@ export function StudentGroupClient({
                       key={sid}
                       className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3"
                     >
-                      <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                      <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                         {entry.student.name[0]}
                       </span>
                       <span className="flex-1 text-sm truncate">{entry.student.name}</span>
@@ -693,4 +693,5 @@ export function StudentGroupClient({
     </div>
   )
 }
+
 

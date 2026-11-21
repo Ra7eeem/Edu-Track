@@ -1,4 +1,4 @@
-import { Grade } from "@/shared/types/api"
+﻿import { Grade } from "@/shared/types/api"
 
 // ─── Academic Stage Configuration ────────────────────────────────────────────
 // Single source of truth for all stage-to-grade mappings.
@@ -31,7 +31,7 @@ export const ACADEMIC_STAGES: AcademicStageConfig[] = [
     id:         "primary-second",
     name:       "المرحلة الابتدائية الثانية",
     grades:     [Grade.GRADE_4, Grade.GRADE_5, Grade.GRADE_6],
-    colorClass: "from-violet-500 to-violet-600",
+    colorClass: "from-primary to-accent",
   },
   {
     id:         "preparatory",
@@ -96,3 +96,4 @@ export function getAcademicYearOptions(): string[] {
     `${start - 2} / ${start - 1}`,
   ]
 }
+

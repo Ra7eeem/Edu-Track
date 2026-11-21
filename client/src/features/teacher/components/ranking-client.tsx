@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
 import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/ranking.action"
@@ -204,7 +204,7 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
                   return (
                     <div key={sid} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
                       <span className="text-xl">{medals[pos-1]}</span>
-                      <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">
+                      <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-primary shadow-sm dark:bg-card">
                         {entry.student.name[0]}
                       </span>
                       <p className="text-center text-[10px] font-semibold leading-tight">
@@ -238,7 +238,7 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
                         : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>
                       }
                     </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                    <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                       {entry.student.name[0]}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
                         <span className="text-emerald-600">{entry.presentCount} حضور</span>
                         {entry.lateCount > 0 && <span className="text-amber-600">{entry.lateCount} متأخر</span>}
                         {entry.absentCount > 0 && <span className="text-rose-600">{entry.absentCount} غياب</span>}
-                        {entry.bonusPoints > 0 && <span className="text-violet-600">+{entry.bonusPoints} مكافأة</span>}
+                        {entry.bonusPoints > 0 && <span className="text-primary">+{entry.bonusPoints} مكافأة</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -274,3 +274,4 @@ export function RankingClient({ groupId, initialRanking, currentMonth, currentYe
     </>
   )
 }
+

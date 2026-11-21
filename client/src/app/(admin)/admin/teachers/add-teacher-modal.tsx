@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { createTeacherAction, TeacherActionState } from "@/features/admin/actions/teacher.action"
 import { Button } from "@/shared/components/ui/button"
@@ -99,7 +99,7 @@ export function AddTeacherModal({ onClose }: { onClose: () => void }) {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                  className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                   disabled={isPending}
                 >
                   {isPending ? "جارٍ الإنشاء..." : "إنشاء الحساب"}

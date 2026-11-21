@@ -87,10 +87,10 @@ function QuestionBuilder({
       {questions.map((q, qi) => (
         <div
           key={q._localId ?? q._id ?? qi}
-          className="rounded-2xl border border-violet-200/60 bg-violet-50/30 dark:border-violet-800/30 dark:bg-violet-950/10 p-4 space-y-3"
+          className="rounded-2xl border border-border bg-card p-4 space-y-3"
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-violet-700 dark:text-violet-400">
+            <span className="text-xs font-bold text-primary dark:text-primary">
               سؤال {qi + 1}
             </span>
             <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ function QuestionBuilder({
       <button
         type="button"
         onClick={addQ}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 bg-violet-50/50 py-3.5 text-sm font-medium text-violet-700 hover:bg-violet-100/50 transition-colors dark:border-violet-700 dark:bg-violet-950/20 dark:text-violet-400"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 py-3.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
       >
         <Plus className="size-4" />إضافة سؤال جديد
       </button>
@@ -314,7 +314,7 @@ export default function EditAssignmentClient({
         notifHref="/teacher/notifications"
         userName={userName}
         userAvatar={userName ? userName[0] : "م"}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 
@@ -505,7 +505,7 @@ export default function EditAssignmentClient({
             </Button>
             <Button
               type="button"
-              className="flex-1 rounded-2xl h-11 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90 shadow-md font-bold"
+              className="flex-1 rounded-2xl h-11 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground shadow-md font-bold"
               onClick={handleSubmit}
               disabled={updateMut.isPending}
             >

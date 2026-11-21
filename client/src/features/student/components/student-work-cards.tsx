@@ -1,4 +1,4 @@
-import { canShowExamResults, getExamAvailability } from "@/features/student/lib/exam-availability"
+﻿import { canShowExamResults, getExamAvailability } from "@/features/student/lib/exam-availability"
 import { Button } from "@/shared/components/ui/button"
 import { cn } from "@/shared/lib/tailwind-cn"
 import { ApiAssignment, resolveId } from "@/shared/types/api"
@@ -76,7 +76,7 @@ export function ExamListCard({ assignment }: { assignment: ApiAssignment }) {
               </span>
             )}
             {questionCount > 0 && (
-              <span className="text-[11px] rounded-full px-2.5 py-0.5 bg-violet-100 text-violet-700 font-bold dark:bg-violet-900/30 dark:text-violet-300 border border-violet-200/50 dark:border-violet-800/30">
+              <span className="text-[11px] rounded-full px-2.5 py-0.5 bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary border border-primary/30">
                 {questionCount} سؤال
               </span>
             )}
@@ -87,7 +87,7 @@ export function ExamListCard({ assignment }: { assignment: ApiAssignment }) {
               </span>
             )}
             {availability.notYet && (
-              <span className="text-[11px] rounded-full px-2.5 py-0.5 font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/30">
+              <span className="text-[11px] rounded-full px-2.5 py-0.5 font-bold bg-accent/10 text-accent font-bold border border-accent/20">
                 يبدأ {availability.fromLabel}
               </span>
             )}
@@ -186,3 +186,4 @@ export function ExamListCard({ assignment }: { assignment: ApiAssignment }) {
     </article>
   )
 }
+

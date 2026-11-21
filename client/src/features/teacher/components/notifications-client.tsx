@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Badge } from "@/shared/components/ui/badge"
 import { useNotifications, useMarkAllRead } from "@/features/groups/hooks/use-notifications"
@@ -12,7 +12,7 @@ import {
 } from "lucide-react"
 
 const iconMap: Record<NotificationType, { icon: React.ElementType; color: string }> = {
-  [NotificationType.NEW_POST]:              { icon: BookOpen,      color: "text-violet-600 bg-violet-100 dark:bg-violet-900/30" },
+  [NotificationType.NEW_POST]:              { icon: BookOpen,      color: "text-primary bg-primary/10 dark:bg-primary/20" },
   [NotificationType.NEW_COMMENT]:           { icon: MessageCircle, color: "text-cyan-600 bg-cyan-100 dark:bg-cyan-900/30"       },
   [NotificationType.NEW_REPLY]:             { icon: MessageCircle, color: "text-cyan-600 bg-cyan-100 dark:bg-cyan-900/30"       },
   [NotificationType.JOIN_REQUEST_APPROVED]: { icon: UserPlus,      color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30"},
@@ -94,3 +94,4 @@ export function NotificationsClient({ initialData }: Props) {
     </div>
   )
 }
+

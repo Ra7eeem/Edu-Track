@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
@@ -52,14 +52,14 @@ export default function TeacherProfilePage() {
         unreadCount={unread}
         userName={profile?.name ?? ""}
         userAvatar={(profile?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 
       <div className="mx-auto w-full max-w-xl p-4 sm:p-6">
         {/* Avatar */}
         <div className="mb-6 flex flex-col items-center">
-          <span className="grid size-20 place-items-center rounded-3xl bg-gradient-to-br from-violet-500 to-violet-700 text-3xl font-extrabold text-white shadow-lg">
+          <span className="grid size-20 place-items-center rounded-3xl bg-primary text-3xl font-display font-bold text-primary-foreground border-2 border-primary">
             {(profile?.name ?? "م")[0]}
           </span>
           <p className="mt-3 text-base font-bold">{profile?.name}</p>
@@ -96,7 +96,7 @@ export default function TeacherProfilePage() {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                className="w-full bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                 disabled={pending}
               >
                 {pending ? "جارٍ الحفظ..." : "حفظ التغييرات"}
@@ -112,3 +112,4 @@ export default function TeacherProfilePage() {
     </div>
   )
 }
+

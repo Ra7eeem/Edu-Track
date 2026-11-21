@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button } from "@/shared/components/ui/button"
 import { useTeacherCreateGroup } from "@/features/teacher/hooks/use-teacher-groups"
@@ -92,7 +92,7 @@ export function CreateGroupModal({ onClose }: { onClose: () => void }) {
 
         <div className="flex gap-2 border-t border-border/60 px-5 py-4 shrink-0">
           <Button variant="outline" className="flex-1" onClick={onClose}>إلغاء</Button>
-          <Button className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+          <Button className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             onClick={handleSubmit} disabled={createMut.isPending}>
             <Plus className="size-4" />{createMut.isPending ? "جارٍ الإنشاء..." : "إنشاء المجموعة"}
           </Button>
@@ -101,3 +101,4 @@ export function CreateGroupModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+

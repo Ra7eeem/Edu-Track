@@ -96,7 +96,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         type="submit"
         size="lg"
         disabled={isSubmitting}
-        className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg shadow-violet-500/25 hover:opacity-90 disabled:opacity-50"
+        className="w-full bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
       >
         {isSubmitting ? "جارٍ تسجيل الدخول..." : "تسجيل الدخول"}
       </Button>

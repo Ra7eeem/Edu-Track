@@ -35,7 +35,7 @@ export default async function PostsPage({ params }: { params: Promise<{ id: stri
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
       <PostsFeedClient

@@ -1,4 +1,4 @@
-import { TopBar } from "@/shared/components/layout/topbar"
+﻿import { TopBar } from "@/shared/components/layout/topbar"
 import { loadTeacherMessages } from "@/features/teacher/lib/load-messages"
 import { TeacherMessagesClient } from "./messages-client"
 
@@ -12,7 +12,7 @@ export default async function TeacherMessagesPage() {
         notifHref="/teacher/notifications"
         userName=""
         userAvatar="م"
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 

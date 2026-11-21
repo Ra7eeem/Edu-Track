@@ -1,4 +1,4 @@
-import { getTeacherNotificationsApi } from "@/features/teacher/apis/teacher.api"
+﻿import { getTeacherNotificationsApi } from "@/features/teacher/apis/teacher.api"
 import { NotificationsClient } from "@/features/teacher/components/notifications-client"
 import { TopBar } from "@/shared/components/layout/topbar"
 import { getSessionData } from "@/shared/lib/session"
@@ -23,10 +23,11 @@ export default async function TeacherNotificationsPage() {
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
       <NotificationsClient initialData={notifsData ?? undefined} />
     </div>
   )
 }
+

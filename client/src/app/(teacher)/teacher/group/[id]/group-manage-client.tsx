@@ -182,7 +182,7 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
                 : status === AttendanceStatus.LATE    ? "border-amber-200 bg-amber-50/60 dark:border-amber-800/50 dark:bg-amber-950/20"
                 : status === AttendanceStatus.ABSENT  ? "border-rose-200 bg-rose-50/60 dark:border-rose-800/50 dark:bg-rose-950/20"
                 : "border-border/60 bg-card")}>
-              <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+              <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                 {avatar}
               </span>
               <span className="flex-1 text-sm font-medium truncate">{name}</span>
@@ -218,7 +218,7 @@ function AttendanceTab({ groupId, students }: { groupId: string; students: Group
             <CheckCircle2 className="size-5"/> تم حفظ الحضور بنجاح!
           </div>
         ) : (
-          <Button size="lg" className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow-lg hover:opacity-90 disabled:opacity-50"
+          <Button size="lg" className="w-full bg-primary text-primary-foreground text-white shadow-lg hover:opacity-90 disabled:opacity-50"
             disabled={isPending} onClick={handleSave}>
             <Save className="size-4"/>
             {isPending ? "جارٍ الحفظ..." : "حفظ الحضور"}
@@ -282,7 +282,7 @@ function PostsTab({ groupId, authorName }: { groupId: string; authorName: string
             className="w-full resize-none rounded-xl bg-muted/40 p-3 text-sm outline-none focus:ring-2 focus:ring-primary/20 transition-all"/>
           <div className="mt-3 flex items-center justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={() => { setShowCompose(false); setContent(""); setError(null) }}>إلغاء</Button>
-            <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" onClick={handleCreate} disabled={isPending || !content.trim()}>
+            <Button size="sm" className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground" onClick={handleCreate} disabled={isPending || !content.trim()}>
               <Plus className="size-3.5"/>{isPending ? "جارٍ النشر..." : "نشر"}
             </Button>
           </div>
@@ -453,7 +453,7 @@ function RankingTab({ groupId }: { groupId: string }) {
                     return (
                       <div key={resolveId(entry.student)} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
                         <span className="text-2xl">{MEDALS[pos-1]}</span>
-                        <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">{entry.student.name[0]}</span>
+                        <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-primary shadow-sm dark:bg-card">{entry.student.name[0]}</span>
                         <p className="text-center text-[10px] font-semibold leading-tight">{entry.student.name.split(" ")[0]}</p>
                         <p className="text-[10px] text-muted-foreground">{entry.score} نقطة</p>
                         <div className={cn("w-full rounded-t-xl", heights[i], podColor)}/>
@@ -474,13 +474,13 @@ function RankingTab({ groupId }: { groupId: string }) {
                     <span className="w-7 text-center shrink-0">
                       {entry.rank<=3 ? MEDALS[entry.rank-1] : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>}
                     </span>
-                    <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">{entry.student.name[0]}</span>
+                    <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">{entry.student.name[0]}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{entry.student.name}</p>
                       <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
                         <span className="text-emerald-600">{entry.presentCount} حضور</span>
                         {(entry as ApiRankingEntry & { lateCount?: number }).lateCount ? <span className="text-amber-600">{(entry as ApiRankingEntry & { lateCount?: number }).lateCount} متأخر</span> : null}
-                        {entry.bonusPoints > 0 && <span className="text-violet-600">+{entry.bonusPoints} مكافأة</span>}
+                        {entry.bonusPoints > 0 && <span className="text-primary">+{entry.bonusPoints} مكافأة</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -759,14 +759,14 @@ export function GroupManageClient({
         unreadCount={unread}
         userName={authorName}
         userAvatar={authorName[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 
       {/* Group actions */}
       <div className="border-b border-border/60 bg-card px-4 py-3 sm:px-6">
         <div className="mx-auto max-w-5xl flex flex-wrap gap-2">
-          <Button size="sm" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
+          <Button size="sm" className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground" asChild>
             <Link href={`/teacher/group/${id}/attendance`}><CalendarCheck className="size-3.5"/>تسجيل حضور منفصل</Link>
           </Button>
           <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} disabled={!group}>
@@ -808,7 +808,7 @@ export function GroupManageClient({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {[
-                  { l: "الطلاب",    v: students.length,  c: "text-violet-600"  },
+                  { l: "الطلاب",    v: students.length,  c: "text-primary"  },
                   { l: "المنشورات", v: "—",              c: "text-cyan-600"    },
                   { l: "الحالة",    v: group.isActive ? "نشطة" : "موقوفة", c: group.isActive ? "text-emerald-600" : "text-rose-600" },
                 ].map(s => (
@@ -841,7 +841,7 @@ export function GroupManageClient({
                               <span className="font-bold text-muted-foreground">{count} طالب ({percent}%)</span>
                             </div>
                             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                              <div className="h-full bg-violet-500 transition-all" style={{ width: `${percent}%` }} />
+                              <div className="h-full bg-primary transition-all" style={{ width: `${percent}%` }} />
                             </div>
                           </div>
                         )
@@ -862,7 +862,7 @@ export function GroupManageClient({
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: "تسجيل الحضور",   href: `/teacher/group/${id}/attendance`, color: "from-emerald-600 to-emerald-500", icon: CalendarCheck },
-                  { label: "كشف الغياب",     href: `/teacher/group/${id}/register`,   color: "from-violet-600 to-violet-500",  icon: ClipboardList  },
+                  { label: "كشف الغياب",     href: `/teacher/group/${id}/register`,   color: "from-primary to-accent",  icon: ClipboardList  },
                   { label: "الطلاب",          tab: "students",   color: "from-cyan-600 to-cyan-500",    icon: Users           },
                   { label: "الترتيب",         tab: "ranking",    color: "from-amber-600 to-amber-500",  icon: Trophy          },
                 ].map(a => (
@@ -894,7 +894,7 @@ export function GroupManageClient({
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="بحث..."
                   className="flex h-10 w-full rounded-2xl border border-input bg-card ps-10 pe-4 text-sm outline-none focus:border-primary focus:ring-3 focus:ring-primary/20 transition-all"/>
               </div>
-              <Button size="sm" className="shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" asChild>
+              <Button size="sm" className="shrink-0 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground" asChild>
                 <Link href={`/teacher/group/${id}/students`}><Users className="size-3.5"/>إضافة طالب</Link>
               </Button>
             </div>
@@ -915,7 +915,7 @@ export function GroupManageClient({
               const avatar = name.length > 0 ? name[0] : "؟"
               return (
                 <div key={sid} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 shadow-sm">
-                  <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                  <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                     {avatar}
                   </span>
                   <Link href={`/teacher/group/${id}/students/${sid}`} className="min-w-0 flex-1 hover:underline underline-offset-2 decoration-muted-foreground/50">
@@ -978,7 +978,7 @@ export function GroupManageClient({
             </p>
             <Link
               href={`/teacher/group/${id}/assignments`}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
             >
               <ClipboardList className="size-4" />
               فتح صفحة الواجبات

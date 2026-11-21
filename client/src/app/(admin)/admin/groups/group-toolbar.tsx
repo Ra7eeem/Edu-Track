@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Plus, Search } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -48,7 +48,7 @@ export function GroupToolbar({
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 px-4 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          className="flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-accent px-4 text-sm font-medium text-white hover:opacity-90 transition-opacity"
         >
           <Plus className="size-4" />
           <span className="hidden sm:inline">إنشاء مجموعة</span>

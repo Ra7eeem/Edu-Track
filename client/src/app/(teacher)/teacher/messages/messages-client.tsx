@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button } from "@/shared/components/ui/button"
 import { ApiAnonymousMessage, resolveId } from "@/shared/types/api"
@@ -92,8 +92,8 @@ export function TeacherMessagesClient({ messages }: { messages: ApiAnonymousMess
 
                 {/* Reply section */}
                 {msg.reply ? (
-                  <div className="border-t border-border/40 bg-violet-50/40 dark:bg-violet-950/10 p-4">
-                    <p className="text-xs font-semibold text-violet-700 dark:text-violet-400 mb-1">ردك:</p>
+                  <div className="border-t border-border/40 bg-primary/5/40 dark:bg-card p-4">
+                    <p className="text-xs font-semibold text-primary dark:text-primary mb-1">ردك:</p>
                     <p className="text-sm leading-relaxed whitespace-pre-line">{msg.reply}</p>
                     <button
                       onClick={() => setReplyTarget({ id: mid, reply: msg.reply })}
@@ -106,7 +106,7 @@ export function TeacherMessagesClient({ messages }: { messages: ApiAnonymousMess
                   <div className="border-t border-border/40 px-4 py-3">
                     <Button
                       size="sm"
-                      className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                      className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                       onClick={() => setReplyTarget({ id: mid, reply: null })}
                     >
                       <Send className="size-3.5" />رد على الرسالة

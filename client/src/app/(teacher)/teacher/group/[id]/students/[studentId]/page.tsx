@@ -94,7 +94,7 @@ export default function StudentProfilePage({
   if (isLoading) {
     return (
       <div className="flex flex-col">
-        <TopBar title="ملف الطالب" subtitle="" notifHref="/teacher/notifications" userName="" userAvatar="م" userAvatarColor="bg-violet-500" profileHref="/teacher/profile"/>
+        <TopBar title="ملف الطالب" subtitle="" notifHref="/teacher/notifications" userName="" userAvatar="م" userAvatarColor="bg-primary" profileHref="/teacher/profile"/>
         <div className="mx-auto w-full max-w-2xl p-4 space-y-4">
           {[1,2,3].map(i => <div key={i} className="h-32 animate-pulse rounded-2xl border border-border/60 bg-muted"/>)}
         </div>
@@ -111,7 +111,7 @@ export default function StudentProfilePage({
         unreadCount={0}
         userName=""
         userAvatar="م"
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 
@@ -154,7 +154,7 @@ export default function StudentProfilePage({
         {/* Profile card */}
         <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 text-2xl font-extrabold text-white shadow-md">
+            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-accent text-2xl font-extrabold text-white shadow-md">
               {(student?.name ?? "؟")[0]}
             </span>
             <div className="min-w-0">
@@ -167,7 +167,7 @@ export default function StudentProfilePage({
             variant="outline"
             size="sm"
             onClick={() => setShowPasswordModal(true)}
-            className="rounded-xl border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 shrink-0 font-bold"
+            className="rounded-xl border-primary text-primary hover:bg-primary/10 shrink-0 font-bold"
           >
             <KeyRound className="size-3.5" />
             <span className="hidden sm:inline">تغيير كلمة المرور</span>
@@ -179,13 +179,13 @@ export default function StudentProfilePage({
         {scores.length > 0 && (
           <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-              <CheckCircle2 className="size-3.5 text-violet-500"/>النقاط الشهرية
+              <CheckCircle2 className="size-3.5 text-accent"/>النقاط الشهرية
             </h3>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {scores.slice(0, 6).map((s, i) => (
                 <div key={i} className="rounded-xl border border-border/40 bg-muted/30 p-3">
                   <p className="text-[10px] text-muted-foreground">{AR_MONTHS[s.month]} {s.year}</p>
-                  <p className="text-lg font-bold text-violet-600">{s.score}</p>
+                  <p className="text-lg font-bold text-primary">{s.score}</p>
                   <div className="mt-1 flex gap-1.5 text-[9px]">
                     <span className="text-emerald-600">{s.presentCount}✓</span>
                     {s.lateCount > 0 && <span className="text-amber-600">{s.lateCount}م</span>}
@@ -201,7 +201,7 @@ export default function StudentProfilePage({
         {Object.keys(byMonth).length > 0 && (
           <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-bold">
-              <CalendarCheck className="size-3.5 text-violet-500"/>سجل الحضور
+              <CalendarCheck className="size-3.5 text-accent"/>سجل الحضور
             </h3>
             <div className="space-y-4">
               {Object.entries(byMonth).map(([key, recs]) => {
@@ -236,7 +236,7 @@ export default function StudentProfilePage({
         {/* Notes */}
         <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm space-y-3">
           <h3 className="flex items-center gap-2 text-sm font-bold">
-            <StickyNote className="size-3.5 text-violet-500"/>ملاحظاتي عن الطالب
+            <StickyNote className="size-3.5 text-accent"/>ملاحظاتي عن الطالب
           </h3>
           <p className="text-[10px] text-muted-foreground">الطالب لا يرى هذه الملاحظات</p>
 
@@ -251,7 +251,7 @@ export default function StudentProfilePage({
                 className="w-full resize-none rounded-2xl border border-input bg-muted/30 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
               <Button size="sm"
-                className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90 w-full"
+                className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground w-full"
                 onClick={handleAddNote}
                 disabled={!noteInput.trim() || createNote.isPending}>
                 <Plus className="size-3.5"/>
@@ -280,7 +280,7 @@ export default function StudentProfilePage({
                         <Button size="sm" variant="outline" className="flex-1"
                           onClick={() => setEditingNote(null)}>إلغاء</Button>
                         <Button size="sm"
-                          className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                          className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                           onClick={handleUpdateNote} disabled={updateNote.isPending}>
                           {updateNote.isPending ? "جارٍ..." : "حفظ"}
                         </Button>

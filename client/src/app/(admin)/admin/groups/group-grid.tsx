@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { ApiGroup, GRADE_LABELS, resolveId } from "@/shared/types/api"
 import { Trash2 } from "lucide-react"
@@ -9,7 +9,7 @@ import { Button } from "@/shared/components/ui/button"
 import { GroupAttendanceBadges } from "./group-attendance-badges"
 
 const COLORS = [
-  "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
+  "from-primary to-accent", "from-cyan-500 to-cyan-600",
   "from-amber-500 to-amber-600",   "from-emerald-500 to-emerald-600",
   "from-rose-500 to-rose-600",
 ]
@@ -36,7 +36,7 @@ export function GroupGrid({ groups }: { groups: ApiGroup[] }) {
               {(g.grades ?? []).length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {g.grades.map(gr => (
-                    <span key={gr} className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                    <span key={gr} className="rounded-full bg-muted border border-border px-2 py-0.5 text-[10px] font-medium text-foreground">
                       {GRADE_LABELS[gr]}
                     </span>
                   ))}

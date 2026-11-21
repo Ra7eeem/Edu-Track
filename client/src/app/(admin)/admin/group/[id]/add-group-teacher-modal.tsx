@@ -66,7 +66,7 @@ export function AddGroupTeacherModal({
               const tid = resolveId(t)
               return (
                 <div key={tid} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3">
-                  <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                  <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                     {t.name[0]}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export function AddGroupTeacherModal({
                   </div>
                   <Button
                     size="sm"
-                    className={cn("shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90")}
+                    className={cn("shrink-0 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground")}
                     onClick={() => handleAdd(tid)}
                     disabled={adding === tid}
                   >

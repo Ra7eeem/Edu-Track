@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button }     from "@/shared/components/ui/button"
 import { useOfflineAttendance } from "@/features/teacher/hooks/use-offline-attendance"
@@ -107,7 +107,7 @@ export function AttendanceClient({ groupId, students }: Props) {
 
       {/* Pending sync banner */}
       {isOnline && pending.length > 0 && (
-        <div className="sticky top-0 z-40 flex items-center justify-between gap-2 bg-violet-600 px-4 py-2 text-xs font-semibold text-white">
+        <div className="sticky top-0 z-40 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-xs font-semibold text-white">
           <span className="flex items-center gap-1.5">
             <Wifi className="size-3.5"/>
             {syncing ? "جارٍ مزامنة الحضور المحفوظ..." : `${pending.length} سجل حضور في انتظار الإرسال`}
@@ -204,7 +204,7 @@ export function AttendanceClient({ groupId, students }: Props) {
             return (
               <div key={s.id}
                 className={cn("flex items-center gap-2.5 sm:gap-3 rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 transition-all", rowClass)}>
-                <span className="grid size-8 sm:size-9 place-items-center rounded-xl bg-violet-100 text-xs sm:text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                <span className="grid size-8 sm:size-9 place-items-center rounded-xl bg-primary/10 text-xs sm:text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                   {s.avatar}
                 </span>
                 <div className="min-w-0 flex-1 py-0.5">
@@ -249,7 +249,7 @@ export function AttendanceClient({ groupId, students }: Props) {
               className={cn(
                 "w-full text-white shadow-lg hover:opacity-90 disabled:opacity-50",
                 isOnline
-                  ? "bg-gradient-to-r from-violet-600 to-violet-500 shadow-violet-500/25"
+                  ? "bg-gradient-to-r from-primary to-accent shadow-sm"
                   : "bg-gradient-to-r from-amber-600 to-amber-500 shadow-amber-500/25"
               )}>
               {isOnline ? <Save className="size-4"/> : <CloudOff className="size-4"/>}
@@ -266,3 +266,4 @@ export function AttendanceClient({ groupId, students }: Props) {
     </div>
   )
 }
+

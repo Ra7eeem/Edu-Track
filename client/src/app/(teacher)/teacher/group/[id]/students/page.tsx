@@ -38,7 +38,7 @@ export default async function StudentsPage({ params }: { params: Promise<{ id: s
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
       <StudentsClient groupId={id} initialStudents={students} />

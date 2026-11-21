@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { TopBar } from "@/shared/components/layout/topbar"
 import { Button } from "@/shared/components/ui/button"
@@ -285,12 +285,12 @@ export default function StudentMessagesPage() {
 
                   {/* Reply */}
                   {msg.reply ? (
-                    <div className="border-t border-border/40 bg-violet-50/40 dark:bg-violet-950/10 p-4">
+                    <div className="border-t border-border/40 bg-primary/5/40 dark:bg-card p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="grid size-7 place-items-center rounded-lg bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                        <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary">
                           {(teacher?.name ?? "م")[0]}
                         </span>
-                        <span className="text-xs font-semibold text-violet-700 dark:text-violet-400">
+                        <span className="text-xs font-semibold text-primary dark:text-primary">
                           {teacher?.name ?? "المدرس"}
                         </span>
                       </div>
@@ -310,3 +310,4 @@ export default function StudentMessagesPage() {
     </>
   )
 }
+

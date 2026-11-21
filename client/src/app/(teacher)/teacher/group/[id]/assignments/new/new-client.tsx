@@ -66,10 +66,10 @@ function QuestionBuilder({
       {questions.map((q, qi) => (
         <div
           key={q._localId ?? qi}
-          className="rounded-2xl border border-violet-200/60 bg-violet-50/30 dark:border-violet-800/30 dark:bg-violet-950/10 p-4 space-y-3"
+          className="rounded-2xl border border-border bg-card p-4 space-y-3"
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold text-violet-700 dark:text-violet-400">
+            <span className="text-xs font-bold text-primary dark:text-primary">
               سؤال {qi + 1}
             </span>
             <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ function QuestionBuilder({
 
       <button
         onClick={addQ}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-violet-300 bg-violet-50/50 py-3 text-sm font-medium text-violet-700 hover:bg-violet-100/50 transition-colors dark:border-violet-700 dark:bg-violet-950/20 dark:text-violet-400"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
       >
         <Plus className="size-4" />إضافة سؤال
       </button>
@@ -235,7 +235,7 @@ export default function NewAssignmentClient({ groupId, userName }: NewAssignment
   return (
     <div className="flex flex-col min-h-screen">
       <TopBar title="إضافة واجب / امتحان" notifHref="/teacher/notifications"
-        userName={userName} userAvatar={userName ? userName[0] : "م"} userAvatarColor="bg-violet-500" profileHref="/teacher/profile" />
+        userName={userName} userAvatar={userName ? userName[0] : "م"} userAvatarColor="bg-primary" profileHref="/teacher/profile" />
 
       <div className="mx-auto w-full max-w-2xl p-4 sm:p-6 space-y-6 flex-1">
         <button
@@ -366,7 +366,7 @@ export default function NewAssignmentClient({ groupId, userName }: NewAssignment
                 <span className="flex items-center gap-2">
                   📋 الأسئلة ({questions.length} سؤال)
                   {questions.length > 0 && (
-                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary dark:bg-primary/20 dark:text-primary">
                       {questions.reduce((s, q) => s + q.points, 0)} نقطة
                     </span>
                   )}
@@ -384,7 +384,7 @@ export default function NewAssignmentClient({ groupId, userName }: NewAssignment
         <div className="flex gap-2 pb-6">
           <Button variant="outline" className="flex-1" onClick={handleBack}>إلغاء</Button>
           <Button
-            className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+            className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             onClick={handleSubmit}
             disabled={createMut.isPending}
           >

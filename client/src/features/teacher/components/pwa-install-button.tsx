@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { Download, CheckCircle2 } from "lucide-react"
@@ -71,7 +71,7 @@ export function PwaInstallButton({ groupId }: Props) {
       size="sm"
       variant="outline"
       onClick={handleInstall}
-      className="gap-1.5 border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-400 dark:hover:bg-violet-950/20"
+      className="gap-1.5 border-primary text-primary hover:bg-primary/10"
     >
       <Download className="size-3.5" />
       <span className="hidden sm:inline">تثبيت</span>
@@ -79,3 +79,4 @@ export function PwaInstallButton({ groupId }: Props) {
     </Button>
   )
 }
+

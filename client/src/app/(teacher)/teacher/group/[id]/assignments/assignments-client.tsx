@@ -131,7 +131,7 @@ function SubmissionsModal({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => { onClose(); router.push(`/teacher/group/${groupId}/assignments/${assignmentId}/edit`) }}
-              className="grid size-9 place-items-center rounded-full border border-violet-500/40 bg-violet-500/15 text-violet-300 hover:bg-violet-500/25 transition-colors"
+              className="grid size-9 place-items-center rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
               title="تعديل الامتحان"
             >
               <Pencil className="size-4" />
@@ -159,7 +159,7 @@ function SubmissionsModal({
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="بحث باسم الطالب..."
-                  className="w-full text-xs rounded-xl border border-slate-700/60 bg-slate-800/40 px-4 py-2.5  placeholder-slate-500 outline-none focus:border-violet-500/60 transition-colors"
+                  className="w-full text-xs rounded-xl border border-slate-700/60 bg-slate-800/40 px-4 py-2.5  placeholder-slate-500 outline-none focus:border-primary transition-colors"
                 />
                 {search && (
                   <button onClick={() => setSearch("")} className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 ">
@@ -405,12 +405,12 @@ export default function AssignmentsClient({
 
       <div className="flex flex-col">
         <TopBar title="الواجبات والامتحانات" notifHref="/teacher/notifications"
-          userName={userName} userAvatar={userName ? userName[0] : "م"} userAvatarColor="bg-violet-500" profileHref="/teacher/profile" />
+          userName={userName} userAvatar={userName ? userName[0] : "م"} userAvatarColor="bg-primary" profileHref="/teacher/profile" />
 
         <div className="mx-auto w-full max-w-2xl p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">{isLoading ? "جارٍ التحميل..." : `${assignments.length} عنصر`}</p>
-            <Button onClick={() => router.push(`/teacher/group/${groupId}/assignments/new`)} className="bg-gradient-to-r from-violet-600 to-violet-500  hover:opacity-90">
+            <Button onClick={() => router.push(`/teacher/group/${groupId}/assignments/new`)} className="bg-primary text-primary-foreground  hover:opacity-90">
               <Plus className="size-4" />إضافة
             </Button>
           </div>
@@ -423,7 +423,7 @@ export default function AssignmentsClient({
             <div className="flex flex-col items-center py-16 text-center">
               <p className="text-4xl mb-3">📚</p>
               <p className="font-medium">لا توجد واجبات بعد</p>
-              <Button className="mt-4 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" onClick={() => router.push(`/teacher/group/${groupId}/assignments/new`)}>
+              <Button className="mt-4 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground" onClick={() => router.push(`/teacher/group/${groupId}/assignments/new`)}>
                 <Plus className="size-4" />إضافة أول واجب
               </Button>
             </div>
@@ -442,14 +442,14 @@ export default function AssignmentsClient({
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5 min-w-0 flex-1">
                         <span className={cn("grid size-9 place-items-center rounded-xl shrink-0 text-base mt-0.5",
-                          isExam ? "bg-rose-100 dark:bg-rose-900/30" : "bg-violet-100 dark:bg-violet-900/30")}>
+                          isExam ? "bg-rose-100 dark:bg-rose-900/30" : "bg-primary/10 dark:bg-primary/20")}>
                           {isExam ? "📝" : "📚"}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5 mb-1">
                             <span className={cn("text-[10px] rounded-full px-2 py-0.5 font-bold shrink-0",
                               isExam ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                                : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400")}>
+                                : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary")}>
                               {ASSIGNMENT_TYPE_LABELS[a.type]}
                             </span>
                             {a.durationMinutes && (
@@ -458,7 +458,7 @@ export default function AssignmentsClient({
                               </span>
                             )}
                             {(a.questions ?? []).length > 0 && (
-                              <span className="text-[10px] rounded-full px-2 py-0.5 bg-violet-100 text-violet-700 font-bold dark:bg-violet-900/30 dark:text-violet-400">
+                              <span className="text-[10px] rounded-full px-2 py-0.5 bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary">
                                 {a.questions.length} سؤال · {totalPoints} نقطة
                               </span>
                             )}
@@ -570,7 +570,7 @@ export default function AssignmentsClient({
                       {a.questions.map((q, qi) => (
                         <div key={q._id ?? qi} className="rounded-xl border border-border/60 bg-card p-3 space-y-2">
                           <div className="flex items-start gap-2">
-                            <span className="grid size-5 shrink-0 place-items-center rounded-lg bg-violet-100 text-[10px] font-bold text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 mt-0.5">
+                            <span className="grid size-5 shrink-0 place-items-center rounded-lg bg-primary/10 text-[10px] font-bold text-primary dark:bg-primary/20 dark:text-primary mt-0.5">
                               {qi + 1}
                             </span>
                             <p className="text-sm font-medium leading-snug">{q.text}</p>

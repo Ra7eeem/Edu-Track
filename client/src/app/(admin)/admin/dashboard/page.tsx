@@ -1,4 +1,4 @@
-import { TopBar }    from "@/shared/components/layout/topbar"
+﻿import { TopBar }    from "@/shared/components/layout/topbar"
 import { Button }    from "@/shared/components/ui/button"
 import { getAdminDashboardApi } from "@/features/admin/apis/admin.api"
 import type { DashboardFull } from "@/features/admin/types/admin"
@@ -6,7 +6,7 @@ import { BookOpen, CalendarCheck, MessageCircle, Users, XCircle } from "lucide-r
 import Link from "next/link"
 
 const COLORS = [
-  "from-violet-500 to-violet-600", "from-cyan-500 to-cyan-600",
+  "from-primary to-accent", "from-cyan-500 to-cyan-600",
   "from-amber-500 to-amber-600",   "from-emerald-500 to-emerald-600",
   "from-rose-500 to-rose-600",
 ]
@@ -39,7 +39,7 @@ export default async function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-violet-600",  bg: "bg-violet-50 dark:bg-violet-900/20", href: "/admin/teachers" },
+            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-primary",  bg: "bg-primary/5 dark:bg-primary/20", href: "/admin/teachers" },
             { label: "الطلاب",     value: stats?.totalStudents ?? "—", icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20", href: "/admin/students" },
             { label: "المجموعات",  value: stats?.totalGroups   ?? "—", icon: BookOpen,      color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/groups" },
             { label: "حضور اليوم", value: stats?.todayPresent  ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/groups" },
@@ -78,7 +78,7 @@ export default async function AdminDashboard() {
               {teachers.map((t, i) => (
                 <div key={String(t._id ?? t.id)} className="flex items-center gap-3">
                   <span className="text-xs font-bold text-muted-foreground w-4 shrink-0">#{i + 1}</span>
-                  <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                  <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                     {t.name[0]}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -124,3 +124,4 @@ export default async function AdminDashboard() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { TopBar }              from "@/shared/components/layout/topbar"
 import { Badge }               from "@/shared/components/ui/badge"
@@ -78,7 +78,7 @@ export function JoinRequestsClient({
         unreadCount={pending}
         userName={userName}
         userAvatar={userName ? userName[0] : "م"}
-        userAvatarColor="bg-violet-500"
+        userAvatarColor="bg-primary"
         profileHref="/teacher/profile"
       />
 
@@ -248,3 +248,4 @@ export function JoinRequestsClient({
     </div>
   )
 }
+

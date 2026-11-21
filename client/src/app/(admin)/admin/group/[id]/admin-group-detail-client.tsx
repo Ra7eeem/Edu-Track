@@ -156,7 +156,7 @@ export function AdminGroupDetailClient({
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <StatCard label="المنشورات" value={postsList.length} color="text-cyan-600" />
                 <StatCard label="المدرسون" value={teachersList.length} color="text-amber-600" />
-                <StatCard label="عدد الطلاب" value={studentsList.length} color="text-violet-600" />
+                <StatCard label="عدد الطلاب" value={studentsList.length} color="text-primary" />
                 <StatCard label="في الترتيب" value={rankingList.length} color="text-emerald-600" />
               </div>
               <div className="rounded-2xl border border-border/60 bg-card p-4">
@@ -179,7 +179,7 @@ export function AdminGroupDetailClient({
                 const email = s.email ?? ""
                 return (
                   <div key={sid || i} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 transition-all hover:border-border">
-                    <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                    <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                       {name.slice(0, 1)}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -239,7 +239,7 @@ export function AdminGroupDetailClient({
                         return (
                           <div key={resolveId(entry.student)} className={cn("flex flex-col items-center gap-1", i===1 && "-mt-3")}>
                             <span className="text-2xl">{medals[pos-1]}</span>
-                            <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-violet-600 shadow-sm dark:bg-card">
+                            <span className="grid size-10 place-items-center rounded-2xl bg-white text-sm font-bold text-primary shadow-sm dark:bg-card">
                               {entry.student.name[0]}
                             </span>
                             <p className="text-center text-[10px] font-semibold leading-tight">
@@ -270,14 +270,14 @@ export function AdminGroupDetailClient({
                             : <span className="text-xs font-bold text-muted-foreground">#{entry.rank}</span>
                           }
                         </span>
-                        <span className="grid size-8 place-items-center rounded-xl bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                        <span className="grid size-8 place-items-center rounded-xl bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                           {entry.student.name[0]}
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{entry.student.name}</p>
                           <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-muted">
                             <div
-                              className="h-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all"
+                              className="h-full bg-gradient-to-r from-primary to-accent transition-all"
                               style={{
                                 width: rankingList[0]?.score
                                   ? `${(entry.score / rankingList[0].score) * 100}%`
@@ -367,7 +367,7 @@ export function AdminGroupDetailClient({
                       key={tid}
                       className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3.5 shadow-sm"
                     >
-                      <span className="grid size-10 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                      <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                         {t.name[0]}
                       </span>
                       <div className="min-w-0 flex-1">

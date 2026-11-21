@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { TopBar }               from "@/shared/components/layout/topbar"
 import { Button }               from "@/shared/components/ui/button"
@@ -11,7 +11,7 @@ import Link                     from "next/link"
 import { useRef, useState }     from "react"
 
 const COLORS = [
-  "from-violet-500 to-violet-600",
+  "from-primary to-accent",
   "from-cyan-500 to-cyan-600",
   "from-amber-500 to-amber-600",
   "from-emerald-500 to-emerald-600",
@@ -95,7 +95,7 @@ function CreateGroupModal({ onClose }: { onClose: () => void }) {
             إلغاء
           </Button>
           <Button
-            className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+            className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             onClick={handleSubmit}
             disabled={createMut.isPending}
           >
@@ -139,7 +139,7 @@ export function GroupsClient({
           unreadCount={pending}
           userName={userName}
           userAvatar={userName ? userName[0] : "م"}
-          userAvatarColor="bg-violet-500"
+          userAvatarColor="bg-primary"
           profileHref="/teacher/profile"
         />
 
@@ -149,7 +149,7 @@ export function GroupsClient({
             <p className="text-sm text-muted-foreground">{groups.length} مجموعة</p>
             <Button
               onClick={() => setShowCreate(true)}
-              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+              className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             >
               <Plus className="size-4" />
               <span className="hidden sm:inline">إنشاء مجموعة</span>
@@ -163,7 +163,7 @@ export function GroupsClient({
               <p className="font-medium">لا توجد مجموعات بعد</p>
               <p className="mt-1 text-sm text-muted-foreground">أنشئ مجموعتك الأولى الآن</p>
               <Button
-                className="mt-4 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                className="mt-4 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                 onClick={() => setShowCreate(true)}
               >
                 <Plus className="size-4" />إنشاء مجموعة
@@ -189,7 +189,7 @@ export function GroupsClient({
                         {g.grades.map(gr => (
                           <span
                             key={gr}
-                            className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                            className="rounded-full bg-muted border border-border px-2 py-0.5 text-[10px] font-medium text-foreground"
                           >
                             {GRADE_LABELS[gr as Grade]}
                           </span>
@@ -207,7 +207,7 @@ export function GroupsClient({
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                        className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                         asChild
                       >
                         <Link href={`/teacher/group/${resolveId(g)}`}>
@@ -225,3 +225,4 @@ export function GroupsClient({
     </>
   )
 }
+

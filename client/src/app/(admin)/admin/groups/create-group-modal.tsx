@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { createGroupAction, GroupActionState } from "@/features/admin/actions/group.action"
 import { Button } from "@/shared/components/ui/button"
@@ -135,7 +135,7 @@ export function CreateGroupModal({
                         sel ? "border-primary bg-primary text-primary-foreground" : "border-border")}>
                         {sel ? "✓" : ""}
                       </span>
-                      <span className="grid size-7 place-items-center rounded-lg bg-violet-100 text-xs font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+                      <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-xs font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
                         {t.name[0]}
                       </span>
                       <div className="min-w-0">
@@ -153,7 +153,7 @@ export function CreateGroupModal({
 
         <div className="flex gap-2 border-t border-border/60 px-5 py-4 shrink-0">
           <Button variant="outline" className="flex-1" onClick={onClose}>إلغاء</Button>
-          <Button className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+          <Button className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             onClick={handleSubmit} disabled={isPending}>
             <Plus className="size-4" />{isPending ? "جارٍ الإنشاء..." : "إنشاء المجموعة"}
           </Button>

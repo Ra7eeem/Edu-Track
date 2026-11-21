@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { ApiUser, GRADE_LABELS, Grade, resolveId } from "@/shared/types/api"
 import { cn } from "@/shared/lib/tailwind-cn"
@@ -11,9 +11,9 @@ const GRADE_BADGE_COLORS: Partial<Record<Grade, string>> = {
   [Grade.GRADE_1]:  "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
   [Grade.GRADE_2]:  "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
   [Grade.GRADE_3]:  "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
-  [Grade.GRADE_4]:  "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
-  [Grade.GRADE_5]:  "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
-  [Grade.GRADE_6]:  "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+  [Grade.GRADE_4]:  "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
+  [Grade.GRADE_5]:  "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
+  [Grade.GRADE_6]:  "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
   [Grade.GRADE_7]:  "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
   [Grade.GRADE_8]:  "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
   [Grade.GRADE_9]:  "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -140,3 +140,4 @@ export function StudentsTable({ students, isLoading, isError }: StudentsTablePro
     </div>
   )
 }
+

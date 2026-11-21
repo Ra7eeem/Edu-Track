@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useRef, useState } from "react"
 import { Button } from "@/shared/components/ui/button"
@@ -60,7 +60,7 @@ export function EditGroupModal({ group, onClose }: EditGroupModalProps) {
         <div className="w-full max-w-sm space-y-4 rounded-3xl border border-border/60 bg-background p-6 text-center shadow-2xl">
           <CheckCircle2 className="mx-auto size-12 text-emerald-500" />
           <p className="font-bold">تم تحديث المجموعة بنجاح</p>
-          <Button className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90" onClick={onClose}>
+          <Button className="w-full bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground" onClick={onClose}>
             حسناً
           </Button>
         </div>
@@ -77,7 +77,7 @@ export function EditGroupModal({ group, onClose }: EditGroupModalProps) {
       <div className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-border/60 bg-background shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4">
           <h2 className="flex items-center gap-2 text-base font-bold">
-            <Save className="size-4 text-violet-500" />
+            <Save className="size-4 text-accent" />
             إعدادات المجموعة
           </h2>
           <button
@@ -123,7 +123,7 @@ export function EditGroupModal({ group, onClose }: EditGroupModalProps) {
             إلغاء
           </Button>
           <Button
-            className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+            className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
             onClick={handleSubmit}
             disabled={updateMut.isPending}
           >

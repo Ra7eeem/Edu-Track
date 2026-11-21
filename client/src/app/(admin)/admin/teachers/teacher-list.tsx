@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { ApiUser, resolveId } from "@/shared/types/api"
 import { Trash2 } from "lucide-react"
@@ -18,7 +18,7 @@ export function TeacherList({ teachers }: { teachers: ApiUser[] }) {
             key={resolveId(t)}
             className={`flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/30 ${i < teachers.length - 1 ? "border-b border-border/40" : ""}`}
           >
-            <span className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0">
               {t.name[0]}
             </span>
             <div className="min-w-0 flex-1">

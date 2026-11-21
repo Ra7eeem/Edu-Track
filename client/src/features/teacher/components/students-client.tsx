@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
@@ -215,7 +215,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
         </div>
         <Button
           size="sm"
-          className="shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+          className="shrink-0 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
           onClick={() => setShowAdd(true)}
         >
           <UserPlus className="size-3.5" />إضافة طالب
@@ -237,7 +237,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
             >
               <Link
                 href={`/teacher/group/${groupId}/students/${sid}`}
-                className="grid size-9 place-items-center rounded-xl bg-violet-100 text-sm font-bold text-violet-600 dark:bg-violet-900/30 dark:text-violet-400 shrink-0 hover:opacity-80 transition-opacity"
+                className="grid size-9 place-items-center rounded-xl bg-primary/10 text-sm font-bold text-primary dark:bg-primary/20 dark:text-primary shrink-0 hover:opacity-80 transition-opacity"
               >
                 {name[0] ?? "؟"}
               </Link>
@@ -251,7 +251,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => setPasswordTarget({ id: sid, name })}
-                  className="grid size-8 place-items-center rounded-xl border border-violet-200 text-violet-600 hover:bg-violet-50 hover:border-violet-300 transition-all dark:border-violet-800 dark:hover:bg-violet-950/20"
+                  className="grid size-8 place-items-center rounded-xl border border-primary text-primary hover:bg-primary/10 transition-all"
                   title="تغيير كلمة المرور"
                   aria-label="تغيير كلمة المرور"
                 >
@@ -287,7 +287,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
           <div className="w-full max-w-md rounded-3xl bg-card border border-border/60 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between mb-4">
               <h2 className="flex items-center gap-2 text-base font-bold">
-                <UserPlus className="size-4 text-violet-500" />إضافة طالب جديد
+                <UserPlus className="size-4 text-accent" />إضافة طالب جديد
               </h2>
               <button onClick={() => setShowAdd(false)} className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted transition-colors">
                 <X className="size-4" />
@@ -358,7 +358,7 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
                 <div className="flex gap-2 pt-2">
                   <Button type="button" variant="outline" className="flex-1" onClick={() => setShowAdd(false)}>إلغاء</Button>
                   <Button type="submit"
-                    className="flex-1 bg-gradient-to-r from-violet-600 to-violet-500 text-white hover:opacity-90"
+                    className="flex-1 bg-primary text-primary-foreground border-2 border-primary hover:bg-primary-hover hover:border-primary-hover hover:text-primary-hover-foreground"
                     disabled={isPending}>
                     {isPending ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
                   </Button>
@@ -371,3 +371,4 @@ export function StudentsClient({ groupId, initialStudents }: Props) {
     </div>
   )
 }
+

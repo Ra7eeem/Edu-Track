@@ -45,7 +45,7 @@ export function SplashScreen() {
           flexDirection:  "column",
           alignItems:     "center",
           justifyContent: "center",
-          background:     "#1B2A4A",
+          background:     "#12503B",
           transition:     "opacity 0.6s ease",
           opacity:        phase === "fade" ? 0 : 1,
           pointerEvents:  "none",

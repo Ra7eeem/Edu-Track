@@ -61,12 +61,6 @@ const navMap: Record<SidebarVariant, NavItem[]> = {
   admin:   adminNav,
 }
 
-const avatarColors: Record<SidebarVariant, string> = {
-  teacher: "bg-teal-600",
-  student: "bg-cyan-500",
-  admin:   "bg-rose-500",
-}
-
 const roleLabels: Record<SidebarVariant, string> = {
   teacher: "مدرس",
   student: "طالب",
@@ -82,7 +76,6 @@ interface SidebarProps {
 export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
   const pathname = usePathname()
   const nav      = navMap[variant]
-  const color    = avatarColors[variant]
   const roleLabel = roleLabels[variant]
 
   const displayName   = userName   || roleLabels[variant]
@@ -99,7 +92,7 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {nav.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/")
@@ -108,13 +101,13 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                "flex items-center gap-3 rounded px-3 py-2.5 text-sm font-medium transition-all",
                 active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-muted text-foreground font-semibold border-s-4 border-accent"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
             >
-              <item.icon className="size-4 shrink-0" />
+              <item.icon className="size-4 shrink-0 text-accent" />
               {item.label}
             </Link>
           )
@@ -123,13 +116,8 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
 
       {/* User + Logout */}
       <div className="border-t border-border p-3">
-        <div className="flex items-center gap-3 rounded-xl p-2">
-          <span
-            className={cn(
-              "grid size-9 place-items-center rounded-xl text-sm font-bold text-white shrink-0",
-              color
-            )}
-          >
+        <div className="flex items-center gap-3 rounded p-2">
+          <span className="grid size-9 place-items-center rounded bg-primary text-primary-foreground text-sm font-bold shrink-0">
             {displayAvatar}
           </span>
           <div className="min-w-0 flex-1">
@@ -142,7 +130,7 @@ export function Sidebar({ variant, userName, userAvatar }: SidebarProps) {
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
             aria-label="تسجيل الخروج"
-            className="grid size-8 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20"
+            className="grid size-8 place-items-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive cursor-pointer"
           >
             <LogOut className="size-4" />
           </button>

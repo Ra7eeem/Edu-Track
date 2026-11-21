@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { IBM_Plex_Sans_Arabic, Geist_Mono, Cairo } from "next/font/google"
+import { IBM_Plex_Sans_Arabic, Amiri, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { cn }             from "@/shared/lib/tailwind-cn"
 import { NextAuthProvider } from "@/shared/providers/next-auth-provider"
@@ -8,18 +8,19 @@ import { ThemeProvider }  from "@/shared/providers/theme-provider"
 import { PwaRegister }    from "@/shared/components/pwa-register"
 import { SplashScreen }   from "@/shared/components/splash-screen"
 
+// Body & UI font — IBM Plex Sans Arabic
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets:  ["arabic"],
-  weight:   ["300", "400", "500", "600", "700"],
+  weight:   ["400", "500", "600", "700"],
   variable: "--font-ibm",
   display:  "swap",
 })
 
-// Cairo — primary UI + display font for Mi'raj
-const cairo = Cairo({
-  subsets:  ["arabic", "latin"],
-  weight:   ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-cairo",
+// Headings, Quranic verses & Numbers — Amiri
+const amiri = Amiri({
+  subsets:  ["arabic"],
+  weight:   ["400", "700"],
+  variable: "--font-amiri",
   display:  "swap",
 })
 
@@ -30,8 +31,8 @@ const geistMono = Geist_Mono({
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)",  color: "#1B2A4A" },
+    { media: "(prefers-color-scheme: light)", color: "#F4ECD8" },
+    { media: "(prefers-color-scheme: dark)",  color: "#0E1B19" },
   ],
   width:        "device-width",
   initialScale: 1,
@@ -42,10 +43,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default:  "معراج | Mi'Raj Educational Platform",
+    default:  "معراج | ارتقِ بتجربة تدريسك",
     template: "%s | معراج",
   },
-  description: "منصة معراج التعليمية — نظّم مجموعاتك وتابع حضور طلابك",
+  description: "منصة معراج التعليمية — إدارة المجموعات والحضور والتفاعل بين المدرس وطلابه في مكانٍ واحد برُوحٍ عربية أصيلة.",
   appleWebApp: {
     capable:        true,
     statusBarStyle: "default",
@@ -53,7 +54,6 @@ export const metadata: Metadata = {
   },
   icons: {
     icon:  [
-      // Use main logo as favicon (SVG works in modern browsers)
       { url: "/main-logo.svg", type: "image/svg+xml" },
       { url: "/icon-192.svg",  sizes: "192x192", type: "image/svg+xml" },
     ],
@@ -61,18 +61,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={cn("h-full antialiased", ibmPlexArabic.variable, cairo.variable, geistMono.variable)}
+      className={cn("h-full antialiased", ibmPlexArabic.variable, amiri.variable, geistMono.variable)}
     >
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
+          attribute="data-theme"
+          defaultTheme="system"
           enableSystem
           storageKey="mearaj-theme"
           disableTransitionOnChange
