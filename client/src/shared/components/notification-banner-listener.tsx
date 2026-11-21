@@ -68,6 +68,16 @@ const iconMap: Record<NotificationType, { icon: React.ElementType; color: string
     color: "text-cyan-700 dark:text-cyan-300",
     bg: "bg-cyan-500/15 border-cyan-500/30",
   },
+  [NotificationType.LESSON_REMINDER]: {
+    icon: BookOpen,
+    color: "text-amber-700 dark:text-amber-300",
+    bg: "bg-amber-500/15 border-amber-500/30",
+  },
+  [NotificationType.TASK_REMINDER]: {
+    icon: Bell,
+    color: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-emerald-500/15 border-emerald-500/30",
+  },
 }
 
 export function NotificationBannerListener() {

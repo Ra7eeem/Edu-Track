@@ -27,6 +27,8 @@ const iconMap: Record<NotificationType, { icon: React.ElementType; color: string
   [NotificationType.NEW_EXAM]:              { icon: Award,         color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30" },
   [NotificationType.ATTENDANCE_RECORDED]:   { icon: CalendarCheck, color: "text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30" },
   [NotificationType.QUESTION_REPLIED]:      { icon: HelpCircle,    color: "text-cyan-600 bg-cyan-100 dark:bg-cyan-900/30" },
+  [NotificationType.LESSON_REMINDER]:       { icon: BookOpen,      color: "text-amber-600 bg-amber-100 dark:bg-amber-900/30" },
+  [NotificationType.TASK_REMINDER]:         { icon: Bell,          color: "text-primary bg-primary/10 dark:bg-primary/20" },
 }
 
 type FilterCategory = "ALL" | "EXAM" | "ATTENDANCE" | "POST" | "REPLY"

@@ -41,8 +41,9 @@ import {
   BarChart3, Bell, BookOpen, CalendarCheck,
   AlertTriangle, CheckCircle2, Clock, ClipboardList, Flame, Gift, Heart,
   ListTodo, PenLine, Plus, RefreshCcw, RotateCcw, Save, Search, Settings,
-  Trash2, Trophy, Users, X, XCircle,
+  Trash2, Trophy, Users, X, XCircle, Film,
 } from "lucide-react"
+import { CoursesTab } from "@/features/courses/components/CoursesTab"
 import Link from "next/link"
 import { useMemo, useState, useTransition } from "react"
 import { useQueryClient } from "@tanstack/react-query"
@@ -50,6 +51,7 @@ import { useQueryClient } from "@tanstack/react-query"
 const TABS = [
   { key: "overview",      label: "نظرة عامة",        icon: BarChart3     },
   { key: "teams",         label: "الفرق والتنافس",   icon: Flame         },
+  { key: "courses",       label: "الكورسات والدروس", icon: Film          },
   { key: "tasks",         label: "المهام والتحديات",  icon: ListTodo      },
   { key: "students",      label: "الطلاب",             icon: Users         },
   { key: "attendance",    label: "الحضور",             icon: CalendarCheck },
@@ -891,6 +893,9 @@ export function GroupManageClient({
 
         {/* ── Teams (الفرق والمنافسة) ── */}
         {tab === "teams" && <TeamsClient groupId={id} />}
+
+        {/* ── Courses (الكورسات والدروس والتحليلات) ── */}
+        {tab === "courses" && <CoursesTab classroomId={id} isTeacher={true} />}
 
         {/* ── Tasks Tracker (قائمة مهام المعلم ومتابعة الطلاب وسؤال اليوم) ── */}
         {tab === "tasks" && <TeacherTaskTracker groupId={id} />}

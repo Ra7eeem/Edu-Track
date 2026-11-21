@@ -37,9 +37,11 @@ import {
 import { useState, useTransition } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
+import { CoursesTab } from "@/features/courses/components/CoursesTab"
 
 const TABS = [
   { key: "posts", label: "المنشورات" },
+  { key: "courses", label: "الكورسات والدروس 🎬" },
   { key: "ranking", label: "الترتيب" },
   { key: "members", label: "الأعضاء" },
 ]
@@ -596,6 +598,11 @@ export function StudentGroupClient({
               )
             })}
           </div>
+        )}
+
+        {/* ── Courses ── */}
+        {activeTab === "courses" && (
+          <CoursesTab classroomId={groupId} isTeacher={false} />
         )}
 
         {/* ── Ranking ── */}
