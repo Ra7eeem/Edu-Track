@@ -60,11 +60,11 @@ export function MearajIcon({ size = 36, className }: { size?: number; className?
           <stop offset="100%" stopColor="#C9A84C"/>
         </linearGradient>
       </defs>
-      <circle cx="23" cy="23" r="23" fill="#1B2A4A"/>
+      <circle cx="23" cy="23" r="23" fill="var(--primary)"/>
       <path d="M23 9 L26.5 19.5 L37 23 L26.5 26.5 L23 37 L19.5 26.5 L9 23 L19.5 19.5 Z"
-            fill="url(#mi-g)"/>
+            fill="var(--gold)"/>
       <path d="M23 15 L25 21 L31 23 L25 25 L23 31 L21 25 L15 23 L21 21 Z"
-            fill="#1B2A4A"/>
+            fill="var(--primary)"/>
     </svg>
   )
 }

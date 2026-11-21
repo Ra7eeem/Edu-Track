@@ -39,19 +39,19 @@ export default async function AdminDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-primary",  bg: "bg-primary/5 dark:bg-primary/20", href: "/admin/teachers" },
-            { label: "الطلاب",     value: stats?.totalStudents ?? "—", icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20", href: "/admin/students" },
-            { label: "المجموعات",  value: stats?.totalGroups   ?? "—", icon: BookOpen,      color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/groups" },
-            { label: "حضور اليوم", value: stats?.todayPresent  ?? "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/groups" },
-            { label: "غياب اليوم", value: stats?.todayAbsent   ?? "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20", href: "/admin/groups" },
-            { label: "المنشورات",  value: stats?.totalPosts    ?? "—", icon: MessageCircle, color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-900/20", href: "/admin/groups" },
+            { label: "المدرسون",    value: stats?.totalTeachers ?? "—", icon: Users,         color: "text-primary",     bg: "bg-primary/10", href: "/admin/teachers" },
+            { label: "الطلاب",     value: stats?.totalStudents ?? "—", icon: Users,         color: "text-accent",      bg: "bg-accent/10", href: "/admin/students" },
+            { label: "المجموعات",  value: stats?.totalGroups   ?? "—", icon: BookOpen,      color: "text-primary",     bg: "bg-primary/10", href: "/admin/groups" },
+            { label: "حضور اليوم", value: stats?.todayPresent  ?? "—", icon: CalendarCheck, color: "text-primary",     bg: "bg-primary/10", href: "/admin/groups" },
+            { label: "غياب اليوم", value: stats?.todayAbsent   ?? "—", icon: XCircle,       color: "text-destructive", bg: "bg-destructive/10", href: "/admin/groups" },
+            { label: "المنشورات",  value: stats?.totalPosts    ?? "—", icon: MessageCircle, color: "text-accent",      bg: "bg-accent/10", href: "/admin/groups" },
           ].map((s) => {
             const CardContent = (
-              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md h-full">
-                <div className={`mb-2 inline-grid size-8 place-items-center rounded-xl ${s.bg} ${s.color}`}>
+              <div className="rounded border border-border bg-card p-4 shadow-sm transition-all hover:border-accent h-full">
+                <div className={`mb-2 inline-grid size-8 place-items-center rounded ${s.bg} ${s.color}`}>
                   <s.icon className="size-3.5" />
                 </div>
-                <p className="text-xl font-extrabold">{s.value}</p>
+                <p className="font-display text-xl font-bold">{s.value}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">{s.label}</p>
               </div>
             );

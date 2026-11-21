@@ -90,7 +90,7 @@ function ReplyRow({
       {/* Vertical thread line */}
       <div className="flex flex-col items-center me-2">
         <div className="w-px flex-1 min-h-[8px]"
-          style={{ background: "linear-gradient(to bottom, oklch(0.46 0.13 183 / 0.3), oklch(0.67 0.15 70 / 0.2))" }} />
+          style={{ background: "linear-gradient(to bottom, var(--primary), var(--accent))", opacity: 0.35 }} />
         <CornerDownRight className="size-3 shrink-0 text-primary/30 mb-1" />
       </div>
 

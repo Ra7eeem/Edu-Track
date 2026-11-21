@@ -45,7 +45,7 @@ export function IslamicBg({ variant = "light" }: { variant?: "light" | "dark" })
         >
           <polygon
             points="12,2 14.2,9.8 22,12 14.2,14.2 12,22 9.8,14.2 2,12 9.8,9.8"
-            fill={isDark ? "oklch(0.80 0.18 72)" : "oklch(0.46 0.15 183)"}
+            fill="var(--gold)"
           />
         </svg>
       ))}
@@ -57,7 +57,7 @@ export function IslamicBg({ variant = "light" }: { variant?: "light" | "dark" })
         className="absolute -top-10 -end-10 size-52 opacity-[0.06] animate-arabesque"
         style={{ animationDuration: "60s" }}
       >
-        <g fill="none" stroke={isDark ? "oklch(0.80 0.18 72)" : "oklch(0.46 0.15 183)"} strokeWidth="1.5">
+        <g fill="none" stroke="var(--gold)" strokeWidth="1.5">
           <polygon points="100,10 118,67 175,67 130,103 148,160 100,125 52,160 70,103 25,67 82,67" />
           <polygon points="100,25 114,60 150,60 122,81 133,116 100,95 67,116 78,81 50,60 86,60"  />
           <polygon points="100,40 110,53 125,53 114,63 118,78 100,68 82,78 86,63 75,53 90,53" />

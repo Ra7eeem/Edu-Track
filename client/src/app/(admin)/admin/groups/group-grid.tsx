@@ -25,9 +25,9 @@ export function GroupGrid({ groups }: { groups: ApiGroup[] }) {
         {groups.map((g, i) => (
           <div
             key={resolveId(g)}
-            className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+            className="overflow-hidden rounded border border-border bg-card shadow-sm hover:border-accent transition-all"
           >
-            <div className={`h-2 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
+            <div className="h-1 bg-primary" />
             <div className="p-4">
               <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
               {g.description && (

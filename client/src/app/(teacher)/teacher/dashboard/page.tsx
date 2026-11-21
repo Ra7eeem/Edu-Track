@@ -42,7 +42,7 @@ export default async function TeacherDashboard() {
         unreadCount={unread}
         userName={session?.name ?? ""}
         userAvatar={(session?.name ?? "م")[0]}
-        userAvatarColor="bg-teal-600"
+        userAvatarColor="bg-primary text-primary-foreground"
         profileHref="/teacher/profile"
       />
 
@@ -50,17 +50,17 @@ export default async function TeacherDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "المجموعات",     value: groups.length,                 icon: BookOpen,      color: "text-teal-600",    bg: "bg-teal-50 dark:bg-teal-900/20", href: "/teacher/groups" },
-            { label: "إجمالي الطلاب", value: totalStudents,                 icon: Users,         color: "text-cyan-600",    bg: "bg-cyan-50 dark:bg-cyan-900/20", href: "/teacher/groups" },
-            { label: "حضور اليوم",    value: hasToday ? todayPresent : "—", icon: CalendarCheck, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/teacher/groups" },
-            { label: "غياب اليوم",    value: hasToday ? todayAbsent  : "—", icon: XCircle,       color: "text-rose-600",    bg: "bg-rose-50 dark:bg-rose-900/20", href: "/teacher/groups" },
+            { label: "المجموعات",     value: groups.length,                 icon: BookOpen,      color: "text-primary",     bg: "bg-primary/10",     href: "/teacher/groups" },
+            { label: "إجمالي الطلاب", value: totalStudents,                 icon: Users,         color: "text-accent",      bg: "bg-accent/10",      href: "/teacher/groups" },
+            { label: "حضور اليوم",    value: hasToday ? todayPresent : "—", icon: CalendarCheck, color: "text-primary",     bg: "bg-primary/10",     href: "/teacher/groups" },
+            { label: "غياب اليوم",    value: hasToday ? todayAbsent  : "—", icon: XCircle,       color: "text-destructive", bg: "bg-destructive/10", href: "/teacher/groups" },
           ].map((s) => {
             const CardContent = (
-              <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md h-full">
-                <div className={`mb-3 inline-grid size-9 place-items-center rounded-xl ${s.bg} ${s.color}`}>
+              <div className="rounded border border-border bg-card p-4 shadow-sm transition-all hover:border-accent h-full">
+                <div className={`mb-3 inline-grid size-9 place-items-center rounded ${s.bg} ${s.color}`}>
                   <s.icon className="size-4" />
                 </div>
-                <p className="text-2xl font-extrabold">{s.value}</p>
+                <p className="font-display text-2xl font-bold">{s.value}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
               </div>
             );
@@ -79,24 +79,24 @@ export default async function TeacherDashboard() {
         {/* Groups */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold">مجموعاتي</h2>
-            <Link href="/teacher/groups" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <h2 className="font-display text-lg font-bold text-heading">مجموعاتي</h2>
+            <Link href="/teacher/groups" className="flex items-center gap-1 text-xs text-accent hover:underline">
               عرض الكل <ArrowLeft className="size-3" />
             </Link>
           </div>
 
           {groups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded border border-dashed border-border py-16 text-center">
               <BookOpen className="mb-3 size-10 text-muted-foreground/30" />
               <p className="text-sm font-medium">لا توجد مجموعات بعد</p>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {groups.map((g, i) => (
-                <div key={g._id} className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-                  <div className={`h-1.5 bg-gradient-to-r ${COLORS[i % COLORS.length]}`} />
+              {groups.map((g) => (
+                <div key={g._id} className="group overflow-hidden rounded border border-border bg-card shadow-sm transition-all hover:border-accent">
+                  <div className="h-1 bg-primary" />
                   <div className="p-4">
-                    <h3 className="text-sm font-bold leading-snug">{g.name}</h3>
+                    <h3 className="font-display text-base font-bold leading-snug">{g.name}</h3>
                     {g.description && (
                       <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{g.description}</p>
                     )}
@@ -119,15 +119,15 @@ export default async function TeacherDashboard() {
         {notifs.length > 0 && (
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold">آخر الإشعارات</h2>
-              <Link href="/teacher/notifications" className="flex items-center gap-1 text-xs text-primary hover:underline">
+              <h2 className="font-display text-lg font-bold text-heading">آخر الإشعارات</h2>
+              <Link href="/teacher/notifications" className="flex items-center gap-1 text-xs text-accent hover:underline">
                 عرض الكل <ArrowLeft className="size-3" />
               </Link>
             </div>
-            <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+            <div className="rounded border border-border bg-card shadow-sm overflow-hidden">
               {notifs.map((n, i) => (
                 <div key={String(n._id ?? n.id)} className={`flex items-start gap-3 px-4 py-3 ${i < notifs.length - 1 ? "border-b border-border/40" : ""}`}>
-                  <span className={`mt-0.5 size-2 shrink-0 rounded-full ${n.isRead ? "bg-muted" : "bg-primary"}`} />
+                  <span className={`mt-0.5 size-2 shrink-0 rounded-full ${n.isRead ? "bg-muted" : "bg-accent"}`} />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{n.title}</p>
                     <p className="truncate text-xs text-muted-foreground">{n.message}</p>
