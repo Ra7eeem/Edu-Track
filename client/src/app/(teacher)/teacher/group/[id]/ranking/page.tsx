@@ -22,7 +22,10 @@ export default async function RankingPage({ params }: { params: Promise<{ id: st
 
   const rawGroup = groupRes.status === "fulfilled" ? groupRes.value : null
   const group = rawGroup ? ("group" in rawGroup ? rawGroup.group : rawGroup) as ApiGroup : null
-  const ranking: ApiRankingEntry[] = rankingRes.status === "fulfilled" ? rankingRes.value : []
+  const rawRanking = rankingRes.status === "fulfilled" ? rankingRes.value : []
+  const ranking: ApiRankingEntry[] = Array.isArray(rawRanking)
+    ? rawRanking
+    : (rawRanking as any)?.ranking ?? []
 
   const unread = notifsRes.status === "fulfilled"
     ? toPaginatedArray(notifsRes.value).filter((n) => !n.isRead).length

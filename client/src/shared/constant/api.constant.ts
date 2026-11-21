@@ -32,14 +32,16 @@ export function getBaseApiUrl(): string {
   }
 
   // Server-side
-  if (process.env.API_URL) return process.env.API_URL
-  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
+  if (process.env.API_URL && !process.env.API_URL.includes("localhost") && !process.env.API_URL.includes("127.0.0.1")) {
+    return process.env.API_URL
+  }
+  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost") && !process.env.NEXT_PUBLIC_API_URL.includes("127.0.0.1")) {
     return process.env.NEXT_PUBLIC_API_URL
   }
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`
   }
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
+  return process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
 }
 
 export const BASE_API_URL = getBaseApiUrl()

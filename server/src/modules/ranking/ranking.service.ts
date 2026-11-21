@@ -14,17 +14,79 @@ export async function getGroupRanking(groupId: string, req: Request) {
   if (!mongoose.Types.ObjectId.isValid(groupId))
     throw ApiError.badRequest("معرّف غير صالح");
 
-  // Get all continuous scores for this group, sorted descending
-  const scores = await StudentScore.find({ group: groupId })
-    .populate("student", "name email avatarUrl grade")
-    .sort({ score: -1, presentCount: -1 })
-    .lean();
+  // Get all continuous scores and active group memberships in parallel
+  const [scores, memberships] = await Promise.all([
+    StudentScore.find({ group: groupId })
+      .populate("student", "name email avatarUrl grade")
+      .lean(),
+    GroupMembership.find({ group: groupId, isActive: { $ne: false } })
+      .populate("student", "name email avatarUrl grade")
+      .lean(),
+  ]);
 
-  // Assign ranks (handle ties — same rank for same score)
+  const scoreMap = new Map<string, any>();
+  for (const s of scores) {
+    if (s.student && (s.student as any)._id) {
+      scoreMap.set(String((s.student as any)._id), s);
+    }
+  }
+
+  const allEntries: Array<{
+    student: any;
+    score: number;
+    presentCount: number;
+    lateCount: number;
+    absentCount: number;
+    bonusPoints: number;
+  }> = [];
+
+  const seenIds = new Set<string>();
+
+  // Add all active members from memberships
+  for (const m of memberships) {
+    if (m.student && (m.student as any)._id) {
+      const sid = String((m.student as any)._id);
+      seenIds.add(sid);
+      const sc = scoreMap.get(sid);
+      allEntries.push({
+        student: m.student,
+        score: sc?.score ?? 0,
+        presentCount: sc?.presentCount ?? 0,
+        lateCount: (sc as any)?.lateCount ?? 0,
+        absentCount: sc?.absentCount ?? 0,
+        bonusPoints: (sc as any)?.bonusPoints ?? 0,
+      });
+    }
+  }
+
+  // Fallback: add any students in StudentScore not found in active memberships
+  for (const s of scores) {
+    if (s.student && (s.student as any)._id) {
+      const sid = String((s.student as any)._id);
+      if (!seenIds.has(sid)) {
+        seenIds.add(sid);
+        allEntries.push({
+          student: s.student,
+          score: s.score ?? 0,
+          presentCount: s.presentCount ?? 0,
+          lateCount: (s as any)?.lateCount ?? 0,
+          absentCount: s.absentCount ?? 0,
+          bonusPoints: (s as any)?.bonusPoints ?? 0,
+        });
+      }
+    }
+  }
+
+  // Sort descending by score, then presentCount
+  allEntries.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.presentCount - a.presentCount;
+  });
+
+  // Assign ranks (handle ties)
   let currentRank = 0;
   let previousScore = -1;
-  const validScores = scores.filter((s) => s.student != null);
-  const ranked = validScores.map((s, idx) => {
+  const ranked = allEntries.map((s, idx) => {
     if (s.score !== previousScore) {
       currentRank = idx + 1;
       previousScore = s.score;
@@ -34,9 +96,9 @@ export async function getGroupRanking(groupId: string, req: Request) {
       student:      s.student,
       score:        s.score,
       presentCount: s.presentCount,
-      lateCount:    (s as { lateCount?: number }).lateCount ?? 0,
+      lateCount:    s.lateCount,
       absentCount:  s.absentCount,
-      bonusPoints:  (s as { bonusPoints?: number }).bonusPoints ?? 0,
+      bonusPoints:  s.bonusPoints,
     };
   });
 

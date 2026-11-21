@@ -42,7 +42,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       // ── Serverless-safe settings ──────────────────────────────────────
-      bufferCommands: false,        // fail fast — never queue ops while disconnected
+      bufferCommands: true,         // serverless: buffer until connection finishes instead of throwing
       maxPoolSize: 5,               // serverless: each instance owns its pool, keep it small
       minPoolSize: 1,               // keep 1 connection alive on a warm lambda
       maxIdleTimeMS: 10_000,        // close idle connections after 10 s (Vercel idles fast)

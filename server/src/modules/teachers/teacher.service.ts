@@ -35,17 +35,29 @@ export async function assertTeacherOwnsGroup(
 
 export async function getMyGroups(teacherId: string, req: Request) {
   const { page, limit, skip } = parsePagination(req);
-  const links = await GroupTeacher.find({ teacher: teacherId })
-    .populate({
-      path: "group",
-      match: { isActive: true },
-    })
-    .skip(skip)
-    .limit(limit);
+  const [links, createdGroups] = await Promise.all([
+    GroupTeacher.find({ teacher: teacherId })
+      .populate({
+        path: "group",
+        match: { isActive: { $ne: false } },
+      })
+      .lean(),
+    Group.find({ createdBy: teacherId, isActive: { $ne: false } }).lean(),
+  ]);
 
-  const groups = links.map((l) => l.group).filter(Boolean);
-  const total = await GroupTeacher.countDocuments({ teacher: teacherId });
-  return { data: groups, pagination: buildPaginationMeta(total, page, limit) };
+  const groupMap = new Map<string, any>();
+  for (const g of createdGroups) {
+    groupMap.set(String(g._id), g);
+  }
+  for (const l of links) {
+    if (l.group && (l.group as any)._id) {
+      groupMap.set(String((l.group as any)._id), l.group);
+    }
+  }
+
+  const allGroups = Array.from(groupMap.values());
+  const paginated = allGroups.slice(skip, skip + limit);
+  return { data: paginated, pagination: buildPaginationMeta(allGroups.length, page, limit) };
 }
 
 // ─────────────────────────────────────────
@@ -401,7 +413,7 @@ export async function getAttendanceRegister(
     Attendance.find({ group: groupId, date: { $gte: startDate, $lt: endDate } })
       .sort({ date: 1 })
       .lean(),
-    GroupMembership.find({ group: groupId, isActive: true })
+    GroupMembership.find({ group: groupId, isActive: { $ne: false } })
       .populate("student", "name")
       .lean(),
   ]);

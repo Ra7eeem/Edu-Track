@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useGroupRanking } from "@/features/teacher/hooks/use-group-ranking"
 import { resetRankingAction, addBonusAction } from "@/features/teacher/actions/ranking.action"
@@ -102,11 +102,18 @@ interface Props {
 
 export function RankingClient({ groupId, initialRanking, currentMonth, currentYear, isTeacher = false }: Props) {
   const qc = useQueryClient()
+  const safeInitialRanking = Array.isArray(initialRanking)
+    ? initialRanking
+    : (initialRanking as any)?.ranking ?? []
+
   // Seed the query with the server-rendered ranking so we don't refetch on mount
   const { data } = useGroupRanking(groupId, currentMonth, currentYear, {
-    initialData: { month: currentMonth, year: currentYear, groupId, ranking: initialRanking },
+    initialData: { month: currentMonth, year: currentYear, groupId, ranking: safeInitialRanking },
   })
-  const ranking  = data?.ranking ?? initialRanking
+  const rankingRaw = data?.ranking ?? safeInitialRanking
+  const ranking: ApiRankingEntry[] = Array.isArray(rankingRaw)
+    ? rankingRaw
+    : (rankingRaw as any)?.ranking ?? []
 
   const [bonusTarget, setBonusTarget]   = useState<{ id: string; name: string } | null>(null)
   const [showReset,   setShowReset]     = useState(false)

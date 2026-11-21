@@ -196,7 +196,10 @@ export async function getGroupRankingApi(
   if (!res.ok || !json.success) {
     throw new Error(json.message || "فشل تحميل ترتيب المجموعة")
   }
-  return json.data ?? []
+  const rawData: any = json.data
+  if (Array.isArray(rawData)) return rawData
+  if (rawData && Array.isArray(rawData.ranking)) return rawData.ranking
+  return []
 }
 
 /**

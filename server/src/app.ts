@@ -41,10 +41,27 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: (requestOrigin, callback) => {
+      if (!requestOrigin) return callback(null, true);
+      if (env.CORS_ORIGIN === "*" || env.CORS_ORIGIN === requestOrigin) {
+        return callback(null, true);
+      }
+      if (
+        requestOrigin.endsWith(".vercel.app") ||
+        requestOrigin.includes("localhost") ||
+        requestOrigin.includes("127.0.0.1")
+      ) {
+        return callback(null, true);
+      }
+      const origins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
+      if (origins.includes(requestOrigin)) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   })
 );
 app.options("*", cors());
