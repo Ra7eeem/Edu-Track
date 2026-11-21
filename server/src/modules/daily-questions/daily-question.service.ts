@@ -208,7 +208,10 @@ export async function answerDailyQuestion(
 // ─────────────────────────────────────────
 // 4. Teacher lists daily questions for classroom
 // ─────────────────────────────────────────
-export async function getTeacherDailyQuestions(teacherId: string, classroomId: string) {
+export async function getTeacherDailyQuestions(
+  teacherId: string,
+  classroomId: string
+): Promise<Record<string, unknown>[]> {
   if (!mongoose.Types.ObjectId.isValid(classroomId)) throw ApiError.badRequest("معرّف غير صالح");
   await assertTeacherOwnsGroup(teacherId, classroomId);
 

@@ -8,6 +8,7 @@ import { resolveId } from "@/shared/types/api"
 import { DashboardPostsFeed } from "./posts-feed"
 import { StudentTeamCard } from "@/features/student/components/student-team-card"
 import { StudentTaskBar } from "@/features/student/components/student-task-bar"
+import { StudentDashboardHighlights } from "@/features/student/components/student-dashboard-highlights"
 import { ArrowLeft, CalendarCheck, Trophy, XCircle } from "lucide-react"
 import Link from "next/link"
 
@@ -27,6 +28,8 @@ export default async function StudentDashboard() {
   const firstGroup = data?.firstGroup ?? null
   const posts      = data?.posts      ?? []
   const rankData   = data?.rank       ?? null
+  const currentStudentId = data?.student ? resolveId(data.student) : (session?.userId ?? "")
+  const classroomId = firstGroup ? resolveId(firstGroup) : null
 
   return (
     <div className="flex flex-col font-sans">
@@ -42,6 +45,16 @@ export default async function StudentDashboard() {
       />
 
       <div className="mx-auto w-full max-w-2xl space-y-5 p-4 sm:p-6">
+        {/* Module 1 & 3: Interactive Highlights Scroll & Daily Challenge */}
+        <StudentDashboardHighlights
+          currentStudentId={currentStudentId}
+          classroomId={classroomId}
+          top3={data?.top3}
+          rankData={rankData}
+          myTeam={data?.myTeam}
+          todayQuestion={data?.todayQuestion}
+        />
+
         {/* Group banner — emerald & gold brand */}
         {firstGroup && (
           <div className="relative overflow-hidden rounded border border-border bg-primary text-primary-foreground p-5 shadow-sm">
@@ -92,8 +105,8 @@ export default async function StudentDashboard() {
         {/* Gamified Team & Rank Card */}
         <StudentTeamCard classroomId={firstGroup ? resolveId(firstGroup) : null} />
 
-        {/* Private Student Task & Progress Bar */}
-        <StudentTaskBar />
+        {/* Private Student Task & Assigned Class Tasks Bar */}
+        <StudentTaskBar classroomId={classroomId} />
 
         {/* Recent posts */}
         {posts.length > 0 && firstGroup && (

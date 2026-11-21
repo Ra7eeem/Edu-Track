@@ -474,3 +474,89 @@ export interface ApiStudentTasksResponse {
   tasks: ApiStudentTask[]
   stats: StudentTaskStats
 }
+
+// ─── Class Tasks & Tracking ───────────────────────────────────────────────────
+
+export interface ApiClassTask {
+  _id:          string
+  id?:          string
+  classroom:    string
+  teacher:      string
+  title:        string
+  description?: string | null
+  dueDate?:     string | null
+  isActive:     boolean
+  createdAt:    string
+  stats?: {
+    completedCount: number
+    totalStudents:  number
+    percentage:     number
+  }
+  isCompleted?: boolean
+  completedAt?: string | null
+}
+
+export interface ApiClassTaskProgressItem {
+  student: {
+    _id?:       string
+    id?:        string
+    name:       string
+    email?:     string
+    avatarUrl?: string | null
+    grade?:     string
+    phone?:     string
+  }
+  completedAt?: string
+}
+
+export interface ApiClassTaskProgressResponse {
+  task: ApiClassTask
+  completed: ApiClassTaskProgressItem[]
+  pending: Array<{
+    student: {
+      _id?:       string
+      id?:        string
+      name:       string
+      email?:     string
+      avatarUrl?: string | null
+      grade?:     string
+      phone?:     string
+    }
+  }>
+  stats: {
+    total:          number
+    completedCount: number
+    pendingCount:   number
+    percentage:     number
+  }
+}
+
+// ─── Daily Questions & Quiz ───────────────────────────────────────────────────
+
+export interface ApiDailyQuestion {
+  _id:                 string
+  id?:                 string
+  classroom:           string
+  date:                string
+  question:            string
+  options:             string[]
+  rewardPoints:        number
+  correctOptionIndex?: number
+  explanation?:        string
+  alreadyAnswered:     boolean
+  previousAnswer?: {
+    selectedOptionIndex: number
+    isCorrect:           boolean
+    pointsEarned:        number
+    answeredAt?:         string
+  } | null
+}
+
+export interface ApiDailyAnswerResult {
+  isCorrect:           boolean
+  correctOptionIndex:  number
+  explanation?:        string
+  pointsEarned:        number
+  selectedOptionIndex: number
+  answerId?:           string
+}

@@ -111,25 +111,39 @@ export async function getDashboard(studentId: string) {
   // Step 2: if group exists, fetch posts + ranking in parallel
   let posts:   unknown[] = [];
   let rankData: unknown  = null;
+  let top3:    unknown[] = [];
+  let myTeam:  unknown   = null;
+  let todayQuestionStatus: unknown = null;
 
   if (groupId) {
     const { StudentScore: MS } = await import("../../models/StudentScore");
-    const [postsRaw, allScores] = await Promise.all([
+    const { Team }             = await import("../../models/Team");
+    const { DailyQuestion }    = await import("../../models/DailyQuestion");
+    const { DailyAnswer }      = await import("../../models/DailyAnswer");
+
+    const todayDate = new Date().toISOString().split("T")[0];
+
+    const [postsRaw, allScores, myTeamDoc, allTeams, dq] = await Promise.all([
       Post.find({ group: groupId })
         .sort({ createdAt: -1 })
         .limit(3)
         .populate("author", "name avatarUrl")
         .lean(),
-      // Sorted once and reused for BOTH the student's own score and the rank
-      // position — this removed a duplicate per-student StudentScore query
       MS.find({ group: groupId })
+        .populate("student", "name avatarUrl grade")
         .sort({ score: -1 })
         .lean(),
+      Team.findOne({ classroom: groupId, members: studentId, isActive: true }).lean(),
+      Team.find({ classroom: groupId, isActive: true }).sort({ currentCycleScore: -1 }).lean(),
+      DailyQuestion.findOne({ classroom: groupId, date: todayDate, isActive: true }).lean(),
     ]);
 
     posts = postsRaw;
 
-    const rankIdx = allScores.findIndex(s => String(s.student) === studentId);
+    const rankIdx = allScores.findIndex(s => {
+      const sId = (s.student as any)?._id || s.student;
+      return String(sId) === studentId;
+    });
     const myScore = rankIdx >= 0 ? allScores[rankIdx] : undefined;
 
     rankData = myScore ? {
@@ -138,7 +152,45 @@ export async function getDashboard(studentId: string) {
       presentCount: myScore.presentCount,
       absentCount:  myScore.absentCount,
       totalMembers: allScores.length,
+      pointsToNextRank:
+        rankIdx > 0
+          ? Math.max((allScores[rankIdx - 1]?.score ?? myScore.score) - myScore.score + 1, 1)
+          : 0,
     } : null;
+
+    top3 = allScores.slice(0, 3).map((s, idx) => {
+      const studentObj = s.student as any;
+      return {
+        rank: idx + 1,
+        studentId: String(studentObj?._id || studentObj?.id || s.student),
+        name: studentObj?.name || "طالب",
+        avatarUrl: studentObj?.avatarUrl,
+        grade: studentObj?.grade,
+        score: s.score,
+      };
+    });
+
+    if (myTeamDoc) {
+      const teamRank = allTeams.findIndex(t => String(t._id) === String(myTeamDoc._id)) + 1;
+      myTeam = {
+        _id: myTeamDoc._id,
+        name: myTeamDoc.name,
+        currentCycleScore: myTeamDoc.currentCycleScore,
+        totalScore: myTeamDoc.totalScore,
+        teamRank: teamRank || 1,
+        totalTeams: allTeams.length,
+      };
+    }
+
+    if (dq) {
+      const ans = await DailyAnswer.findOne({ dailyQuestion: dq._id, student: studentId }).lean();
+      todayQuestionStatus = {
+        questionId: dq._id,
+        rewardPoints: dq.rewardPoints,
+        alreadyAnswered: !!ans,
+        isCorrect: ans?.isCorrect ?? null,
+      };
+    }
   }
 
   const unreadCount = await (await import("../../models/Notification"))
@@ -152,5 +204,8 @@ export async function getDashboard(studentId: string) {
     firstGroup,
     posts,
     rank: rankData,
+    top3,
+    myTeam,
+    todayQuestion: todayQuestionStatus,
   };
 }

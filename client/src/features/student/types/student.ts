@@ -20,6 +20,7 @@ export interface StudentRankEntry {
   presentCount: number
   absentCount: number
   totalMembers: number
+  pointsToNextRank?: number
 }
 
 export interface StudentDashboardData {
@@ -30,6 +31,28 @@ export interface StudentDashboardData {
   firstGroup: (ApiGroup & { _id?: string; id?: string }) | null
   posts: ApiPost[]
   rank: StudentRankEntry | null
+  top3?: {
+    rank: number
+    studentId: string
+    name: string
+    avatarUrl?: string
+    grade?: string
+    score: number
+  }[]
+  myTeam?: {
+    _id: string
+    name: string
+    currentCycleScore: number
+    totalScore: number
+    teamRank: number
+    totalTeams: number
+  } | null
+  todayQuestion?: {
+    questionId: string
+    rewardPoints: number
+    alreadyAnswered: boolean
+    isCorrect?: boolean | null
+  } | null
 }
 
 export interface StudentAttendanceRecord {

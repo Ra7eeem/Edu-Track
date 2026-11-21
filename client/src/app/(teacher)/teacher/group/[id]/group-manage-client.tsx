@@ -25,6 +25,7 @@ import { PostCommentsSection } from "@/features/teacher/components/post-comments
 import { AttendanceRegister } from "@/features/teacher/components/attendance-register"
 import { EditGroupModal }     from "@/features/teacher/components/edit-group-modal"
 import { TeamsClient }        from "@/features/teacher/components/teams-client"
+import { TeacherTaskTracker } from "@/features/teacher/components/teacher-task-tracker"
 import {
   resolveId,
   AttendanceStatus,
@@ -39,7 +40,7 @@ import { useGroupStudents, type GroupStudent } from "@/features/teacher/hooks/us
 import {
   BarChart3, Bell, BookOpen, CalendarCheck,
   AlertTriangle, CheckCircle2, Clock, ClipboardList, Flame, Gift, Heart,
-  PenLine, Plus, RefreshCcw, RotateCcw, Save, Search, Settings,
+  ListTodo, PenLine, Plus, RefreshCcw, RotateCcw, Save, Search, Settings,
   Trash2, Trophy, Users, X, XCircle,
 } from "lucide-react"
 import Link from "next/link"
@@ -49,6 +50,7 @@ import { useQueryClient } from "@tanstack/react-query"
 const TABS = [
   { key: "overview",      label: "نظرة عامة",        icon: BarChart3     },
   { key: "teams",         label: "الفرق والتنافس",   icon: Flame         },
+  { key: "tasks",         label: "المهام والتحديات",  icon: ListTodo      },
   { key: "students",      label: "الطلاب",             icon: Users         },
   { key: "attendance",    label: "الحضور",             icon: CalendarCheck },
   { key: "register",      label: "كشاف الغياب",        icon: ClipboardList },
@@ -889,6 +891,9 @@ export function GroupManageClient({
 
         {/* ── Teams (الفرق والمنافسة) ── */}
         {tab === "teams" && <TeamsClient groupId={id} />}
+
+        {/* ── Tasks Tracker (قائمة مهام المعلم ومتابعة الطلاب وسؤال اليوم) ── */}
+        {tab === "tasks" && <TeacherTaskTracker groupId={id} />}
 
         {/* ── Students ── */}
         {tab === "students" && (
