@@ -47,3 +47,16 @@ describe("Notification Types & Dispatcher", () => {
     expect(NotificationType.QUESTION_REPLIED).toBe("QUESTION_REPLIED");
   });
 });
+
+describe("Hybrid Tasks Engine: Task Types & Daily Date Tracking", () => {
+  it("exports TaskType enum with ONCE and DAILY", async () => {
+    const { TaskType } = await import("../models/ClassTask");
+    expect(TaskType.ONCE).toBe("ONCE");
+    expect(TaskType.DAILY).toBe("DAILY");
+  });
+
+  it("formats date strings consistently as YYYY-MM-DD", () => {
+    const dateStr = new Date().toISOString().split("T")[0];
+    expect(dateStr).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
