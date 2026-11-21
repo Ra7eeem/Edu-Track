@@ -477,6 +477,11 @@ export interface ApiStudentTasksResponse {
 
 // ─── Class Tasks & Tracking ───────────────────────────────────────────────────
 
+export enum TaskType {
+  ONCE = "ONCE",
+  DAILY = "DAILY",
+}
+
 export interface ApiClassTask {
   _id:          string
   id?:          string
@@ -484,6 +489,7 @@ export interface ApiClassTask {
   teacher:      string
   title:        string
   description?: string | null
+  type?:        TaskType | "ONCE" | "DAILY"
   dueDate?:     string | null
   isActive:     boolean
   createdAt:    string
@@ -494,6 +500,8 @@ export interface ApiClassTask {
   }
   isCompleted?: boolean
   completedAt?: string | null
+  streak?:      number
+  targetDate?:  string
 }
 
 export interface ApiClassTaskProgressItem {
@@ -511,6 +519,7 @@ export interface ApiClassTaskProgressItem {
 
 export interface ApiClassTaskProgressResponse {
   task: ApiClassTask
+  selectedDate?: string
   completed: ApiClassTaskProgressItem[]
   pending: Array<{
     student: {

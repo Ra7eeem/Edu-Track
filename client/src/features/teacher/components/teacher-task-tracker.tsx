@@ -27,6 +27,8 @@ import {
   HelpCircle,
   Sparkles,
   ChevronLeft,
+  RotateCw,
+  Flame,
 } from "lucide-react"
 
 interface Props {
@@ -43,19 +45,29 @@ export function TeacherTaskTracker({ groupId }: Props) {
   const tasks = data?.tasks ?? []
   const totalStudents = data?.totalStudents ?? 0
 
-  // Modals state
+  // Create Task Modal state
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDesc, setTaskDesc] = useState("")
+  const [taskType, setTaskType] = useState<"ONCE" | "DAILY">("ONCE")
   const [taskDueDate, setTaskDueDate] = useState("")
   const [createErr, setCreateErr] = useState<string | null>(null)
 
-  // Drilldown progress modal
+  // Drilldown progress modal state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
-  const { data: progressData, isLoading: progressLoading } =
-    useClassTaskProgress(selectedTaskId)
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  )
 
-  // Daily Question Modal
+  const selectedTaskObj = tasks.find((t) => resolveId(t) === selectedTaskId)
+  const isSelectedDaily = selectedTaskObj?.type === "DAILY"
+
+  const { data: progressData, isLoading: progressLoading } = useClassTaskProgress(
+    selectedTaskId,
+    isSelectedDaily ? selectedDate : undefined
+  )
+
+  // Daily Question Modal state
   const [showDailyQModal, setShowDailyQModal] = useState(false)
   const [dqQuestion, setDqQuestion] = useState("")
   const [dqOptions, setDqOptions] = useState(["", "", "", ""])
@@ -77,11 +89,13 @@ export function TeacherTaskTracker({ groupId }: Props) {
       await createMut.mutateAsync({
         title: taskTitle.trim(),
         description: taskDesc.trim() || undefined,
-        dueDate: taskDueDate || undefined,
+        type: taskType,
+        dueDate: taskType === "ONCE" && taskDueDate ? taskDueDate : undefined,
       })
       setShowCreateTaskModal(false)
       setTaskTitle("")
       setTaskDesc("")
+      setTaskType("ONCE")
       setTaskDueDate("")
     } catch (err: any) {
       setCreateErr(err.message || "حدث خطأ أثناء إضافة المهمة")
@@ -90,7 +104,11 @@ export function TeacherTaskTracker({ groupId }: Props) {
 
   const handleSendReminder = async (taskId: string, studentIds?: string[]) => {
     try {
-      const res = await reminderMut.mutateAsync({ taskId, studentIds })
+      const res = await reminderMut.mutateAsync({
+        taskId,
+        studentIds,
+        dateStr: isSelectedDaily ? selectedDate : undefined,
+      })
       setReminderToast(res.message || "تم إرسال التنبيه بنجاح")
       setTimeout(() => setReminderToast(null), 3500)
     } catch (err: any) {
@@ -140,7 +158,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
             متابعة المهام والتكليفات الإلزامية ({tasks.length})
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            تعيين مهام موحدة لجميع طلاب المجموعة ومتابعة نسبة إنجاز كل طالب وإرسال تذكيرات بنقرة واحدة.
+            تعيين مهام موحدة لجميع طلاب المجموعة (يومية متجددة أو لمرة واحدة) ومتابعة نسبة إنجاز كل طالب لحظياً.
           </p>
         </div>
 
@@ -185,7 +203,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
           <ListTodo className="size-10 text-muted-foreground/30 mb-2" />
           <p className="font-semibold text-foreground text-sm">لا توجد مهام معينة للمجموعة بعد</p>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-            أضف مهاماً مثل مراجعة الدروس أو حل التدريبات لتظهر في شريط مهام الطلاب وتتبع نسبة إنجازهم.
+            أضف مهاماً مثل مراجعة الدروس أو أوراد يومية لتظهر في شريط مهام الطلاب وتتبع نسبة إنجازهم بدقة.
           </p>
           <Button
             size="sm"
@@ -202,6 +220,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
             const tid = resolveId(task)
             const completedCount = task.stats?.completedCount ?? 0
             const percentage = task.stats?.percentage ?? 0
+            const isDaily = task.type === "DAILY"
 
             return (
               <div
@@ -210,21 +229,41 @@ export function TeacherTaskTracker({ groupId }: Props) {
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-display text-base font-bold text-foreground">
-                      {task.title}
-                    </h3>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-display text-base font-bold text-foreground">
+                          {task.title}
+                        </h3>
+                        {isDaily ? (
+                          <span className="flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-bold text-cyan-700 dark:text-cyan-300">
+                            <RotateCw className="size-2.5" />
+                            🔄 يومية متجددة
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                            📌 لمرة واحدة
+                          </span>
+                        )}
+                      </div>
+                      {isDaily && (
+                        <p className="text-[11px] text-cyan-700 dark:text-cyan-400 font-medium">
+                          إنجاز اليوم: {new Date().toLocaleDateString("ar-EG")}
+                        </p>
+                      )}
+                    </div>
+
                     <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary shrink-0">
-                      {completedCount}/{totalStudents} طالب ({percentage}%)
+                      {completedCount}/{totalStudents} ({percentage}%)
                     </span>
                   </div>
 
                   {task.description && (
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                    <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
                       {task.description}
                     </p>
                   )}
 
-                  {task.dueDate && (
+                  {!isDaily && task.dueDate && (
                     <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
                       <Calendar className="size-3" />
                       موعد التسليم: {new Date(task.dueDate).toLocaleDateString("ar-EG")}
@@ -245,10 +284,13 @@ export function TeacherTaskTracker({ groupId }: Props) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setSelectedTaskId(tid)}
+                      onClick={() => {
+                        setSelectedTaskId(tid)
+                        setSelectedDate(new Date().toISOString().split("T")[0])
+                      }}
                       className="h-8 rounded-xl text-xs font-semibold"
                     >
-                      تفاصيل الإنجاز والطلاب
+                      عرض تفاصيل الإنجاز
                       <ChevronLeft className="size-3 ms-1" />
                     </Button>
 
@@ -279,13 +321,25 @@ export function TeacherTaskTracker({ groupId }: Props) {
           <div className="w-full max-w-xl rounded-3xl bg-card border border-border shadow-2xl overflow-hidden font-sans">
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-4 bg-muted/20">
               <div>
-                <h2 className="text-base font-bold text-heading">
-                  متابعة إنجاز: {progressData.task.title}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-bold text-heading">
+                    متابعة إنجاز: {progressData.task.title}
+                  </h2>
+                  {isSelectedDaily ? (
+                    <span className="rounded-full bg-cyan-500/10 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-bold text-cyan-700 dark:text-cyan-300">
+                      🔄 مهمة يومية
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                      📌 لمرة واحدة
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {progressData.stats.completedCount} أنجزوا • {progressData.stats.pendingCount} لم ينجزوا بعد ({progressData.stats.percentage}%)
                 </p>
               </div>
+
               <button
                 onClick={() => setSelectedTaskId(null)}
                 className="grid size-8 place-items-center rounded-xl text-muted-foreground hover:bg-muted"
@@ -295,6 +349,34 @@ export function TeacherTaskTracker({ groupId }: Props) {
             </div>
 
             <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              {/* If Daily: Show Date Picker to inspect historical completion */}
+              {isSelectedDaily && (
+                <div className="flex items-center justify-between rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="size-4 text-cyan-600" />
+                    <span className="text-xs font-bold text-cyan-950 dark:text-cyan-200">
+                      تاريخ المتابعة:
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="rounded-xl border border-input bg-card px-2.5 py-1 text-xs outline-none focus:border-primary"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
+                      className="h-7 text-[11px] px-2 rounded-lg"
+                    >
+                      اليوم
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Progress Summary bar */}
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -327,7 +409,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
 
                 {progressData.pending.length === 0 ? (
                   <p className="text-xs text-emerald-600 font-semibold p-3 rounded-xl bg-emerald-500/10 text-center">
-                    رائع! جميع طلاب المجموعة أتموا هذه المهمة 🎉
+                    رائع! جميع طلاب المجموعة أتموا هذه المهمة {isSelectedDaily ? "لهذا اليوم" : ""} 🎉
                   </p>
                 ) : (
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -338,7 +420,12 @@ export function TeacherTaskTracker({ groupId }: Props) {
                           key={sid}
                           className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-3 py-2 text-xs"
                         >
-                          <span className="font-medium">{p.student.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="grid size-6 place-items-center rounded-lg bg-amber-500/10 text-[10px] font-bold text-amber-700">
+                              {p.student.name?.[0] || "؟"}
+                            </span>
+                            <span className="font-medium">{p.student.name}</span>
+                          </div>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -374,12 +461,17 @@ export function TeacherTaskTracker({ groupId }: Props) {
                           key={sid}
                           className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-xs"
                         >
-                          <span className="font-medium text-emerald-950 dark:text-emerald-200">
-                            {c.student.name}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="grid size-6 place-items-center rounded-lg bg-emerald-500/15 text-[10px] font-bold text-emerald-700">
+                              {c.student.name?.[0] || "؟"}
+                            </span>
+                            <span className="font-medium text-emerald-950 dark:text-emerald-200">
+                              {c.student.name}
+                            </span>
+                          </div>
                           <span className="text-[10px] text-muted-foreground">
                             {c.completedAt
-                              ? new Date(c.completedAt).toLocaleDateString("ar-EG", {
+                              ? new Date(c.completedAt).toLocaleTimeString("ar-EG", {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })
@@ -407,7 +499,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
         </div>
       )}
 
-      {/* ─── Create Class Task Modal ──────────────────────────────── */}
+      {/* ─── Create Class Task Modal (with Toggle Switch / Segmented Button) ── */}
       {showCreateTaskModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -428,13 +520,53 @@ export function TeacherTaskTracker({ groupId }: Props) {
             </div>
 
             <form onSubmit={handleCreateTask} className="p-5 space-y-4">
+              {/* Interactive Toggle Switch / Segmented Button */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold">نوع المهمة *</Label>
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/40 rounded-2xl border border-border/60">
+                  <button
+                    type="button"
+                    onClick={() => setTaskType("ONCE")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                      taskType === "ONCE"
+                        ? "bg-card text-foreground shadow-sm border border-border/80"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    📌 مهمة لمرة واحدة
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTaskType("DAILY")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all",
+                      taskType === "DAILY"
+                        ? "bg-card text-foreground shadow-sm border border-border/80"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    🔄 مهمة يومية متجددة
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {taskType === "ONCE"
+                    ? "واجب مدرسي، تسليم مشروع، أو حل تدريبات محددة (ينجزها الطالب لمرة واحدة)."
+                    : "ورد قرآني، أذكار الصباح، مراجعة يومية (تتجدد تلقائياً كل يوم عند منتصف الليل)."}
+                </p>
+              </div>
+
               <div>
                 <Label htmlFor="cTaskTitle" className="text-xs font-bold">
                   عنوان المهمة *
                 </Label>
                 <Input
                   id="cTaskTitle"
-                  placeholder="مثال: مراجعة الدرس الأول، حل تدريبات ص 45..."
+                  placeholder={
+                    taskType === "ONCE"
+                      ? "مثال: مراجعة الدرس الأول، حل تدريبات ص 45..."
+                      : "مثال: قراءة ورد صفحتين من القرآن، أذكار الصباح..."
+                  }
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   className="mt-1 rounded-xl"
@@ -448,7 +580,7 @@ export function TeacherTaskTracker({ groupId }: Props) {
                 </Label>
                 <textarea
                   id="cTaskDesc"
-                  rows={3}
+                  rows={2}
                   placeholder="اكتب أي تعليمات أو توضيحات إضافية للطلاب..."
                   value={taskDesc}
                   onChange={(e) => setTaskDesc(e.target.value)}
@@ -456,18 +588,21 @@ export function TeacherTaskTracker({ groupId }: Props) {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="cTaskDue" className="text-xs font-bold">
-                  موعد التسليم الأخير (اختياري)
-                </Label>
-                <Input
-                  id="cTaskDue"
-                  type="date"
-                  value={taskDueDate}
-                  onChange={(e) => setTaskDueDate(e.target.value)}
-                  className="mt-1 rounded-xl"
-                />
-              </div>
+              {/* Show Due Date only when taskType === 'ONCE' */}
+              {taskType === "ONCE" && (
+                <div>
+                  <Label htmlFor="cTaskDue" className="text-xs font-bold">
+                    موعد التسليم الأخير (اختياري)
+                  </Label>
+                  <Input
+                    id="cTaskDue"
+                    type="date"
+                    value={taskDueDate}
+                    onChange={(e) => setTaskDueDate(e.target.value)}
+                    className="mt-1 rounded-xl"
+                  />
+                </div>
+              )}
 
               {createErr && (
                 <p className="rounded-xl border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive text-center">

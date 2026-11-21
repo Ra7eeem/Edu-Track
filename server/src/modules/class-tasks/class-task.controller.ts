@@ -18,7 +18,8 @@ export const getClassTasks = asyncHandler(async (req: Request, res: Response) =>
   const data = await ClassTaskService.getClassTasks(
     req.user!.userId,
     req.user!.role,
-    p(req.params.classroomId)
+    p(req.params.classroomId),
+    req.query.date as string | undefined
   );
   sendSuccess(res, data);
 });
@@ -26,7 +27,8 @@ export const getClassTasks = asyncHandler(async (req: Request, res: Response) =>
 export const getClassTaskProgress = asyncHandler(async (req: Request, res: Response) => {
   const data = await ClassTaskService.getClassTaskProgress(
     req.user!.userId,
-    p(req.params.taskId)
+    p(req.params.taskId),
+    req.query.date as string | undefined
   );
   sendSuccess(res, data);
 });

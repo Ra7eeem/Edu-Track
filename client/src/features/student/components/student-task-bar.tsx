@@ -19,12 +19,22 @@ import {
   Trash2,
   ListTodo,
   Sparkles,
-  Pin,
   Calendar,
+  RotateCw,
+  Flame,
+  AlertTriangle,
 } from "lucide-react"
 
 interface Props {
   classroomId?: string | null
+}
+
+function getDaysUntilDue(dueDateStr?: string | null): number | null {
+  if (!dueDateStr) return null
+  const due = new Date(dueDateStr).getTime()
+  const now = new Date().setHours(0, 0, 0, 0)
+  const diffTime = due - now
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 }
 
 export function StudentTaskBar({ classroomId }: Props) {
@@ -119,9 +129,13 @@ export function StudentTaskBar({ classroomId }: Props) {
           </div>
         ) : (
           <>
-            {/* 1. Teacher-Assigned Class Tasks */}
+            {/* 1. Teacher-Assigned Class Tasks (Hybrid: DAILY vs ONCE) */}
             {classTasks.map((ct) => {
               const ctid = resolveId(ct)
+              const isDaily = ct.type === "DAILY"
+              const daysLeft = !isDaily ? getDaysUntilDue(ct.dueDate) : null
+              const isDueSoon = daysLeft !== null && daysLeft <= 2 && daysLeft >= 0
+
               return (
                 <div
                   key={ctid}
@@ -129,6 +143,8 @@ export function StudentTaskBar({ classroomId }: Props) {
                     "flex items-center justify-between rounded-2xl border px-3.5 py-2.5 text-xs transition-all",
                     ct.isCompleted
                       ? "border-emerald-500/30 bg-emerald-500/5 text-muted-foreground"
+                      : isDaily
+                      ? "border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/60 text-foreground"
                       : "border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60 text-foreground"
                   )}
                 >
@@ -145,26 +161,60 @@ export function StudentTaskBar({ classroomId }: Props) {
                       )}
                     </span>
                     <div className="min-w-0">
-                      <p
-                        className={cn(
-                          "font-semibold truncate",
-                          ct.isCompleted && "line-through opacity-70"
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p
+                          className={cn(
+                            "font-semibold truncate",
+                            ct.isCompleted && "line-through opacity-70"
+                          )}
+                        >
+                          {ct.title}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
+                        {isDaily ? (
+                          <span className="flex items-center gap-1 text-cyan-600 dark:text-cyan-400 font-medium">
+                            <RotateCw className="size-2.5" />
+                            تتجدد يومياً • إنجاز اليوم
+                          </span>
+                        ) : ct.dueDate ? (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-2.5" />
+                            موعد التسليم: {new Date(ct.dueDate).toLocaleDateString("ar-EG")}
+                          </span>
+                        ) : null}
+
+                        {isDueSoon && !ct.isCompleted && (
+                          <span className="flex items-center gap-1 rounded-md bg-rose-500/10 px-1.5 py-0.5 font-bold text-rose-600">
+                            <AlertTriangle className="size-2.5" />
+                            {daysLeft === 0 ? "ينتهي اليوم!" : `باقي ${daysLeft} يوم`}
+                          </span>
                         )}
-                      >
-                        {ct.title}
-                      </p>
-                      {ct.dueDate && (
-                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
-                          <Calendar className="size-2.5" />
-                          موعد التسليم: {new Date(ct.dueDate).toLocaleDateString("ar-EG")}
-                        </span>
-                      )}
+                      </div>
                     </div>
                   </button>
 
-                  <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 shrink-0 ms-2">
-                    مهمة من المعلم 📌
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0 ms-2">
+                    {/* Badge: DAILY vs ONCE */}
+                    {isDaily ? (
+                      <div className="flex items-center gap-1">
+                        {ct.streak && ct.streak > 0 ? (
+                          <span className="flex items-center gap-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                            <Flame className="size-3 text-amber-500" />
+                            {ct.streak} أيام متتالية
+                          </span>
+                        ) : null}
+                        <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-bold text-cyan-700 dark:text-cyan-300">
+                          🔄 يومية
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                        📌 مرة واحدة
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}

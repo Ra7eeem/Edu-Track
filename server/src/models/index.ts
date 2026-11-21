@@ -14,7 +14,7 @@ export { Team } from "./Team";
 export { ScoreLog } from "./ScoreLog";
 export { StudentTask } from "./StudentTask";
 export { ArchivedLeaderboard } from "./ArchivedLeaderboard";
-export { ClassTask } from "./ClassTask";
+export { ClassTask, TaskType } from "./ClassTask";
 export { StudentTaskProgress } from "./StudentTaskProgress";
 export { DailyQuestion } from "./DailyQuestion";
 export { DailyAnswer } from "./DailyAnswer";

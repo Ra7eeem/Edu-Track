@@ -1,5 +1,6 @@
 import { z } from "zod";
 import mongoose from "mongoose";
+import { TaskType } from "../../models/ClassTask";
 
 const objectIdRef = z
   .string()
@@ -7,20 +8,22 @@ const objectIdRef = z
 
 export const createClassTaskSchema = z.object({
   classroomId: objectIdRef,
-  title: z.string().min(1, "عنوان المهمة مطلوب").max(250, "عنوان المهمة طويل جداً"),
-  description: z.string().max(1000).optional(),
+  title: z.string().min(1, "عنوان المهمة مطلوب").max(200, "عنوان المهمة طويل جداً"),
+  description: z.string().max(500).optional(),
+  type: z.nativeEnum(TaskType).optional().default(TaskType.ONCE),
   dueDate: z.string().optional(),
 });
 
 export const updateClassTaskSchema = z.object({
-  title: z.string().min(1).max(250).optional(),
-  description: z.string().max(1000).optional(),
+  title: z.string().min(1).max(200).optional(),
+  description: z.string().max(500).optional(),
   dueDate: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
 export const sendTaskReminderSchema = z.object({
   studentIds: z.array(objectIdRef).optional(),
+  dateStr: z.string().optional(),
 });
 
 export type CreateClassTaskDto = z.infer<typeof createClassTaskSchema>;

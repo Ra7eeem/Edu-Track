@@ -15,6 +15,7 @@ async function getAuthHeader() {
 export async function createClassTaskApi(dto: {
   classroomId: string
   title: string
+  type?: "ONCE" | "DAILY"
   dueDate?: string
   description?: string
 }): Promise<ApiClassTask> {
@@ -36,10 +37,14 @@ export async function createClassTaskApi(dto: {
 }
 
 export async function getClassTasksApi(
-  classroomId: string
-): Promise<{ tasks: ApiClassTask[]; totalStudents: number }> {
+  classroomId: string,
+  date?: string
+): Promise<{ tasks: ApiClassTask[]; totalStudents: number; date?: string }> {
   const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/class-tasks/classroom/${classroomId}`, {
+  const url = `${BASE_API_URL}/api/class-tasks/classroom/${classroomId}${
+    date ? `?date=${encodeURIComponent(date)}` : ""
+  }`
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       ...HEADERS.JsonBody,
@@ -48,7 +53,8 @@ export async function getClassTasksApi(
     cache: "no-store",
   })
 
-  const json: ApiResponse<{ tasks: ApiClassTask[]; totalStudents: number }> = await res.json()
+  const json: ApiResponse<{ tasks: ApiClassTask[]; totalStudents: number; date?: string }> =
+    await res.json()
   if (!res.ok || !json.success) {
     throw new Error(json.message || "فشل تحميل المهام")
   }
@@ -56,10 +62,14 @@ export async function getClassTasksApi(
 }
 
 export async function getClassTaskProgressApi(
-  taskId: string
+  taskId: string,
+  date?: string
 ): Promise<ApiClassTaskProgressResponse> {
   const authHeader = await getAuthHeader()
-  const res = await fetch(`${BASE_API_URL}/api/class-tasks/${taskId}/progress`, {
+  const url = `${BASE_API_URL}/api/class-tasks/${taskId}/progress${
+    date ? `?date=${encodeURIComponent(date)}` : ""
+  }`
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       ...HEADERS.JsonBody,
@@ -96,7 +106,8 @@ export async function toggleClassTaskApi(
 
 export async function sendTaskReminderApi(
   taskId: string,
-  studentIds?: string[]
+  studentIds?: string[],
+  dateStr?: string
 ): Promise<{ success: boolean; message: string; count: number }> {
   const authHeader = await getAuthHeader()
   const res = await fetch(`${BASE_API_URL}/api/class-tasks/${taskId}/remind`, {
@@ -105,7 +116,7 @@ export async function sendTaskReminderApi(
       ...HEADERS.JsonBody,
       ...authHeader,
     },
-    body: JSON.stringify({ studentIds }),
+    body: JSON.stringify({ studentIds, dateStr }),
   })
 
   const json: ApiResponse<{ success: boolean; message: string; count: number }> =
@@ -115,6 +126,8 @@ export async function sendTaskReminderApi(
   }
   return json.data
 }
+
+// ─── Teacher Daily Question APIs ───────────────────────────────────────────────
 
 export async function createDailyQuestionApi(dto: {
   classroomId: string
@@ -137,17 +150,17 @@ export async function createDailyQuestionApi(dto: {
 
   const json: ApiResponse<ApiDailyQuestion> = await res.json()
   if (!res.ok || !json.success) {
-    throw new Error(json.message || "فشل حفظ سؤال اليوم")
+    throw new Error(json.message || "فشل إنشاء سؤال اليوم")
   }
   return json.data
 }
 
 export async function getTeacherDailyQuestionsApi(
   classroomId: string
-): Promise<any[]> {
+): Promise<ApiDailyQuestion[]> {
   const authHeader = await getAuthHeader()
   const res = await fetch(
-    `${BASE_API_URL}/api/daily-questions/classroom/${classroomId}`,
+    `${BASE_API_URL}/api/daily-questions/classroom/${classroomId}/teacher`,
     {
       method: "GET",
       headers: {
@@ -158,9 +171,9 @@ export async function getTeacherDailyQuestionsApi(
     }
   )
 
-  const json: ApiResponse<any[]> = await res.json()
+  const json: ApiResponse<ApiDailyQuestion[]> = await res.json()
   if (!res.ok || !json.success) {
-    return []
+    throw new Error(json.message || "فشل تحميل أسئلة اليوم")
   }
   return json.data
 }
