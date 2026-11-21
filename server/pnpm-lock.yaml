@@ -53,6 +53,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@4.22.3(supports-color@7.2.0))
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
       web-push:
         specifier: ^4.0.0
         version: 4.0.0(supports-color@7.2.0)
@@ -105,9 +108,6 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.23.15
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.5)(supports-color@7.2.0)
