@@ -24,7 +24,6 @@ import {
   Sparkles,
   Flame,
   Award,
-  ChevronDown,
   Trash2,
   X,
   AlertTriangle,
